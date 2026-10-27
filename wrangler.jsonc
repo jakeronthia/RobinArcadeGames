@@ -1,0 +1,6 @@
+// Cloudflare Workers config: ROBIN Arcade is a static site, every file is served as is.
+{
+  "name": "robinarcadegames",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./" }
+}
