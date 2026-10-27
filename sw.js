@@ -1,8 +1,8 @@
 /* ROBIN Arcade service worker: makes the site installable and fast on repeat visits.
    Pages: network first (always fresh), falling back to cache when offline.
    Images, clips, scripts: cache first. Other sites (DEX Screener, fonts) are not touched. */
-var CACHE = 'robin-arcade-v6';
-var CORE = ['./', 'index.html', 'game.html', 'profile.html', 'kit.html', 'faq.html', 'leaderboard.html', 'styles.css', 'site.js', 'data.js', 'assets/robin.jpg', 'assets/icon-192.png'];
+var CACHE = 'robin-arcade-v7';
+var CORE = ['./', 'index.html', 'game.html', 'profile.html', 'kit.html', 'faq.html', 'styles.css', 'site.js', 'data.js', 'assets/robin.jpg', 'assets/icon-192.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(CORE); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));

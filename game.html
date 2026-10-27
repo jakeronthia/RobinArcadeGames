@@ -20,7 +20,6 @@
     <a class="logo" href="./">ROBIN <span>Arcade</span></a>
     <nav class="nav" aria-label="Main">
       <a href="./#games" aria-current="page">Games</a>
-      <a href="leaderboard.html">Leaderboard</a>
       <a href="./#heroes">Heroes</a>
       <a href="./#token">Token</a>
       <a href="kit.html">Meme kit</a>
@@ -88,12 +87,6 @@
         <span>Saved on this device</span>
         <button class="btn" type="button" id="cardBtn" style="margin-top:10px">Share my score</button>
       </div>
-      <div class="box" id="weekBox">
-        <h2 style="font-size:20px">This week's top 3</h2>
-        <div id="weekTop" class="mini-board"></div>
-        <p id="weekMe" class="note" style="margin:0"></p>
-        <a class="chip-btn" id="weekLink" href="leaderboard.html" style="align-self:flex-start;text-decoration:none">Full leaderboard</a>
-      </div>
       <div class="box">
         <h2 style="font-size:20px">Play as</h2>
         <div class="mini-heroes" id="miniHeroes"></div>
@@ -126,7 +119,7 @@
 <footer class="site-foot">
   <div class="wrap">
     <span>ROBIN Arcade · games for fun, not financial advice.</span>
-    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+    <nav aria-label="Social"><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
   </div>
 </footer>
 
@@ -176,25 +169,6 @@
     a.querySelector('h3').textContent = o.title;
     $('moreGrid').appendChild(a);
   });
-
-  /* weekly leaderboard box */
-  $('weekLink').href = 'leaderboard.html?g=' + encodeURIComponent(g.id);
-  function loadWeek() {
-    api('leaderboard?game=' + encodeURIComponent(g.id)).then(function (d) {
-      var box = $('weekTop'); box.innerHTML = '';
-      if (!d.rows.length) box.innerHTML = '<p class="note" style="margin:0">No scores yet. Take the top spot!</p>';
-      d.rows.slice(0, 3).forEach(function (r, i) {
-        var row = document.createElement('div'); row.className = 'mb-row';
-        row.innerHTML = '<span class="medal m' + (i + 1) + '">' + (i + 1) + '</span><span class="mb-who"></span><b></b>';
-        row.querySelector('.mb-who').textContent = r.nick || r.account; row.querySelector('b').textContent = Number(r.value).toLocaleString('en');
-        box.appendChild(row);
-      });
-      var s = getSession();
-      $('weekMe').innerHTML = !s ? '<a href="profile.html">Connect your NEAR wallet</a> to compete for this week\'s prizes.' : d.me ? 'You are <b style="color:var(--gold)">#' + d.me.rank + '</b> this week.' : 'Play a run to get on the board.';
-    }).catch(function (e) { $('weekTop').innerHTML = '<p class="note" style="margin:0">' + (e.message === 'offline' ? 'Goes live once the site is online.' : 'Leaderboard unavailable right now.') + '</p>'; $('weekMe').textContent = ''; });
-  }
-  loadWeek();
-  addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.type === 'robin-ranked') { loadWeek(); showBest(); } });
 
   /* score card */
   var cardData = null;

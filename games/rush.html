@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>[hidden]{display:none!important}html,body{margin:0;height:100%;background:#0a0712}</style>
-<script src="ranked.js"></script>
 <title>Ravenport Rush</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -182,8 +181,6 @@ body{margin:0;background:var(--night);color:var(--ink);font-family:var(--round);
     <h2>Upgrades</h2>
     <p class="bank">Bank <b id="bankN">0</b> coins · every coin you grab in a run is saved here</p>
     <div class="uplist" id="upList"></div>
-    <label class="uptog"><input type="checkbox" id="useUp"> Use upgrades in my runs</label>
-    <p class="bank uphint">Weekly leaderboard runs are played without upgrades. Turn them off to compete.</p>
     <div class="acts"><button class="go" id="upClose" type="button">Done</button></div>
   </div>
 </div>
@@ -759,14 +756,14 @@ function openMenu(){state='menu';['hud','powerBtn','over','pause','revive','hint
 
 /* run */
 let runUp=false;const UPL=id=>runUp?PROG.up[id]:0;const hasUps=()=>Object.values(PROG.up).some(v=>v>0);
-function startRun(){runUp=PROG.useUp!==false&&hasUps();window.RobinRanked&&RobinRanked.start('rush',!runUp);try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();
+function startRun(){runUp=hasUps();window.RobinRanked&&RobinRanked.start('rush',!runUp);try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
   PROG.hero=sel;saveProg();clearItems();setDistrict(0);
   pl={lane:1,x:0,y:0,vy:0,slide:0,air:false,jumps:0,shield:UPL('shield')>0,inv:0,lean:0,t:0,sq:1,floor:0};
   speed=15;dist=0;score=0;coins=0;power=0;powerT=0;powerOn=-1;x2T=0;bootsT=0;revived=false;slowK=1;rs={coins:0,dist:0,jumps:0,slides:0,powers:0,smash:0,roof:0};
   for(let i=0;i<9;i++)genRow();
   ['menu','over','pause','revive','topTitle'].forEach(id=>$(id).hidden=true);$('hud').hidden=false;$('powerBtn').hidden=false;$('mult').textContent='x'+PROG.mult;
-  showHero();updHud();state='play';banner('Go!<small>'+(runUp?'Upgrades on · not ranked':'Catch the runner')+'</small>');sfx(392,.12,'square',.04,200);
+  showHero();updHud();state='play';banner('Go!<small>'+'Catch the runner'+'</small>');sfx(392,.12,'square',.04,200);
   if(!PROG.tut){tutStep=0;nextTut()}}
 let tutStep=-1;const TUT=matchMedia('(pointer:coarse)').matches?['Swipe left or right to change lanes','Swipe up to jump','Swipe down to slide','Collect coins, then tap the power button']:['← → to change lanes','↑ or Space to jump','↓ to slide','Collect coins, then press E for your power'];
 function nextTut(){if(tutStep<0)return;if(tutStep>=TUT.length){tutStep=-1;$('hint').hidden=true;PROG.tut=true;saveProg();return}$('hint').textContent=TUT[tutStep];$('hint').hidden=false}
@@ -819,7 +816,7 @@ $('revYes').addEventListener('click',()=>{if(state!=='revive')return;coins-=50;r
 $('revNo').addEventListener('click',()=>{$('revive').hidden=true;gameOver()});
 function gameOver(){state='over';$('revive').hidden=true;$('powerBtn').hidden=true;const fin=Math.floor(score);window.RobinRanked&&RobinRanked.end('rush',fin,!runUp);const rec=fin>PROG.best;if(rec){PROG.best=fin}PROG.bestDist=Math.max(PROG.bestDist,Math.floor(dist));PROG.bank+=coins;saveProg();
   $('overTitle').textContent=rec?'New record!':'Run over';$('overScore').textContent=fin.toLocaleString('en');$('oDist').textContent=Math.floor(dist)+' m';$('oCoins').textContent=coins;$('oHero').textContent=HEROES[sel].name;
-  $('overBest').textContent='Best '+PROG.best.toLocaleString('en')+' · Multiplier x'+PROG.mult+(coins?' · +'+coins+' coins to the bank':'')+(runUp?' · Upgrades on: not ranked':'');$('over').hidden=false;$('againBtn').focus();submitScore(fin,Math.floor(dist))}
+  $('overBest').textContent='Best '+PROG.best.toLocaleString('en')+' · Multiplier x'+PROG.mult+(coins?' · +'+coins+' coins to the bank':'');$('over').hidden=false;$('againBtn').focus();submitScore(fin,Math.floor(dist))}
 $('playBtn').addEventListener('click',startRun);$('againBtn').addEventListener('click',startRun);$('heroesBtn').addEventListener('click',openMenu);
 function pause(){if(state!=='play')return;state='paused';$('pauseTitle').textContent='Paused';$('resumeBtn').hidden=false;$('quitBtn').hidden=false;$('pause').hidden=false}
 function resume(){$('pause').hidden=true;if(state==='paused'){state='play';last=performance.now()}else if(state==='menu'){}}
@@ -839,7 +836,6 @@ function renderUps(){$('bankN').textContent=PROG.bank.toLocaleString('en');const
     const bt=el.querySelector('button');bt.textContent=maxed?'Max':c.toLocaleString('en');bt.disabled=maxed||PROG.bank<c;
     bt.addEventListener('click',()=>{if(PROG.bank<c||maxed)return;PROG.bank-=c;PROG.up[u.id]++;saveProg();sfx(880,.12,'triangle',.05,440);setTimeout(()=>sfx(1320,.18,'triangle',.05),90);renderUps()});
     box.appendChild(el)}}
-$('useUp').checked=PROG.useUp!==false;$('useUp').addEventListener('change',e=>{PROG.useUp=e.target.checked;saveProg()});
 $('upBtn').addEventListener('click',()=>{renderUps();$('upgrades').hidden=false;$('upClose').focus()});
 $('upClose').addEventListener('click',()=>{$('upgrades').hidden=true;$('upBtn').focus()});
 $('optMusic').checked=musicOn;$('optSfx').checked=sfxOn;

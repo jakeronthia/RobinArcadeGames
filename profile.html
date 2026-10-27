@@ -21,7 +21,6 @@
     <a class="logo" href="./">ROBIN <span>Arcade</span></a>
     <nav class="nav" aria-label="Main">
       <a href="./#games">Games</a>
-      <a href="leaderboard.html">Leaderboard</a>
       <a href="./#heroes">Heroes</a>
       <a href="./#token">Token</a>
       <a href="kit.html">Meme kit</a>
@@ -39,7 +38,7 @@
   <div class="wrap page-head">
     <span class="arcade-label">Player 1</span>
     <h1>Your profile</h1>
-    <p>Pick a nickname and your favourite hero, then connect your NEAR wallet to enter the weekly leaderboards.</p>
+    <p>Pick a nickname and your favourite hero. Your records and badge live on this device.</p>
   </div>
 
   <div class="wrap section" style="padding-top:16px">
@@ -69,14 +68,14 @@
 
       <aside class="game-side">
         <div class="box best" id="walletBox">
-          <small>NEAR WALLET</small>
-          <div id="walletBody"></div>
+          <small>$ROBIN HOLDER BADGE</small>
+          <p style="margin:0;color:var(--dim);font-size:15px;line-height:1.5">Write your NEAR account to show the holder badge. We only read your $ROBIN balance.</p>
+          <form id="holderForm" style="display:flex;gap:8px;flex-wrap:wrap"><input id="acct" placeholder="yourname.near" autocomplete="off" style="flex:1 1 160px;min-width:0;min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;font:inherit"><button class="btn" type="submit">Check</button></form>
           <div id="holderOut" aria-live="polite"></div>
-          <p class="note" style="margin:0" id="walletNote">Connecting signs a short message in your wallet to prove the account is yours. It costs nothing and moves no funds.</p>
         </div>
         <div class="box">
           <h2 style="font-size:20px">Start fresh</h2>
-          <p class="note" style="margin:0">Removes your nickname, hero, badge and wallet connection from this device. Game records stay.</p>
+          <p class="note" style="margin:0">Removes your nickname, hero and badge from this device. Game records stay.</p>
           <button class="chip-btn" type="button" id="resetBtn" style="align-self:flex-start">Reset profile</button>
         </div>
       </aside>
@@ -87,7 +86,7 @@
 <footer class="site-foot">
   <div class="wrap">
     <span>ROBIN Arcade · games for fun, not financial advice.</span>
-    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+    <nav aria-label="Social"><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
   </div>
 </footer>
 
@@ -140,30 +139,15 @@
     robinBalance(acct).then(function (r) {
       var pr = Object.assign(getProfile() || { name: '', hero: HEROES[0].name }, { account: acct, balance: r.amount, holder: r.amount > 0 });
       saveProfile(pr); p = pr; showHolder(pr);
-    }).catch(function () {});
+      if (!pr.holder) $('holderOut').innerHTML = '<p class="note" style="margin:8px 0 0">No $ROBIN found on this account yet.</p>';
+    }).catch(function () { $('holderOut').innerHTML = '<p class="err" style="margin:8px 0 0">Could not read that account. Check the name and try again.</p>'; });
   }
-  function drawWallet(msg) {
-    var s = getSession(), box = $('walletBody');
-    if (s) {
-      box.innerHTML = '<p style="margin:0;font-weight:800;font-size:17px;overflow-wrap:anywhere"></p><p class="ok" style="margin:4px 0 0">Entered in the weekly leaderboard</p><button class="chip-btn" type="button" id="outBtn" style="margin-top:10px">Disconnect</button>';
-      box.querySelector('p').textContent = s.account; $('walletNote').hidden = true;
-      $('outBtn').onclick = function () { setSession(null); var pr = getProfile(); if (pr) { delete pr.holder; delete pr.account; saveProfile(pr); } location.reload(); };
-      showHolder(getProfile()); checkHolder(s.account);
-    } else {
-      box.innerHTML = '<p style="margin:0;color:var(--dim);font-size:15px;line-height:1.5">Connect your NEAR wallet to enter the weekly leaderboards and receive prizes. $ROBIN holders also get the holder badge.</p><button class="btn" type="button" id="inBtn" style="margin-top:10px">Connect NEAR wallet</button>' + (msg ? '<p class="err" style="margin:8px 0 0"></p>' : '');
-      if (msg) box.querySelector('.err').textContent = msg;
-      $('inBtn').onclick = function () {
-        var b = this; b.disabled = true; b.textContent = 'Opening wallet…';
-        nearSignIn().catch(function (e) { b.disabled = false; b.textContent = 'Connect NEAR wallet'; drawWallet(e.message === 'offline' ? 'Wallet sign-in works once the site is online.' : 'Could not start sign-in: ' + e.message); });
-      };
-    }
-  }
-  nearFinishSignIn().then(function (r) { drawWallet(); if (r) { coinSound(); coinBurst(innerWidth / 2, innerHeight / 3); syncNick(); } })
-    .catch(function (e) { drawWallet(e.message); });
-  function syncNick() { var pr = getProfile(); if (getSession() && pr && pr.name) api('me', { body: { nick: pr.name, hero: pr.hero } }).catch(function () {}); }
+  var cur = getProfile();
+  if (cur && cur.account) { $('acct').value = cur.account; showHolder(cur); }
+  $('holderForm').addEventListener('submit', function (e) { e.preventDefault(); var a = $('acct').value.trim().toLowerCase(); if (!a) return; $('holderOut').innerHTML = '<p class="note" style="margin:8px 0 0">Checking…</p>'; checkHolder(a); });
 
   $('resetBtn').addEventListener('click', function () {
-    try { localStorage.removeItem('arcade-profile'); localStorage.removeItem('arcade-session'); } catch (e) {}
+    try { localStorage.removeItem('arcade-profile'); } catch (e) {}
     location.reload();
   });
 })();

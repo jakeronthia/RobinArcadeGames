@@ -160,9 +160,3 @@ window.CHALLENGES = [
    { week: 'Week 1', name: 'nickname', game: 'Ravenport Rush', score: '12,400', hero: 'Spud' },
    ============================================================ */
 window.HALL = [];
-
-/* ============================================================
-   Weekly leaderboard prizes: shown for the top 3 of every game.
-   Write the real prizes here, e.g. '50,000 $ROBIN'.
-   ============================================================ */
-window.PRIZES = ['[1st prize]', '[2nd prize]', '[3rd prize]'];

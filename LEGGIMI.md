@@ -51,42 +51,15 @@ La scheda in homepage, la clip al passaggio del mouse, la pagina del gioco e "Mo
 
 Tutto è in cima a `data.js`: contratto, pair di DEX Screener, link Buy/Swap, descrizione, X e Telegram.
 
-## Pubblicare su Cloudflare Pages (con la classifica)
+## Pubblicare su Cloudflare Pages
 
-La classifica ha bisogno di una piccola parte "server" (cartella `functions/`) e di un database.
-Cloudflare la attiva solo se il sito arriva da **GitHub** (il caricamento dello zip trascinandolo NON avvia la parte server).
+Il sito è nella repository GitHub **RobinArcadeGames**. Cloudflare lo pubblica gratis e lo aggiorna da solo a ogni modifica.
 
-### 1. Metti i file su GitHub
-1. Crea un account su github.com (gratis) e poi un nuovo repository, per esempio `robin-arcade` (può essere privato).
-2. Nel repository: **Add file → Upload files**, trascina TUTTO il contenuto di questa cartella (non la cartella stessa) e conferma con **Commit changes**.
+1. dash.cloudflare.com → **Workers & Pages → Create application**. In fondo alla pagina clicca **Get started** accanto a "Looking to deploy Pages?".
+2. **Import an existing Git repository** → collega GitHub → scegli **RobinArcadeGames** → **Begin setup**.
+3. Framework preset **None**, Build command **vuoto**, Build output directory **/** → **Save and Deploy**.
 
-### 2. Collega GitHub a Cloudflare Pages
-1. dash.cloudflare.com → **Workers & Pages → Create → Pages → Connect to Git** → scegli il repository.
-2. Impostazioni di build: Framework preset **None**, Build command **vuoto**, Build output directory **/**.
-3. **Save and Deploy**.
-
-### 3. Crea il database
-1. dash.cloudflare.com → **Storage & Databases → D1 → Create database**, nome `robin-arcade`.
-2. Apri il database → **Console**, incolla tutto il contenuto di `schema.sql` e premi **Execute**.
-
-### 4. Collega database e chiave admin al sito
-1. Workers & Pages → il tuo progetto → **Settings → Bindings → Add → D1 database**: Variable name **DB**, database `robin-arcade`.
-2. **Settings → Variables and Secrets → Add**: tipo **Secret**, nome **ADMIN_KEY**, valore una password lunga che sai solo tu.
-3. **Deployments → ⋯ sull'ultimo → Retry deployment** (serve per applicare le impostazioni).
-
-Da qui in poi, ogni modifica caricata su GitHub aggiorna il sito da sola in un minuto.
-
-## Classifica e premi: come funziona
-
-- Ogni gioco ha la sua classifica settimanale (reset ogni lunedì 00:00 UTC). Patrol e Rush: miglior partita (in Rush valgono solo le partite con gli upgrade spenti). Brawl: trofei vinti. Night Shift: Moon Badges guadagnate. ROBIN Ventures: quotazioni in borsa (IPO).
-- Per entrare in classifica il giocatore collega il wallet NEAR dal **Profilo** (firma un messaggio con MyNearWallet, gratis, nessun movimento di fondi). Il premio va a quell'account.
-- I premi mostrati sul sito si scrivono in `data.js` (`PRIZES`).
-- Difese contro i furbi: ogni partita ha un "biglietto" del server, punteggi impossibili o troppo veloci vengono rifiutati, un biglietto vale una sola volta, limite di partite al minuto. Nessuna difesa è perfetta: per questo il podio resta **In review** finché non lo controlli tu.
-
-### Ogni lunedì (pagina `admin.html`, non è linkata da nessuna parte)
-1. Apri `tuosito/admin.html`, inserisci la ADMIN_KEY, **Load last week**.
-2. Per ogni gioco guarda i primi 3: numero di partite, orario, punteggio sensato? **Verify** se va bene, **Remove score** o **Ban** se è un imbroglio.
-3. Invia i premi agli account NEAR e premi **Mark paid** (puoi scrivere l'id della transazione). Sul sito comparirà "Prize sent".
+Dopo un minuto il sito è online su `nome-progetto.pages.dev`. Per usare un tuo dominio: progetto → **Custom domains → Set up a custom domain**.
 
 ## Sfida del giorno
 
