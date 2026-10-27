@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ROBIN Arcade · Play the memes</title>
+<meta name="description" content="Free arcade games starring the NEAR meme squad. Powered by $ROBIN.">
+<meta property="og:title" content="ROBIN Arcade">
+<meta property="og:description" content="Free arcade games starring the NEAR meme squad. Powered by $ROBIN.">
+<meta property="og:image" content="assets/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games">Games</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<div class="ticker" aria-label="Live $ROBIN info">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<main>
+  <section class="hero-band">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div id="top" class="wrap hero">
+    <div class="hero-text">
+      <span class="pill-tag">Meme arcade on NEAR</span>
+      <h1>Play the memes.<br>Powered by <em>$ROBIN</em>.</h1>
+      <p>Free arcade games starring the NEAR meme squad.<br>Pick a game, pick a hero, play right in your browser.<br><br>New games drop here first.</p>
+      <div class="hero-cta">
+        <a class="btn big" href="#games">Play now</a>
+        <a class="btn big ghost" href="#token">About the token</a>
+      </div>
+    </div>
+    <a class="coin-stage" href="#token" aria-label="The $ROBIN token">
+      <span class="roof" aria-hidden="true"><i></i></span>
+      <span class="coin-shadow"></span>
+      <div class="coin-bob">
+        <div class="coin" id="coin">
+          <div class="coin-face"><img src="assets/robin.jpg" alt="$ROBIN mascot: a beagle hero with a green mask and yellow cape"></div>
+          <div class="coin-face back" aria-hidden="true"><b>R</b><span>$ROBIN</span></div>
+        </div>
+      </div>
+    </a>
+  </div>
+  </section>
+
+  <section class="wrap section" aria-labelledby="dailyTitle" style="padding-bottom:0">
+    <div class="daily" id="daily">
+      <span class="av"><img id="dailyHero" alt=""></span>
+      <div class="txt">
+        <small>Daily challenge</small>
+        <b id="dailyTitle"></b>
+        <span id="dailyGame"></span>
+      </div>
+      <div class="clock"><small>NEW CHALLENGE IN</small><b id="dailyClock">--:--:--</b></div>
+      <a class="btn" id="dailyPlay" href="#">Accept</a>
+    </div>
+  </section>
+
+  <section id="games" class="wrap section">
+    <div>
+      <span class="arcade-label">Select game</span>
+      <h2 class="sec-title">All games</h2>
+      <p class="sec-sub">Free to play. No wallet needed.</p>
+    </div>
+    <div class="games-grid" id="gamesGrid"></div>
+  </section>
+
+  <section id="heroes" class="wrap section">
+    <div>
+      <span class="arcade-label">Player select</span>
+      <h2 class="sec-title">Meet the squad</h2>
+      <p class="sec-sub">Nine NEAR memes, playable in every game.</p>
+    </div>
+    <div class="heroes-grid" id="heroesGrid"></div>
+  </section>
+
+  <section id="hall" class="wrap section">
+    <div>
+      <span class="arcade-label">High scores</span>
+      <h2 class="sec-title">Hall of Fame</h2>
+      <p class="sec-sub">The weekly champions of Ravenport. Play, post your card on X and get crowned.</p>
+    </div>
+    <div class="hall" id="hallGrid"></div>
+  </section>
+
+  <section id="token" class="wrap section">
+    <div class="token-card">
+      <div class="token-info">
+        <span class="arcade-label">Insert coin</span>
+        <div class="mascot" aria-hidden="true"><img src="assets/robin.jpg" alt=""><span class="bubble">To the moon, one rooftop at a time!</span></div>
+        <h2>$ROBIN on NEAR</h2>
+        <p id="tokenAbout"></p>
+        <div class="contract">
+          <small>CONTRACT</small>
+          <code id="contract"></code>
+          <button type="button" id="copyBtn">Copy</button>
+        </div>
+      </div>
+      <div class="token-side">
+        <div class="stats">
+          <div class="stat"><small>PRICE</small><b id="price">…</b><span class="chg" id="chg"></span></div>
+          <div class="stat"><small>MARKET CAP</small><b id="mcap">…</b><span class="chg" id="liq" style="color:var(--mute)"></span></div>
+        </div>
+        <a class="btn" data-link="buy" href="#">View chart on DEX Screener</a>
+        <a class="btn ghost" data-link="swap" href="#">Swap on Ref Finance</a>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-head">
+          <b>Live chart</b>
+          <span class="live"><i></i>Real time · DEX Screener</span>
+        </div>
+        <div class="chart" id="chart"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  var T = SITE.token, $ = function (id) { return document.getElementById(id); };
+
+  /* games */
+  var grid = $('gamesGrid');
+  GAMES.forEach(function (g) {
+    var a = document.createElement('a');
+    a.className = 'card cab';
+    a.href = 'game.html?g=' + encodeURIComponent(g.id);
+    a.style.setProperty('--acc', g.accent || '#ffc93c');
+    a.innerHTML =
+      '<div class="card-media"><img loading="lazy" alt=""><span class="orient"></span>' + (g.badge ? '<span class="badge"></span>' : '') + '<span class="scan"></span></div>' +
+      '<div class="card-body"><div><h3></h3><p></p></div><span class="btn">Play</span></div>';
+    var img = a.querySelector('img');
+    img.src = g.shot; img.alt = g.title + ' gameplay'; img.style.objectPosition = g.pos || 'center';
+    a.querySelector('.orient').textContent = g.orient === 'portrait' ? 'Portrait' : 'Landscape';
+    if (g.badge) a.querySelector('.badge').textContent = g.badge;
+    a.querySelector('h3').textContent = g.title;
+    a.querySelector('p').textContent = g.blurb;
+    if (g.clip && matchMedia('(hover:hover)').matches) {
+      var v = null, media = a.querySelector('.card-media');
+      a.addEventListener('mouseenter', function () {
+        if (!v) { v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = g.clip; v.style.objectPosition = g.pos || 'center'; v.setAttribute('aria-hidden', 'true'); media.insertBefore(v, media.querySelector('.orient')); }
+        v.currentTime = 0; var p = v.play(); if (p && p.catch) p.catch(function () {}); v.classList.add('on');
+      });
+      a.addEventListener('mouseleave', function () { if (v) { v.classList.remove('on'); v.pause(); } });
+    }
+    grid.appendChild(a);
+  });
+  var next = document.createElement('div');
+  next.className = 'card next';
+  next.innerHTML = '<span class="plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><b>Next game loading…</b><span>New drops land here first. Follow us on <a data-link="x" href="#">X</a> for the reveal.</span>';
+  grid.appendChild(next);
+
+  /* heroes */
+  var hg = $('heroesGrid');
+  HEROES.forEach(function (h) {
+    var d = document.createElement('div');
+    d.className = 'hero-tile';
+    d.tabIndex = 0;
+    d.innerHTML = '<span class="av"><img loading="lazy" alt=""></span><b></b><small class="pw"></small><span class="tip" role="tooltip"></span>';
+    d.querySelector('.av').style.background = h.col;
+    d.querySelector('img').src = h.img; d.querySelector('img').alt = h.name;
+    d.querySelector('b').textContent = h.name;
+    d.querySelector('.pw').textContent = h.power || '';
+    d.querySelector('.tip').textContent = h.desc || '';
+    hg.appendChild(d);
+  });
+  var more = document.createElement('b'); more.className = 'more-coming'; more.textContent = 'More coming'; hg.appendChild(more);
+
+  /* token */
+  $('tokenAbout').textContent = T.about;
+  $('contract').textContent = T.contract;
+  $('copyBtn').addEventListener('click', function () {
+    var b = this;
+    copyText(T.contract).then(function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1800); });
+  });
+
+  /* live chart: only load the embed when the section is near the screen */
+  var chart = $('chart'), loaded = false;
+  function loadChart() {
+    if (loaded) return; loaded = true;
+    var f = document.createElement('iframe');
+    f.title = '$ROBIN / NEAR live chart on DEX Screener';
+    f.loading = 'lazy';
+    f.src = 'https://dexscreener.com/' + T.chain + '/' + T.pair + '?embed=1&theme=dark&trades=0&info=0&chartTheme=dark&chartStyle=1&chartType=usd&interval=15';
+    chart.appendChild(f);
+  }
+  if ('IntersectionObserver' in window) new IntersectionObserver(function (e, o) { if (e[0].isIntersecting) { loadChart(); o.disconnect(); } }, { rootMargin: '400px' }).observe(chart);
+  else loadChart();
+
+  /* ticker */
+  var tick = { price: null, chg: null };
+  function buildTicker() {
+    var items = [
+      { t: '$ROBIN', v: tick.price || '…', c: tick.chg },
+      { t: 'GAMES', v: String(GAMES.length) },
+      { t: 'HEROES', v: String(HEROES.length) },
+      { t: 'FREE TO PLAY' },
+      { t: 'NO WALLET NEEDED' },
+      { t: 'NEXT GAME', v: 'LOADING…' },
+      { t: 'POWERED BY', v: '$ROBIN' }
+    ];
+    var html = items.map(function (i) {
+      var c = i.c == null ? '' : '<em class="' + (i.c >= 0 ? 'up' : 'down') + '">' + (i.c >= 0 ? '▲ ' : '▼ ') + Math.abs(i.c).toFixed(2) + '%</em>';
+      return '<span class="tk"><b>' + i.t + '</b>' + (i.v ? ' <span>' + i.v + '</span>' : '') + c + '</span><i class="tk-dot"></i>';
+    }).join('');
+    $('tickerTrack').innerHTML = '<div>' + html + html + '</div><div aria-hidden="true">' + html + html + '</div>';
+  }
+  buildTicker();
+
+  /* night sky behind the hero */
+  (function () {
+    var cv = $('sky'), x = cv.getContext('2d'), W, H, dpr, layers = [], drops = [], wins = [];
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function rnd(s) { return function () { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+    function build() {
+      var r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+      W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layers = []; wins = [];
+      [[0.42, 0.30, '#120d22', 7, 40, 90], [0.62, 0.42, '#1a1430', 11, 50, 110]].forEach(function (L, li) {
+        var R = rnd(L[3] + 3), bx = -20, bl = [];
+        while (bx < W + 20) {
+          var bw = L[4] + R() * L[5], bh = H * (L[1] * (0.5 + R()));
+          var b = { x: bx, w: bw, top: H - bh, spire: R() < 0.25, roof: R() < 0.3 };
+          bl.push(b);
+          if (li === 1) for (var wy = b.top + 14; wy < H - 10; wy += 18) for (var wx = bx + 8; wx < bx + bw - 10; wx += 14) if (R() < 0.16) wins.push({ x: wx, y: wy, p: R() * 6, s: 0.3 + R() * 1.4 });
+          bx += bw + 3;
+        }
+        layers.push({ col: L[2], b: bl });
+      });
+      drops = []; for (var i = 0; i < Math.round(W / 14); i++) drops.push({ x: Math.random() * W, y: Math.random() * H, v: 380 + Math.random() * 240 });
+    }
+    function draw(t) {
+      x.clearRect(0, 0, W, H);
+      var narrow = W < 760, mx = narrow ? W * 0.86 : W * 0.9, my = narrow ? H * 0.6 : H * 0.17, mr = narrow ? 30 : 52;
+      x.fillStyle = '#c9c0a8'; x.beginPath(); x.arc(mx, my, mr, 0, 7); x.fill();
+      x.fillStyle = '#0a0712'; x.globalAlpha = 0.18; x.beginPath(); x.arc(mx + mr * 0.35, my - mr * 0.2, mr * 0.85, 0, 7); x.fill(); x.globalAlpha = 1;
+      layers.forEach(function (L) {
+        x.fillStyle = L.col;
+        L.b.forEach(function (b) {
+          x.fillRect(b.x, b.top, b.w, H - b.top);
+          if (b.spire) { x.beginPath(); x.moveTo(b.x + b.w * 0.3, b.top); x.lineTo(b.x + b.w * 0.5, b.top - b.w * 0.7); x.lineTo(b.x + b.w * 0.7, b.top); x.fill(); }
+          else if (b.roof) { x.beginPath(); x.moveTo(b.x, b.top); x.lineTo(b.x + b.w / 2, b.top - b.w * 0.35); x.lineTo(b.x + b.w, b.top); x.fill(); }
+        });
+      });
+      wins.forEach(function (w) { var a = still ? 0.7 : 0.45 + 0.4 * Math.sin(t / 1000 * w.s + w.p); x.globalAlpha = Math.max(0.15, a); x.fillStyle = '#ffa63c'; x.fillRect(w.x, w.y, 4, 7); });
+      x.globalAlpha = 1;
+      x.strokeStyle = 'rgba(154,166,216,.28)'; x.lineWidth = 1.2; x.beginPath();
+      drops.forEach(function (d) { x.moveTo(d.x, d.y); x.lineTo(d.x - 4, d.y + 14); });
+      x.stroke();
+    }
+    var last = performance.now(), visible = true;
+    function loop(now) {
+      var dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (visible) {
+        drops.forEach(function (d) { d.y += d.v * dt; d.x -= d.v * dt * 0.25; if (d.y > H) { d.y = -14; d.x = Math.random() * (W + 60); } });
+        draw(now);
+      }
+      requestAnimationFrame(loop);
+    }
+    build(); draw(0);
+    addEventListener('resize', function () { build(); draw(performance.now()); });
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { visible = e[0].isIntersecting; }).observe(cv);
+    if (!still) requestAnimationFrame(loop);
+  })();
+
+  /* daily challenge */
+  (function () {
+    var day = Math.floor(Date.now() / 864e5), c = CHALLENGES[day % CHALLENGES.length];
+    var g = GAMES.filter(function (x) { return x.id === c.game; })[0] || GAMES[0], h = heroByName(c.hero);
+    $('dailyHero').src = h.img; $('dailyHero').parentNode.style.background = h.col; $('dailyHero').alt = h.name;
+    $('dailyTitle').textContent = c.text;
+    $('dailyGame').textContent = 'Today in ' + g.title;
+    $('dailyPlay').href = 'game.html?g=' + encodeURIComponent(g.id);
+    function tickClock() {
+      var left = 864e5 - (Date.now() % 864e5), t = Math.floor(left / 1000);
+      $('dailyClock').textContent = [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map(function (n) { return String(n).padStart(2, '0'); }).join(':');
+    }
+    tickClock(); setInterval(tickClock, 1000);
+  })();
+
+  /* hall of fame */
+  (function () {
+    var box = $('hallGrid');
+    if (HALL.length) {
+      HALL.slice(0, 6).forEach(function (e, i) {
+        var h = heroByName(e.hero), d = document.createElement('div');
+        d.className = 'trophy' + (i === 0 ? ' first' : '');
+        d.innerHTML = '<span class="av"><img alt=""></span><div class="t"><small></small><b></b><span></span></div>';
+        d.querySelector('.av').style.background = h.col; d.querySelector('img').src = h.img;
+        d.querySelector('small').textContent = (i === 0 ? 'Champion · ' : '') + e.week;
+        d.querySelector('b').textContent = e.name;
+        d.querySelector('span').textContent = e.score + ' · ' + e.game;
+        box.appendChild(d);
+      });
+    } else {
+      ['Week 1', 'Week 2', 'Week 3'].forEach(function (w, i) {
+        var d = document.createElement('div'); d.className = 'trophy empty';
+        d.innerHTML = '<span class="av"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></svg></span><div class="t"><small></small><b>Your name here</b><span>Champion to be crowned</span></div>';
+        d.querySelector('small').textContent = w; box.appendChild(d);
+      });
+    }
+  })();
+
+  /* live price */
+  function fmtUsd(n) {
+    if (n == null || isNaN(n)) return '—';
+    n = +n;
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+    if (n >= 1) return '$' + n.toFixed(3);
+    var s = n.toPrecision(4); return '$' + (+s).toString().replace(/e-(\d+)/, function (m, d) { return 'e-' + d; });
+  }
+  function loadPrice() {
+    fetch('https://api.dexscreener.com/latest/dex/pairs/' + T.chain + '/' + encodeURIComponent(T.pair))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var p = (j.pairs && j.pairs[0]) || j.pair;
+        if (!p) throw 0;
+        $('price').textContent = fmtUsd(p.priceUsd);
+        var c = p.priceChange && p.priceChange.h24;
+        if (c != null) { var el = $('chg'); el.textContent = (c >= 0 ? '+' : '') + (+c).toFixed(2) + '% 24h'; el.className = 'chg ' + (c >= 0 ? 'up' : 'down'); }
+        $('mcap').textContent = fmtUsd(p.marketCap || p.fdv);
+        if (p.liquidity && p.liquidity.usd) $('liq').textContent = 'Liquidity ' + fmtUsd(p.liquidity.usd);
+        tick.price = fmtUsd(p.priceUsd); tick.chg = c != null ? +c : null; buildTicker();
+      })
+      .catch(function () { if ($('price').textContent === '…') { $('price').textContent = '—'; $('mcap').textContent = '—'; } });
+  }
+  loadPrice(); setInterval(function () { if (!document.hidden) loadPrice(); }, 30000);
+})();
+</script>
+</body>
+</html>

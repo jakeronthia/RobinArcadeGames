@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Your profile · ROBIN Arcade</title>
+<meta name="description" content="Your ROBIN Arcade player profile.">
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games">Games</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-head">
+    <span class="arcade-label">Player 1</span>
+    <h1>Your profile</h1>
+    <p>Pick a nickname and your favourite hero, then connect your NEAR wallet to enter the weekly leaderboards.</p>
+  </div>
+
+  <div class="wrap section" style="padding-top:16px">
+    <div class="game-cols">
+      <section class="game-main">
+        <form class="box" id="profForm" autocomplete="off">
+          <div class="form">
+            <label for="nick">Nickname</label>
+            <input id="nick" name="nick" maxlength="16" placeholder="e.g. RooftopKing" required>
+          </div>
+          <div class="form">
+            <span style="font-weight:800;font-size:14px;color:var(--dim)" id="pickLbl">Favourite hero</span>
+            <div class="pick" id="pick" role="radiogroup" aria-labelledby="pickLbl"></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <button class="btn" type="submit">Save profile</button>
+            <span id="saved" class="ok" hidden>Saved</span>
+          </div>
+        </form>
+
+        <div class="box">
+          <h2>Your records</h2>
+          <div class="records" id="records"></div>
+          <p class="note" style="margin:0">Records come from the games you played in this browser.</p>
+        </div>
+      </section>
+
+      <aside class="game-side">
+        <div class="box best" id="walletBox">
+          <small>NEAR WALLET</small>
+          <div id="walletBody"></div>
+          <div id="holderOut" aria-live="polite"></div>
+          <p class="note" style="margin:0" id="walletNote">Connecting signs a short message in your wallet to prove the account is yours. It costs nothing and moves no funds.</p>
+        </div>
+        <div class="box">
+          <h2 style="font-size:20px">Start fresh</h2>
+          <p class="note" style="margin:0">Removes your nickname, hero, badge and wallet connection from this device. Game records stay.</p>
+          <button class="chip-btn" type="button" id="resetBtn" style="align-self:flex-start">Reset profile</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var p = getProfile() || { name: '', hero: HEROES[0].name };
+
+  $('nick').value = p.name || '';
+  HEROES.forEach(function (h, i) {
+    var l = document.createElement('label');
+    l.innerHTML = '<input type="radio" name="hero"><img alt=""><span></span>';
+    var r = l.querySelector('input'); r.value = h.name; r.checked = h.name === p.hero;
+    l.querySelector('img').src = h.img; l.querySelector('span').textContent = h.name;
+    $('pick').appendChild(l);
+  });
+
+  $('profForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('nick').value.trim().slice(0, 16); if (!name) { $('nick').focus(); return; }
+    var hero = (document.querySelector('input[name=hero]:checked') || {}).value || HEROES[0].name;
+    p = Object.assign(getProfile() || {}, { name: name, hero: hero });
+    saveProfile(p); coinSound(); syncNick();
+    $('saved').hidden = false; setTimeout(function () { $('saved').hidden = true; }, 1800);
+  });
+
+  GAMES.forEach(function (g) {
+    var v = 0; try { v = g.best ? g.best() : 0; } catch (e) {}
+    var a = document.createElement('a'); a.className = 'rec'; a.href = 'game.html?g=' + encodeURIComponent(g.id);
+    a.style.textDecoration = 'none'; a.style.color = 'inherit'; a.style.borderTop = '4px solid ' + (g.accent || '#ffc93c');
+    a.innerHTML = '<small></small><b></b><span></span>';
+    a.querySelector('small').textContent = g.title.toUpperCase();
+    a.querySelector('b').textContent = (+v || 0).toLocaleString('en');
+    a.querySelector('span').textContent = (g.bestLabel || 'Best score') + (v ? '' : ' · not played yet');
+    $('records').appendChild(a);
+  });
+
+  function showHolder(pr) {
+    var out = $('holderOut'); out.innerHTML = '';
+    if (pr && pr.holder) {
+      var bdg = document.createElement('span'); bdg.className = 'badge-holder'; bdg.textContent = 'HOLDER';
+      var t = document.createElement('p'); t.style.margin = '10px 0 0'; t.style.color = 'var(--dim)';
+      t.textContent = 'Holds ' + Number(pr.balance).toLocaleString('en') + ' $ROBIN';
+      out.append(bdg, t);
+    }
+  }
+  function checkHolder(acct) {
+    robinBalance(acct).then(function (r) {
+      var pr = Object.assign(getProfile() || { name: '', hero: HEROES[0].name }, { account: acct, balance: r.amount, holder: r.amount > 0 });
+      saveProfile(pr); p = pr; showHolder(pr);
+    }).catch(function () {});
+  }
+  function drawWallet(msg) {
+    var s = getSession(), box = $('walletBody');
+    if (s) {
+      box.innerHTML = '<p style="margin:0;font-weight:800;font-size:17px;overflow-wrap:anywhere"></p><p class="ok" style="margin:4px 0 0">Entered in the weekly leaderboard</p><button class="chip-btn" type="button" id="outBtn" style="margin-top:10px">Disconnect</button>';
+      box.querySelector('p').textContent = s.account; $('walletNote').hidden = true;
+      $('outBtn').onclick = function () { setSession(null); var pr = getProfile(); if (pr) { delete pr.holder; delete pr.account; saveProfile(pr); } location.reload(); };
+      showHolder(getProfile()); checkHolder(s.account);
+    } else {
+      box.innerHTML = '<p style="margin:0;color:var(--dim);font-size:15px;line-height:1.5">Connect your NEAR wallet to enter the weekly leaderboards and receive prizes. $ROBIN holders also get the holder badge.</p><button class="btn" type="button" id="inBtn" style="margin-top:10px">Connect NEAR wallet</button>' + (msg ? '<p class="err" style="margin:8px 0 0"></p>' : '');
+      if (msg) box.querySelector('.err').textContent = msg;
+      $('inBtn').onclick = function () {
+        var b = this; b.disabled = true; b.textContent = 'Opening wallet…';
+        nearSignIn().catch(function (e) { b.disabled = false; b.textContent = 'Connect NEAR wallet'; drawWallet(e.message === 'offline' ? 'Wallet sign-in works once the site is online.' : 'Could not start sign-in: ' + e.message); });
+      };
+    }
+  }
+  nearFinishSignIn().then(function (r) { drawWallet(); if (r) { coinSound(); coinBurst(innerWidth / 2, innerHeight / 3); syncNick(); } })
+    .catch(function (e) { drawWallet(e.message); });
+  function syncNick() { var pr = getProfile(); if (getSession() && pr && pr.name) api('me', { body: { nick: pr.name, hero: pr.hero } }).catch(function () {}); }
+
+  $('resetBtn').addEventListener('click', function () {
+    try { localStorage.removeItem('arcade-profile'); localStorage.removeItem('arcade-session'); } catch (e) {}
+    location.reload();
+  });
+})();
+</script>
+</body>
+</html>

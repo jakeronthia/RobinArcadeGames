@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Leaderboard · ROBIN Arcade</title>
+<meta name="description" content="Weekly leaderboards of ROBIN Arcade. Top 3 of each game win prizes.">
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games">Games</a>
+      <a href="leaderboard.html" aria-current="page">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-head">
+    <span class="arcade-label">High scores</span>
+    <h1>Leaderboard</h1>
+    <p>Every game has its own weekly leaderboard. The top 3 of each game win a prize. Boards reset every Monday at 00:00 UTC.</p>
+  </div>
+
+  <div class="wrap section" style="padding-top:16px">
+    <div class="lb-top">
+      <div class="lb-tabs" role="tablist" aria-label="Game" id="tabs"></div>
+      <div class="lb-clock"><small id="clockLbl">RESETS IN</small><b id="clock">--</b></div>
+    </div>
+
+    <div class="lb-wrap">
+      <section class="lb-main">
+        <div class="seg-week" role="group" aria-label="Week">
+          <button type="button" data-w="current" class="on">This week</button>
+          <button type="button" data-w="last">Last week</button>
+        </div>
+        <div class="podium" id="podium"></div>
+        <ol class="lb-list" id="list" start="4"></ol>
+        <p class="lb-empty" id="empty" hidden></p>
+      </section>
+
+      <aside class="lb-side">
+        <div class="box best" id="meBox">
+          <small>YOU</small>
+          <div id="meBody"></div>
+        </div>
+        <div class="box">
+          <h2 style="font-size:20px">Prizes</h2>
+          <ul class="prize-list" id="prizes"></ul>
+          <p class="note" style="margin:0">For each game, every week.</p>
+        </div>
+        <div class="box">
+          <h2 style="font-size:20px">Rules</h2>
+          <ul class="rules">
+            <li>Connect your NEAR wallet to enter. Prizes are sent to that account.</li>
+            <li>Patrol and Rush count your best run of the week (in Rush, only runs with upgrades turned off). Brawl counts the trophies you win. Night Shift counts the Moon Badges you earn. ROBIN Ventures counts your IPOs.</li>
+            <li>Daily challenges and continued runs don't count.</li>
+            <li>The top 3 are checked before prizes go out. Impossible scores are removed and cheating accounts are banned.</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var game = (new URLSearchParams(location.search).get('g')) || GAMES[0].id, week = 'current', end = 0;
+  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function shortAcct(a) { return a.length > 22 ? a.slice(0, 10) + '…' + a.slice(-8) : a; }
+
+  GAMES.forEach(function (g) {
+    var b = document.createElement('button'); b.type = 'button'; b.role = 'tab'; b.dataset.g = g.id; b.textContent = g.title.replace('Ravenport ', '');
+    b.style.setProperty('--acc', g.accent || '#ffc93c');
+    b.addEventListener('click', function () { game = g.id; history.replaceState(null, '', '?g=' + g.id); load(); });
+    $('tabs').appendChild(b);
+  });
+  document.querySelectorAll('.seg-week button').forEach(function (b) {
+    b.addEventListener('click', function () { week = b.dataset.w; document.querySelectorAll('.seg-week button').forEach(function (x) { x.classList.toggle('on', x === b); }); load(); });
+  });
+  PRIZES.forEach(function (p, i) { var li = document.createElement('li'); li.innerHTML = '<span class="medal m' + (i + 1) + '">' + (i + 1) + '</span><b></b>'; li.querySelector('b').textContent = p; $('prizes').appendChild(li); });
+
+  function heroImg(name) { var h = heroByName(name || 'Leonidas'); return '<span class="lb-av" style="background:' + h.col + '"><img src="' + h.img + '" alt=""></span>'; }
+  function who(r) { return r.nick ? esc(r.nick) + '<small>' + esc(shortAcct(r.account)) + '</small>' : esc(shortAcct(r.account)); }
+
+  function render(d) {
+    var g = GAMES.filter(function (x) { return x.id === game; })[0];
+    document.querySelectorAll('#tabs button').forEach(function (b) { var on = b.dataset.g === game; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+    end = d.end; $('clockLbl').textContent = d.current ? 'RESETS IN' : 'FINAL RESULTS';
+    var top = d.rows.slice(0, 3), rest = d.rows.slice(3);
+    $('podium').innerHTML = [1, 0, 2].map(function (i) {
+      var r = top[i];
+      if (!r) return '<div class="pod p' + (i + 1) + ' free"><span class="medal m' + (i + 1) + '">' + (i + 1) + '</span><b>Free spot</b><small>' + esc(PRIZES[i] || '') + '</small></div>';
+      var paid = (d.paid || []).some(function (p) { return p.rank === i + 1; });
+      var tag = paid ? '<em class="tag ok">Prize sent</em>' : r.verified ? '<em class="tag ok">Verified</em>' : '<em class="tag">In review</em>';
+      return '<div class="pod p' + (i + 1) + '"><span class="medal m' + (i + 1) + '">' + (i + 1) + '</span>' + heroImg(r.hero) + '<b class="who">' + who(r) + '</b><strong>' + Number(r.value).toLocaleString('en') + '</strong><small>' + esc(PRIZES[i] || '') + '</small>' + tag + '</div>';
+    }).join('');
+    $('list').innerHTML = rest.map(function (r) { return '<li>' + heroImg(r.hero) + '<span class="who">' + who(r) + '</span><b>' + Number(r.value).toLocaleString('en') + '</b></li>'; }).join('');
+    $('empty').hidden = d.rows.length > 0; $('empty').textContent = d.current ? 'No scores yet this week. Be the first on the board!' : 'Nobody played this game last week.';
+    var s = getSession();
+    if (!s) $('meBody').innerHTML = '<p style="margin:0;color:var(--dim)">Connect your NEAR wallet to get on the board.</p><a class="btn" href="profile.html" style="margin-top:10px">Connect NEAR</a>';
+    else if (d.me) $('meBody').innerHTML = '<b>#' + d.me.rank + '</b><span>' + esc(d.label) + ': ' + Number(d.me.value).toLocaleString('en') + '</span><a class="btn" href="game.html?g=' + g.id + '" style="margin-top:10px">Play ' + esc(g.title) + '</a>';
+    else $('meBody').innerHTML = '<p style="margin:0;color:var(--dim)">' + esc(s.account) + ' has no ' + esc(d.label.toLowerCase()) + ' here yet.</p><a class="btn" href="game.html?g=' + g.id + '" style="margin-top:10px">Play ' + esc(g.title) + '</a>';
+  }
+  function load() {
+    $('podium').innerHTML = ''; $('list').innerHTML = ''; $('empty').hidden = true;
+    api('leaderboard?game=' + encodeURIComponent(game) + '&week=' + week).then(render).catch(function (e) {
+      document.querySelectorAll('#tabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.g === game); });
+      $('empty').hidden = false;
+      $('empty').textContent = e.message === 'offline' ? 'The leaderboard goes live once the site is online with its database.' : 'Could not load the leaderboard. Try again in a moment.';
+      $('meBody').innerHTML = '';
+    });
+  }
+  function tick() {
+    var ms = end - Date.now();
+    if (!end || week !== 'current' || ms <= 0) { $('clock').textContent = week === 'current' ? '--' : 'Week closed'; return; }
+    var s = Math.floor(ms / 1000), d = Math.floor(s / 86400);
+    $('clock').textContent = (d ? d + 'd ' : '') + [Math.floor(s / 3600) % 24, Math.floor(s / 60) % 60, s % 60].map(function (n) { return String(n).padStart(2, '0'); }).join(':');
+  }
+  load(); setInterval(tick, 1000); setInterval(function () { if (!document.hidden && week === 'current') load(); }, 60000);
+})();
+</script>
+</body>
+</html>

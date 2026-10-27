@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FAQ · ROBIN Arcade</title>
+<meta name="description" content="Questions and answers about ROBIN Arcade and $ROBIN.">
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games">Games</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html" aria-current="page">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-head">
+    <span class="arcade-label">Help</span>
+    <h1>FAQ</h1>
+    <p>Everything you need to know about ROBIN Arcade and $ROBIN.</p>
+  </div>
+  <div class="wrap section" style="padding-top:20px">
+    <div class="faq">
+      <details open><summary>What is ROBIN Arcade?</summary>
+        <p>A collection of free arcade games you play right in your browser. Every game stars the same squad of NEAR memes, and the whole arcade is powered by $ROBIN. New games drop here first.</p></details>
+      <details><summary>Do I need a wallet or to pay anything?</summary>
+        <p>To play, no: every game is free and works without a wallet. To enter the weekly leaderboards and win prizes, connect your NEAR wallet in your profile. Connecting only signs a short message, it costs nothing and moves no funds.</p></details>
+      <details><summary>What is $ROBIN?</summary>
+        <p><span id="about"></span> It trades on NEAR. Contract: <code id="contract" style="color:var(--ink)"></code></p></details>
+      <details><summary>How do I get $ROBIN?</summary>
+        <p>You can swap for it on <a data-link="swap" href="#">Ref Finance</a> and follow the price on <a data-link="buy" href="#">DEX Screener</a>. Always double check the contract address before you swap.</p></details>
+      <details><summary>Where are my scores saved?</summary>
+        <p>In your browser, on this device. If you clear your browser data or switch device, your records start again.</p></details>
+      <details><summary>Can I play on my phone?</summary>
+        <p>Yes. Patrol, Rush and Brawl play best with the phone sideways. Night Shift and ROBIN Ventures are made for the phone held upright.</p></details>
+      <details><summary>Can I install ROBIN Arcade as an app?</summary>
+        <p>Yes. On iPhone open the site in Safari, tap Share and then "Add to Home Screen". On Android open it in Chrome, tap the menu and then "Install app". It opens full screen like a normal app.</p></details>
+      <details><summary>How do the weekly prizes work?</summary>
+        <p>Every game has its own <a href="leaderboard.html">leaderboard</a> that resets every Monday at 00:00 UTC. When the week closes, the top 3 of each game are checked and the prizes are sent to their NEAR accounts. Patrol and Rush count your best run (Rush runs only count with upgrades turned off), Brawl the trophies you win, Night Shift the Moon Badges you earn, ROBIN Ventures your IPOs.</p></details>
+      <details><summary>What happens if someone cheats?</summary>
+        <p>Impossible scores are rejected automatically and every podium is reviewed before prizes go out. Accounts caught cheating are removed and banned.</p></details>
+      <details><summary>How do I get into the Hall of Fame?</summary>
+        <p>Weekly champions are announced on <a data-link="x" href="#">X</a> and added to the Hall of Fame on the homepage.</p></details>
+      <details><summary>Is any of this financial advice?</summary>
+        <p>No. ROBIN Arcade is a set of games made for fun. Nothing on this site is financial advice. Crypto is risky, so only use what you can afford to lose.</p></details>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+document.getElementById('about').textContent = SITE.token.about;
+document.getElementById('contract').textContent = SITE.token.contract;
+</script>
+</body>
+</html>

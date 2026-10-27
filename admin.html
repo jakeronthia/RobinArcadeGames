@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin · ROBIN Arcade</title>
+<meta name="description" content="Leaderboard admin.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games">Games</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap page-head">
+    <span class="arcade-label">Staff only</span>
+    <h1>Admin</h1>
+    <p>Check the podium of every game before sending prizes. Use your ADMIN_KEY from the Cloudflare project settings.</p>
+  </div>
+  <div class="wrap section" style="padding-top:16px">
+    <form class="box form" id="keyForm" style="max-width:520px">
+      <label for="key">Admin key</label>
+      <input id="key" type="password" autocomplete="off" required>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="submit">Load last week</button>
+        <button class="btn ghost" type="button" id="curBtn">Load this week</button>
+      </div>
+      <p id="msg" class="note" style="margin:0"></p>
+    </form>
+    <div id="out" style="display:flex;flex-direction:column;gap:16px"></div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); }, which = 'last', data = null;
+  try { $('key').value = sessionStorage.getItem('arcade-admin') || ''; } catch (e) {}
+  function esc(s) { var d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
+  function hdr() { return { 'x-admin-key': $('key').value }; }
+  function load() {
+    try { sessionStorage.setItem('arcade-admin', $('key').value); } catch (e) {}
+    $('msg').textContent = 'Loading…';
+    api('admin?week=' + which, { headers: hdr() }).then(function (d) { data = d; $('msg').textContent = 'Week ' + d.week + (which === 'current' ? ' (in progress)' : ' (closed)'); draw(); })
+      .catch(function (e) { $('msg').textContent = e.message; $('out').innerHTML = ''; });
+  }
+  function act(body) { return api('admin', { headers: hdr(), body: body }).then(load).catch(function (e) { alert(e.message); }); }
+  function draw() {
+    $('out').innerHTML = '';
+    GAMES.forEach(function (g) {
+      var G = data.games[g.id] || { rows: [], paid: [] }, box = document.createElement('div'); box.className = 'box';
+      box.innerHTML = '<h2>' + esc(g.title) + '</h2>' + (G.rows.length ? '' : '<p class="note" style="margin:0">No scores.</p>');
+      G.rows.forEach(function (r, i) {
+        var paid = G.paid.filter(function (p) { return p.rank === i + 1; })[0];
+        var row = document.createElement('div'); row.className = 'adm-row';
+        row.innerHTML = '<b>#' + (i + 1) + '</b><span class="adm-who">' + esc(r.nick || '-') + '<small>' + esc(r.account) + (r.banned ? ' · BANNED' : '') + '</small></span><span class="adm-val">' + Number(r.value).toLocaleString('en') + '<small>' + r.runs + ' runs · ' + new Date(r.updated).toLocaleString() + '</small></span>' +
+          '<span class="adm-st">' + (paid ? 'Paid' + (paid.note ? ': ' + esc(paid.note) : '') : r.verified ? 'Verified' : 'In review') + '</span>';
+        var btns = document.createElement('span'); btns.className = 'adm-btns';
+        function add(label, fn, ghost) { var b = document.createElement('button'); b.type = 'button'; b.className = 'chip-btn'; b.textContent = label; b.onclick = fn; btns.appendChild(b); }
+        add('Verify', function () { act({ action: 'verify', week: data.week, game: g.id, account: r.account }); });
+        if (i < 3) add('Mark paid', function () { var n = prompt('Note for this payment (e.g. transaction id):', ''); if (n !== null) act({ action: 'paid', week: data.week, game: g.id, rank: i + 1, account: r.account, note: n }); });
+        add('Remove score', function () { if (confirm('Remove ' + r.account + ' from ' + g.title + ' this week?')) act({ action: 'remove', week: data.week, game: g.id, account: r.account }); });
+        add(r.banned ? 'Unban' : 'Ban', function () { if (confirm((r.banned ? 'Unban ' : 'Ban ') + r.account + '?')) act({ action: r.banned ? 'unban' : 'ban', account: r.account }); });
+        row.appendChild(btns); box.appendChild(row);
+      });
+      $('out').appendChild(box);
+    });
+  }
+  $('keyForm').addEventListener('submit', function (e) { e.preventDefault(); which = 'last'; load(); });
+  $('curBtn').addEventListener('click', function () { which = 'current'; load(); });
+})();
+</script>
+</body>
+</html>

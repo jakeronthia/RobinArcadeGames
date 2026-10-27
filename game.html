@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ROBIN Arcade</title>
+<meta name="theme-color" content="#0a0712">
+<link rel="icon" href="assets/icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="logo" href="./">ROBIN <span>Arcade</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="./#games" aria-current="page">Games</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="./#heroes">Heroes</a>
+      <a href="./#token">Token</a>
+      <a href="kit.html">Meme kit</a>
+      <a href="faq.html">FAQ</a>
+    </nav>
+    <div class="head-tools">
+      <button type="button" class="snd" aria-label="Sound"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="mute" d="M17 9l5 6M22 9l-5 6"/></svg></button>
+      <a class="me" href="profile.html"></a>
+      <a class="btn flat" data-link="buy" href="#">Buy $ROBIN</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" style="padding-top:20px;padding-bottom:48px;display:flex;flex-direction:column;gap:24px">
+  <a class="back" href="./#games">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    All games
+  </a>
+
+  <section aria-label="Game" style="display:flex;flex-direction:column;gap:12px">
+    <div class="player" id="player">
+      <img id="poster" alt="">
+      <div class="shade"></div>
+      <div class="start" id="start">
+        <button type="button" id="playBtn" aria-label="Play">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <b id="startTitle"></b>
+        <span id="startHint"></span>
+      </div>
+    </div>
+    <div class="player-bar">
+      <span class="hint" id="orientHint">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M18 12h.01"/></svg>
+        <span></span>
+      </span>
+      <div class="tools">
+        <button type="button" class="chip-btn" id="fsBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          Full screen
+        </button>
+        <button type="button" class="chip-btn" id="shareBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="game-cols">
+    <section class="game-main">
+      <div>
+        <h1 id="title"></h1>
+        <p id="about"></p>
+      </div>
+      <div class="box">
+        <h2>How to play</h2>
+        <div class="controls" id="controls"></div>
+      </div>
+    </section>
+    <aside class="game-side">
+      <div class="box best">
+        <small id="bestLabel">YOUR BEST</small>
+        <b id="best">0</b>
+        <span>Saved on this device</span>
+        <button class="btn" type="button" id="cardBtn" style="margin-top:10px">Share my score</button>
+      </div>
+      <div class="box" id="weekBox">
+        <h2 style="font-size:20px">This week's top 3</h2>
+        <div id="weekTop" class="mini-board"></div>
+        <p id="weekMe" class="note" style="margin:0"></p>
+        <a class="chip-btn" id="weekLink" href="leaderboard.html" style="align-self:flex-start;text-decoration:none">Full leaderboard</a>
+      </div>
+      <div class="box">
+        <h2 style="font-size:20px">Play as</h2>
+        <div class="mini-heroes" id="miniHeroes"></div>
+      </div>
+    </aside>
+  </div>
+
+  <section style="display:flex;flex-direction:column;gap:16px">
+    <h2 style="font-size:30px">More games</h2>
+    <div class="games-grid" id="moreGrid"></div>
+  </section>
+</main>
+
+<div class="modal" id="cardModal" hidden role="dialog" aria-modal="true" aria-labelledby="cardTitle">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <h2 id="cardTitle" style="font-size:24px">Your score card</h2>
+      <button type="button" class="icon-btn" id="cardClose" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <img id="cardImg" alt="Score card preview" style="width:100%;border-radius:14px;border:2px solid var(--line)">
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <a class="btn" id="cardX" href="#" target="_blank" rel="noopener">Post on X</a>
+      <a class="btn ghost" id="cardDl" href="#" download="robin-arcade-score.png">Download image</a>
+      <button class="btn ghost" type="button" id="cardShare" hidden>Share</button>
+    </div>
+    <p class="note" style="margin:0">On X, attach the downloaded image to your post.</p>
+  </div>
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span>ROBIN Arcade · games for fun, not financial advice.</span>
+    <nav aria-label="Social"><a href="leaderboard.html">Leaderboard</a><a href="faq.html">FAQ</a><a href="kit.html">Meme kit</a><a data-link="x" href="#">X</a><a data-link="telegram" href="#">Telegram</a></nav>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var id = new URLSearchParams(location.search).get('g');
+  var g = GAMES.filter(function (x) { return x.id === id; })[0] || GAMES[0];
+  var portrait = g.orient === 'portrait';
+
+  document.title = g.title + ' · ROBIN Arcade';
+  $('poster').src = g.shot; $('poster').alt = g.title + ' gameplay preview'; $('poster').style.objectPosition = g.pos || 'center';
+  $('startTitle').textContent = g.title;
+  $('startHint').textContent = portrait ? 'Tap to start · made for phones held upright' : 'Tap to start · best in landscape';
+  $('playBtn').setAttribute('aria-label', 'Play ' + g.title);
+  $('orientHint').querySelector('span').textContent = portrait ? 'On a phone, hold it upright' : 'On a phone, turn it sideways';
+  if (portrait) { $('player').classList.add('portrait'); $('orientHint').querySelector('svg').style.transform = 'rotate(90deg)'; }
+  $('title').textContent = g.title;
+  $('about').textContent = g.about;
+
+  (g.controls || []).forEach(function (c) {
+    var d = document.createElement('div'); d.className = 'ctl';
+    d.innerHTML = '<b></b><span><kbd></kbd> · <i style="font-style:normal"></i></span>';
+    d.querySelector('b').textContent = c[0]; d.querySelector('kbd').textContent = c[1]; d.querySelector('i').textContent = c[2];
+    $('controls').appendChild(d);
+  });
+
+  function showBest() {
+    var v = 0; try { v = g.best ? g.best() : 0; } catch (e) {}
+    $('best').textContent = (+v || 0).toLocaleString('en');
+  }
+  $('bestLabel').textContent = (g.bestLabel || 'Your best').toUpperCase();
+  showBest();
+  addEventListener('focus', showBest); setInterval(showBest, 5000);
+
+  HEROES.forEach(function (h) {
+    var i = document.createElement('img'); i.src = h.img; i.alt = h.name; i.title = h.name; i.loading = 'lazy';
+    $('miniHeroes').appendChild(i);
+  });
+
+  GAMES.filter(function (x) { return x.id !== g.id; }).forEach(function (o) {
+    var a = document.createElement('a'); a.className = 'card'; a.href = 'game.html?g=' + encodeURIComponent(o.id);
+    a.innerHTML = '<div class="card-media" style="height:140px"><img loading="lazy" alt=""></div><div class="card-body" style="flex-direction:row;justify-content:space-between;align-items:center;padding:12px 16px"><h3 style="font-size:18px"></h3><span style="color:var(--gold);font-family:var(--display);font-weight:700">Play</span></div>';
+    var im = a.querySelector('img'); im.src = o.shot; im.alt = o.title + ' gameplay'; im.style.objectPosition = o.pos || 'center';
+    a.querySelector('h3').textContent = o.title;
+    $('moreGrid').appendChild(a);
+  });
+
+  /* weekly leaderboard box */
+  $('weekLink').href = 'leaderboard.html?g=' + encodeURIComponent(g.id);
+  function loadWeek() {
+    api('leaderboard?game=' + encodeURIComponent(g.id)).then(function (d) {
+      var box = $('weekTop'); box.innerHTML = '';
+      if (!d.rows.length) box.innerHTML = '<p class="note" style="margin:0">No scores yet. Take the top spot!</p>';
+      d.rows.slice(0, 3).forEach(function (r, i) {
+        var row = document.createElement('div'); row.className = 'mb-row';
+        row.innerHTML = '<span class="medal m' + (i + 1) + '">' + (i + 1) + '</span><span class="mb-who"></span><b></b>';
+        row.querySelector('.mb-who').textContent = r.nick || r.account; row.querySelector('b').textContent = Number(r.value).toLocaleString('en');
+        box.appendChild(row);
+      });
+      var s = getSession();
+      $('weekMe').innerHTML = !s ? '<a href="profile.html">Connect your NEAR wallet</a> to compete for this week\'s prizes.' : d.me ? 'You are <b style="color:var(--gold)">#' + d.me.rank + '</b> this week.' : 'Play a run to get on the board.';
+    }).catch(function (e) { $('weekTop').innerHTML = '<p class="note" style="margin:0">' + (e.message === 'offline' ? 'Goes live once the site is online.' : 'Leaderboard unavailable right now.') + '</p>'; $('weekMe').textContent = ''; });
+  }
+  loadWeek();
+  addEventListener('message', function (e) { if (e.origin === location.origin && e.data && e.data.type === 'robin-ranked') { loadWeek(); showBest(); } });
+
+  /* score card */
+  var cardData = null;
+  function closeCard() { $('cardModal').hidden = true; $('cardBtn').focus(); }
+  $('cardBtn').addEventListener('click', function () {
+    var v = 0; try { v = g.best ? g.best() : 0; } catch (e) {}
+    $('cardBtn').disabled = true;
+    makeScoreCard(g, v, g.bestLabel || 'Best score').then(function (r) {
+      cardData = r; $('cardImg').src = r.url; $('cardDl').href = r.url;
+      var pageUrl = location.href.split('#')[0];
+      var text = (v ? 'I scored ' + Number(v).toLocaleString('en') + ' in ' + g.title : 'Playing ' + g.title) + ' on ROBIN Arcade. Can you beat me? $ROBIN';
+      $('cardX').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(pageUrl);
+      try {
+        var f = new File([r.blob], 'robin-arcade-score.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) {
+          $('cardShare').hidden = false;
+          $('cardShare').onclick = function () { navigator.share({ files: [f], text: text + ' ' + pageUrl }).catch(function () {}); };
+        }
+      } catch (e) {}
+      $('cardModal').hidden = false; $('cardClose').focus();
+    }).then(function () { $('cardBtn').disabled = false; });
+  });
+  $('cardClose').addEventListener('click', closeCard);
+  $('cardModal').addEventListener('click', function (e) { if (e.target === this) closeCard(); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cardModal').hidden) closeCard(); });
+
+  /* play */
+  var frame = null;
+  var smallTouch = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
+  function start() {
+    if (smallTouch) { location.href = g.file; return; } // phones: the game takes the whole screen
+    if (frame) return;
+    frame = document.createElement('iframe');
+    frame.src = g.file; frame.title = g.title;
+    frame.allow = 'fullscreen; autoplay; gamepad';
+    frame.setAttribute('allowfullscreen', '');
+    var ld = document.createElement('div'); ld.className = 'loading'; ld.setAttribute('role', 'status');
+    ld.innerHTML = '<span class="ld-coin"></span><b>Loading Ravenport…</b><small>Grab a hero, the thieves are on the roofs</small>';
+    $('player').appendChild(frame); $('player').appendChild(ld);
+    $('start').hidden = true;
+    frame.addEventListener('load', function () { setTimeout(function () { ld.classList.add('done'); setTimeout(function () { ld.remove(); }, 400); }, 250); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} });
+  }
+  $('playBtn').addEventListener('click', start);
+
+  $('fsBtn').addEventListener('click', function () {
+    var p = $('player');
+    if (smallTouch || !(p.requestFullscreen || p.webkitRequestFullscreen)) { location.href = g.file; return; }
+    if (!frame) start();
+    (p.requestFullscreen || p.webkitRequestFullscreen).call(p);
+    setTimeout(function () { try { frame.focus(); } catch (e) {} }, 300);
+  });
+
+  $('shareBtn').addEventListener('click', function () {
+    var data = { title: g.title + ' · ROBIN Arcade', text: 'Play ' + g.title + ' on ROBIN Arcade', url: location.href };
+    if (navigator.share) navigator.share(data).catch(function () {});
+    else copyText(location.href).then(function () { toast('Link copied'); });
+  });
+})();
+</script>
+</body>
+</html>
