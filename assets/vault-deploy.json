@@ -1,12 +1,25 @@
 {
   "network": "testnet",
-  "built": "2026-11-04T22:35:57.327Z",
-  "main": "robinarcade-1793831745-260.testnet",
-  "error": "wasm not built: robin_vault.wasm",
+  "built": "2026-11-04T22:38:14.813Z",
+  "main": "robinarcade-1793831883-8829.testnet",
+  "token": "robin.robinarcade-1793831883-8829.testnet",
+  "vault": "vault.robinarcade-1793831883-8829.testnet",
+  "burn_to": "0000000000000000000000000000000000000000000000000000000000000000",
+  "ticket": "10000000000000000000",
+  "decimals": 18,
+  "epoch_secs": 86400,
+  "week_days": 7,
+  "goal": 300,
+  "error": "Sender robinarcade-1793831883-8829.testnet does not have enough balance 0.371012298846959 for operation costing 0.40760744245625",
   "log": [
-    "created robin.robinarcade-1793831745-260.testnet",
-    "created vault.robinarcade-1793831745-260.testnet",
+    "created robin.robinarcade-1793831883-8829.testnet",
+    "created vault.robinarcade-1793831883-8829.testnet",
     "using /home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_demo_token/robin_demo_token.wasm 152825 bytes",
-    "ERROR Error: wasm not built: robin_vault.wasm\n    at W (file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:33:97)\n    at file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:40:44\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    "using /home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_vault/robin_vault.wasm 220292 bytes",
+    "production config {\"token\":\"robin.robinarcade-1793831883-8829.testnet\",\"burn_to\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"ticket\":\"10000000000000000000\",\"epoch_secs\":86400,\"week_days\":7,\"goal\":300,\"today\":20761,\"week\":2965,\"hero_of_week\":-1,\"burned\":\"0\",\"paid\":\"0\",\"tickets\":0,\"runs\":0}",
+    "created testvault.robinarcade-1793831883-8829.testnet",
+    "using /home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_vault/robin_vault.wasm 220292 bytes",
+    "created p1.robinarcade-1793831883-8829.testnet",
+    "ERROR Error: Sender robinarcade-1793831883-8829.testnet does not have enough balance 0.371012298846959 for operation costing 0.40760744245625\n    at parseRpcError (/home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/node_modules/@near-js/utils/lib/errors/rpc_errors.js:24:19)\n    at JsonRpcProvider.<anonymous> (/home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/node_modules/@near-js/providers/lib/json-rpc-provider.js:383:61)\n    at Generator.next (<anonymous>)\n    at fulfilled (/home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/node_modules/@near-js/providers/lib/json-rpc-provider.js:5:58)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
   ]
 }
