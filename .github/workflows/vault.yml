@@ -24,9 +24,9 @@ jobs:
       - name: Build contracts
         working-directory: vault-contract
         run: |
-          (cd demo-token && cargo near build non-reproducible-wasm --no-abi) 2>&1 | tail -20
-          (cd vault && cargo near build non-reproducible-wasm --no-abi) 2>&1 | tail -20
-          ls -la target/near
+          mkdir -p ci
+          { (cd demo-token && cargo near build non-reproducible-wasm --no-abi) ; echo "exit $?"; (cd vault && cargo near build non-reproducible-wasm --no-abi); echo "exit $?"; find . -name '*.wasm' -path '*near*' | xargs ls -la; } > ci/build.txt 2>&1 || true
+          tail -60 ci/build.txt
       - name: Create a testnet account with the faucet
         run: |
           MAIN="robinarcade-$(date +%s)-$RANDOM.testnet"
@@ -42,7 +42,7 @@ jobs:
         if: always()
         run: |
           mkdir -p ci
-          cp vault-contract/ci/simcheck.txt ci/ 2>/dev/null || true
+          cp vault-contract/ci/simcheck.txt vault-contract/ci/build.txt ci/ 2>/dev/null || true
           git config user.name "ci-bot"; git config user.email "ci-bot@users.noreply.github.com"
           git add -f assets/vault-deploy.json ci/ 2>/dev/null || true
           git commit -m "ci: vault deploy report [skip ci]" || true

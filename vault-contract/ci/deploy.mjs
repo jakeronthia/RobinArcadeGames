@@ -29,7 +29,8 @@ function bestMoves(day, bonus) { const d = V.daily(day); let best = null;
     const r = play(d.seed, bonus, { order, upFirst }, d.mods); const rp = V.replay(d.seed, bonus, r.acts, d.mods);
     if (!best || (rp.win && rp.lives > best.rp.lives) || (!best.rp.win && rp.win)) best = { acts: r.acts, rp }; }
   return { moves: enc(best.acts), rp: best.rp, target: d.target }; }
-const W = f => fs.readFileSync(path.join(ROOT, 'vault-contract/target/near', f));
+function findWasm(dir, f) { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const p = path.join(dir, e.name); if (e.isDirectory()) { const r = findWasm(p, f); if (r) return r; } else if (e.name === f && p.includes(path.sep + 'near')) return p; } return null; }
+const W = f => { const p = findWasm(path.join(ROOT, 'vault-contract/target'), f); if (!p) throw new Error('wasm not built: ' + f); say('using', p, fs.statSync(p).size, 'bytes'); return fs.readFileSync(p); };
 const BURN = '0'.repeat(64);
 const result = { network: 'testnet', built: new Date().toISOString(), main: MAIN };
 try {
