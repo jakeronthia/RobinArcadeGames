@@ -41,7 +41,7 @@
         import('https://esm.sh/@near-wallet-selector/here-wallet@' + V)]);
       if (!document.getElementById('nws-css')) { const l = document.createElement('link'); l.id = 'nws-css'; l.rel = 'stylesheet'; l.href = 'https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui@' + V + '/styles.css'; document.head.appendChild(l); }
       const selector = await setupWalletSelector({ network: c.network, modules: [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()] });
-      const modal = setupModal(selector, { contractId: c.vault, description: 'Connect to play for the ROBIN Vault.' });
+      const modal = setupModal(selector, { contractId: c.vault, theme: 'dark', description: 'Connect to play for the ROBIN Vault.' });
       RV._sel = { selector, modal }; return RV._sel;
     },
     async account() { const { selector } = await RV.wallet(); const st = selector.store.getState(); const a = st.accounts && st.accounts.find(x => x.active) || (st.accounts || [])[0]; return a ? a.accountId : null; },

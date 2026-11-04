@@ -35,6 +35,7 @@ pub enum Action { Place(i64, i64, i64), Up(i64, i64), Sell(i64, i64), Go }
 
 struct Enemy { hp: i64, spd: i64, cash: i64, steal: i64, armor: i64, d: i64, x: i64, z: i64, slow: i64, slow_k: i64, stun: i64, dead: bool }
 struct Tower { h: usize, c: i64, r: i64, x: i64, z: i64, lv: usize, cd: i64, spent: i64 }
+#[derive(Clone, Copy)]
 struct Hit { left: i64, atk: Atk, tg: usize, d: i64, lv: usize, x: i64, z: i64 }
 
 fn seg_len() -> ([i64; 7], i64) { let mut s = [0i64; 7]; let mut t = 0; for i in 1..8 { let l = (PATH[i].0 - PATH[i - 1].0).abs() + (PATH[i].1 - PATH[i - 1].1).abs(); s[i - 1] = l; t += l; } (s, t) }
@@ -60,13 +61,13 @@ pub struct Outcome { pub ok: bool, pub win: bool, pub waves: i64, pub lives: i64
 pub struct Game {
     tick: i64, cash: i64, lives: i64, wave: i64, in_wave: bool, queue: Vec<(usize, i64)>, qi: usize, spawn_t: i64,
     towers: Vec<Tower>, enemies: Vec<Enemy>, hits: Vec<Hit>, kills: i64, over: bool, win: bool, bonus: i64, rng: u32,
-    hpm: i64, maxh: usize, seg: [i64; 7], path_len: i64,
+    hpm: i64, maxh: usize, seg: [i64; 7], path_len: i64, scratch: Vec<usize>,
 }
 impl Game {
     pub fn new(seed: u32, bonus: i64, m: &Mods) -> Self {
         let (seg, path_len) = seg_len();
         Game { tick: 0, cash: m.cash, lives: 20, wave: 0, in_wave: false, queue: Vec::new(), qi: 0, spawn_t: 0, towers: Vec::new(), enemies: Vec::new(), hits: Vec::new(),
-            kills: 0, over: false, win: false, bonus, rng: if seed == 0 { 0x9e3779b9 } else { seed }, hpm: m.hp, maxh: m.heroes, seg, path_len }
+            kills: 0, over: false, win: false, bonus, rng: if seed == 0 { 0x9e3779b9 } else { seed }, hpm: m.hp, maxh: m.heroes, seg, path_len, scratch: Vec::new() }
     }
     fn rand(&mut self) -> u32 { let mut x = self.rng; x ^= x << 13; x ^= x >> 17; x ^= x << 5; self.rng = x; x }
     fn tower_at(&self, c: i64, r: i64) -> Option<usize> { self.towers.iter().position(|t| t.c == c && t.r == r) }
@@ -114,14 +115,14 @@ impl Game {
         }
         for ti in 0..self.towers.len() {
             if self.towers[ti].cd > 0 { self.towers[ti].cd -= 1; }
+            if self.towers[ti].cd > 0 { continue; }
             let (h, lv, tx, tz) = { let t = &self.towers[ti]; (t.h, t.lv, t.x, t.z) };
             let (_, range, dmg, cd, atk) = HERO[h]; let r = range * LVR[lv] / 1000;
-            let mut list: Vec<usize> = Vec::new();
+            let mut list = core::mem::take(&mut self.scratch); list.clear();
             for (i, e) in self.enemies.iter().enumerate() { if !e.dead { let dx = e.x - tx; let dz = e.z - tz; if dx * dx + dz * dz <= r * r { list.push(i); } } }
             let mut tg: Option<usize> = None;
             for &i in &list { match tg { None => tg = Some(i), Some(j) => { let better = if atk == Atk::Feather { self.enemies[i].hp > self.enemies[j].hp } else { self.enemies[i].d > self.enemies[j].d }; if better { tg = Some(i); } } } }
-            let tg = match tg { Some(t) => t, None => continue };
-            if self.towers[ti].cd > 0 { continue; }
+            let tg = match tg { Some(t) => t, None => { self.scratch = list; continue } };
             self.towers[ti].cd = if lv == 2 && h == 0 { 10 } else { cd };
             let dd = dmg * 1000 * LVM[lv] / 1000 * (if h as i64 == self.bonus { 1250 } else { 1000 }) / 1000;
             match atk {
@@ -130,10 +131,12 @@ impl Game {
                 _ => { let left = match atk { Atk::Nunchaku => 6, Atk::Feather => 4, Atk::Ball => 17, _ => 3 }; let (x, z) = (self.enemies[tg].x, self.enemies[tg].z);
                     self.hits.push(Hit { left, atk, tg, d: dd, lv, x, z }); }
             }
+            self.scratch = list;
         }
-        let hits = core::mem::take(&mut self.hits); let mut keep = Vec::new();
-        for mut h in hits {
-            h.left -= 1; if h.left > 0 { keep.push(h); continue; }
+        let mut hits = core::mem::take(&mut self.hits); let mut kept = 0usize;
+        for hi in 0..hits.len() {
+            hits[hi].left -= 1; if hits[hi].left > 0 { hits.swap(kept, hi); kept += 1; continue; }
+            let h = hits[hi];
             if h.atk == Atk::Ball {
                 let gone = h.tg == usize::MAX || self.enemies[h.tg].dead; let (px, pz) = if gone { (h.x, h.z) } else { (self.enemies[h.tg].x, self.enemies[h.tg].z) }; let rad: i64 = if h.lv == 2 { 4455 } else { 3300 };
                 for i in 0..self.enemies.len() { if !self.enemies[i].dead { let dx = self.enemies[i].x - px; let dz = self.enemies[i].z - pz; if dx * dx + dz * dz < rad * rad { self.hit(i, h.d); } } }
@@ -148,13 +151,15 @@ impl Game {
                 _ => self.hit(h.tg, h.d),
             }
         }
+        hits.truncate(kept);
         // drop dead thieves and re-point pending hits at the survivors
-        let mut remap: Vec<Option<usize>> = Vec::with_capacity(self.enemies.len()); let mut n = 0usize;
-        for e in &self.enemies { if e.dead { remap.push(None) } else { remap.push(Some(n)); n += 1; } }
-        let mut kept_hits = Vec::new();
-        for mut h in keep { if h.tg == usize::MAX { kept_hits.push(h); continue; } match remap[h.tg] { Some(j) => { h.tg = j; kept_hits.push(h); } None => { h.tg = usize::MAX; kept_hits.push(h); } } }
-        self.enemies.retain(|e| !e.dead);
-        self.hits = kept_hits; self.tick += 1;
+        if self.enemies.iter().any(|e| e.dead) {
+            let mut remap: Vec<usize> = Vec::with_capacity(self.enemies.len()); let mut n = 0usize;
+            for e in &self.enemies { if e.dead { remap.push(usize::MAX) } else { remap.push(n); n += 1; } }
+            for h in hits.iter_mut() { if h.tg != usize::MAX { h.tg = remap[h.tg]; } }
+            self.enemies.retain(|e| !e.dead);
+        }
+        self.hits = hits; self.tick += 1;
     }
     pub fn outcome(&self, ok: bool) -> Outcome { Outcome { ok, win: self.win, waves: if self.win { WAVES } else { core::cmp::max(0, self.wave - 1) }, lives: self.lives, kills: self.kills, cash: self.cash, ticks: self.tick } }
 }
