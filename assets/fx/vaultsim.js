@@ -134,7 +134,7 @@
     { name: 'Armored night', text: 'Thieves have double health. Use at most 8 heroes. Keep 16 vault or more.', hp: 2000, heroes: 8, cash: 150, lives: 16 },
     { name: 'Skeleton crew', text: 'Thieves have 80% more health and only 6 heroes may join. Keep 18 vault or more.', hp: 1800, heroes: 6, cash: 150, lives: 18 },
     { name: 'Master heist', text: 'Thieves have 120% more health. Keep 12 vault or more.', hp: 2200, heroes: 10, cash: 150, lives: 12 }];
-  function daily(day) { const t = TWISTS[day % TWISTS.length]; return { day, seed: (day * 2654435761) >>> 0, mods: { hp: t.hp, heroes: t.heroes, cash: t.cash }, target: t.lives, name: t.name, text: t.text }; }
+  function daily(day) { const t = TWISTS[day % TWISTS.length]; return { day, seed: Number((BigInt(day) * 2654435761n) & 0xffffffffn), mods: { hp: t.hp, heroes: t.heroes, cash: t.cash }, target: t.lives, name: t.name, text: t.text }; }
   const API = { create, daily, TWISTS, replay, waveQueue, posAt, roofAt, cellX, cellZ, CELL, TPS, WAVES, HERO, UPCOST, ENEMY, KIND, PATH, PATH_LEN, ROOF, COLS, ROWS };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.VaultSim = API;
 })(typeof self !== 'undefined' ? self : this);

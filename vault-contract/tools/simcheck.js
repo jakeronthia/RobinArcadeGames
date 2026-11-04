@@ -9,7 +9,7 @@ function randomGame(seed,bonus,mods){const g=V.create(seed,bonus,mods),S=g.S,act
       if(S.wave>=12)break;g.act(['go']);acts.push([S.tick,['go']])}else g.step()}
   return acts}
 const lines=[],expect=[];
-for(let i=0;i<300;i++){const day=20000+i,d=V.daily(day),bonus=i%7-1;const mods=i%5===0?{}:d.mods;const acts=randomGame(d.seed,bonus,mods);
+for(let i=0;i<300;i++){const day=i%2?20000+i:14948604+i*977,d=V.daily(day),bonus=i%7-1;const mods=i%5===0?{}:d.mods;const acts=randomGame(d.seed,bonus,mods);
   const r=V.replay(d.seed,bonus,acts,mods);const m={hp:mods.hp||1000,heroes:mods.heroes||99,cash:mods.cash||150};
   lines.push([d.seed,bonus,m.hp,m.heroes,m.cash,enc(acts)].join(' '));expect.push([r.ok?1:0,r.win?1:0,r.waves,r.lives,r.kills,r.cash,r.ticks].join(' '))}
 const {play}=require('./bot.js');

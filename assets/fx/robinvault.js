@@ -4,7 +4,7 @@
   'use strict';
   const here = document.currentScript && document.currentScript.src ? document.currentScript.src : location.href;
   const DEPLOY_URL = new URL('../vault-deploy.json', here).href;
-  const RPCS = { testnet: ['https://rpc.testnet.near.org', 'https://test.rpc.fastnear.com', 'https://neart.lava.build'], mainnet: ['https://rpc.mainnet.near.org', 'https://free.rpc.fastnear.com'] };
+  const RPCS = { testnet: ['https://test.rpc.fastnear.com', 'https://rpc.testnet.near.org', 'https://neart.lava.build'], mainnet: ['https://free.rpc.fastnear.com', 'https://rpc.mainnet.near.org'] };
   let cfgP = null, rpcI = 0;
   const RV = {
     ready() { if (!cfgP) cfgP = fetch(DEPLOY_URL, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(c => { if (!c || !c.vault) throw new Error('The Vault is not deployed yet'); RV.cfg = c; return c; }); return cfgP; },
