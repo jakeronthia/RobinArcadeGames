@@ -84,13 +84,13 @@ impl Vault {
         if amount == 0 { return; }
         self.burned += amount; log!("BURN {} ({})", amount, why);
         Promise::new(self.token.clone())
-            .function_call("ft_transfer".into(), serde_json::json!({"receiver_id": self.burn_to, "amount": U128(amount), "memo": why}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
+            .function_call("ft_transfer", serde_json::json!({"receiver_id": self.burn_to, "amount": U128(amount), "memo": why}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
             .then(Self::ext(env::current_account_id()).with_static_gas(GAS_CB).on_burned(U128(amount)));
     }
     fn pay(&mut self, to: AccountId, amount: u128, what: String) -> Promise {
         self.paid += amount;
         Promise::new(self.token.clone())
-            .function_call("ft_transfer".into(), serde_json::json!({"receiver_id": to, "amount": U128(amount), "memo": what}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
+            .function_call("ft_transfer", serde_json::json!({"receiver_id": to, "amount": U128(amount), "memo": what}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
             .then(Self::ext(env::current_account_id()).with_static_gas(GAS_CB).on_paid(to, U128(amount), what))
     }
 
@@ -203,7 +203,7 @@ impl Vault {
         let a = env::predecessor_account_id(); require!(week < self.week_of(self.today()), "votes stay locked until the week ends");
         let k = key("v", week, &a); let (_, amt) = self.locks.get(&k).cloned().unwrap_or((0, 0)); require!(amt > 0, "nothing locked");
         self.locks.remove(&k); let p = self.player_mut(&a); p.locks.retain(|x| *x != week);
-        Promise::new(self.token.clone()).function_call("ft_transfer".into(), serde_json::json!({"receiver_id": a, "amount": U128(amt), "memo": "vote unlocked"}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
+        Promise::new(self.token.clone()).function_call("ft_transfer", serde_json::json!({"receiver_id": a, "amount": U128(amt), "memo": "vote unlocked"}).to_string().into_bytes(), NearToken::from_yoctonear(1), GAS_FT)
     }
 
     #[private]
