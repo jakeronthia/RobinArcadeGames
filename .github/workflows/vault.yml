@@ -1,7 +1,7 @@
 name: vault
 on:
   push:
-    paths: ['vault-contract/**', 'assets/fx/vaultsim.js', '.github/workflows/vault.yml', 'treasury.html', 'assets/fx/robinvault.js']
+    paths: ['vault-contract/**', 'assets/fx/vaultsim.js', '.github/workflows/vault.yml']
 permissions:
   contents: write
 concurrency: vault

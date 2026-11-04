@@ -20,8 +20,8 @@ async function call(from, contractId, methodName, args, deposit = '0', gas = 100
   const fail = r.receipts_outcome.find(o => o.outcome.status.Failure); const logs = r.receipts_outcome.flatMap(o => o.outcome.logs);
   let val = null; try { const b = r.status.SuccessValue; if (b) val = JSON.parse(Buffer.from(b, 'base64').toString()); } catch (e) {}
   if (fail || r.status.Failure) throw new Error(methodName + ' failed: ' + JSON.stringify(fail ? fail.outcome.status.Failure : r.status.Failure));
-  const gas = r.receipts_outcome.reduce((g, o) => g + BigInt(o.outcome.gas_burnt), BigInt(r.transaction_outcome.outcome.gas_burnt));
-  return { val, logs, tx: r.transaction.hash, tgas: Number(gas / 10n ** 12n) };
+  const burnt = r.receipts_outcome.reduce((g, o) => g + BigInt(o.outcome.gas_burnt), BigInt(r.transaction_outcome.outcome.gas_burnt));
+  return { val, logs, tx: r.transaction.hash, tgas: Number(burnt / 10n ** 12n) };
 }
 const view = async (c, m, args = {}) => (await acct(MAIN)).viewFunction({ contractId: c, methodName: m, args });
 const enc = acts => acts.map(([t, a]) => t + ':' + (a[0] === 'place' ? 'p,' + a.slice(1).join(',') : a[0] === 'up' ? 'u,' + a.slice(1).join(',') : a[0] === 'sell' ? 's,' + a.slice(1).join(',') : 'g')).join(';');
