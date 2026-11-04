@@ -46,3 +46,27 @@ Here is your console command if you need to script it or re-run:
     [33mnear account create-account sponsor-by-faucet-service robinarcade-1793832691-21244.testnet autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain network-config testnet create[39m
 
 ok robinarcade-1793832691-21244.testnet
+Migrating config.toml from V4 to V5...
+Note: `near` CLI configuration is stored in "/home/runner/.config/near-cli/config.toml"
+├  Your transaction:
+│    signer_id:    testnet
+│    actions:
+│       -- create account:      robinarcade-1793833175-16091.testnet
+│       -- add access key:     
+│                       public key:   ed25519:3MHmUNVoeCiXqSvdpYy7jGJHBgYMazzLQPMAcFzgvpNV
+│                       permission:   FullAccess
+│     [0m
+├  Transaction Execution Info:
+│    Transaction ID: FqLHNSwHHDzyJmqyqeZfvg4CJtaq5xvXgAxUk4gzi2bB
+│    To see the transaction in the transaction explorer, please open this url in your browser:
+│    https://explorer.testnet.near.org/transactions/FqLHNSwHHDzyJmqyqeZfvg4CJtaq5xvXgAxUk4gzi2bB
+[0m
+New account <robinarcade-1793833175-16091.testnet> created successfully.
+The data for the access key is saved in a file /home/runner/.near-credentials/testnet/robinarcade-1793833175-16091.testnet/ed25519_3MHmUNVoeCiXqSvdpYy7jGJHBgYMazzLQPMAcFzgvpNV.json
+The data for the access key is saved in a file /home/runner/.near-credentials/testnet/robinarcade-1793833175-16091.testnet.json
+
+
+Here is your console command if you need to script it or re-run:
+    [33mnear account create-account sponsor-by-faucet-service robinarcade-1793833175-16091.testnet autogenerate-new-keypair --signature-scheme ed25519 save-to-legacy-keychain network-config testnet create[39m
+
+ok robinarcade-1793833175-16091.testnet
