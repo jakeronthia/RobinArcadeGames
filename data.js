@@ -134,7 +134,7 @@ window.GAMES.push({
     file: 'games/vault.html',
     orient: 'portrait',
     blurb: 'Thieves march on the ROBIN Vault. Place the squad on the rooftops and stop them.',
-    about: 'A tower defense on the Ravenport rooftops. Thieves walk the streets toward the ROBIN Vault: place heroes on the roofs along their path, upgrade them and survive 12 waves. Every hero fights differently, from Atreus and his nunchaku to Baller and his magnet ball.',
+    about: 'A tower defense on the Ravenport rooftops. Thieves walk the streets toward the ROBIN Vault: place heroes on the roofs along their path, upgrade them and survive 12 waves. Every day there is a new Vault challenge with its own twist: buy a ticket on The Vault page, beat the target and share the pot. The contract replays your moves to check every defense.',
     shot: 'assets/shots/vault.jpg',
     clip: 'assets/clips/vault.mp4',
     pos: 'center',
