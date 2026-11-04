@@ -3,3 +3,7 @@
 wrangler.jsonc
 .assetsignore
 LEGGIMI.md
+
+.github
+ci
+vault-contract
