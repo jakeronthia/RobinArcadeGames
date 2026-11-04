@@ -389,3 +389,15 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;line-height:1.05}
 .mb-row{display:flex;align-items:center;gap:10px}
 .mb-who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
 .mb-row b{font-family:var(--display);font-size:17px;font-variant-numeric:tabular-nums}
+
+/* ===== v7: compact header on phones ===== */
+@media (max-width:600px){
+  .site-head .wrap{gap:10px 12px;padding-top:10px;padding-bottom:10px}
+  .logo{font-size:20px;margin-right:auto}
+  .head-tools{gap:6px}
+  .head-tools .btn{font-size:14px;padding:8px 14px;min-height:40px}
+  .head-tools .me span{display:none}
+  .head-tools .me{padding:0;width:42px;justify-content:center}
+  .nav{gap:18px;font-size:14px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+}

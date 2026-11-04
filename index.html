@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="home.css">
 </head>
 <body>
 
@@ -25,7 +26,7 @@
     <a class="logo" href="./">ROBIN <span>Arcade</span></a>
     <nav class="nav" aria-label="Main">
       <a href="./#games">Games</a>
-      <a href="./#heroes">Heroes</a>
+      <a href="./#top">Heroes</a>
       <a href="./#token">Token</a>
       <a href="kit.html">Meme kit</a>
       <a href="faq.html">FAQ</a>
@@ -38,35 +39,30 @@
   </div>
 </header>
 
-<div class="ticker" aria-label="Live $ROBIN info">
-  <div class="ticker-track" id="tickerTrack"></div>
-</div>
 
 <main>
-  <section class="hero-band">
-  <canvas id="sky" aria-hidden="true"></canvas>
-  <div id="top" class="wrap hero">
-    <div class="hero-text">
+  <section class="stage" aria-label="Ravenport rooftop">
+    <canvas id="city3d" aria-hidden="true"></canvas>
+    <div class="stage-fade" aria-hidden="true"></div>
+    <div class="wrap stage-copy">
       <span class="pill-tag">Meme arcade on NEAR</span>
       <h1>Play the memes.<br>Powered by <em>$ROBIN</em>.</h1>
-      <p>Free arcade games starring the NEAR meme squad.<br>Pick a game, pick a hero, play right in your browser.<br><br>New games drop here first.</p>
+      <p>Free arcade games starring the NEAR meme squad. Pick a game, pick a hero, play right in your browser.</p>
       <div class="hero-cta">
         <a class="btn big" href="#games">Play now</a>
         <a class="btn big ghost" href="#token">About the token</a>
       </div>
     </div>
-    <a class="coin-stage" href="#token" aria-label="The $ROBIN token">
-      <span class="roof" aria-hidden="true"><i></i></span>
-      <span class="coin-shadow"></span>
-      <div class="coin-bob">
-        <div class="coin" id="coin">
-          <div class="coin-face"><img src="assets/robin.jpg" alt="$ROBIN mascot: a beagle hero with a green mask and yellow cape"></div>
-          <div class="coin-face back" aria-hidden="true"><b>R</b><span>$ROBIN</span></div>
-        </div>
-      </div>
-    </a>
-  </div>
+    <div class="bubble3d" id="bubble3d" hidden><b id="bName"></b><span id="bPower"></span><small id="bDesc"></small></div>
+    <div class="wrap squad-bar">
+      <span class="squad-label">Meet the squad · tap a hero</span>
+      <div class="squad" id="squad"></div>
+    </div>
   </section>
+
+  <div class="ticker" aria-label="Live $ROBIN info">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
 
   <section class="wrap section" aria-labelledby="dailyTitle" style="padding-bottom:0">
     <div class="daily" id="daily">
@@ -90,14 +86,6 @@
     <div class="games-grid" id="gamesGrid"></div>
   </section>
 
-  <section id="heroes" class="wrap section">
-    <div>
-      <span class="arcade-label">Player select</span>
-      <h2 class="sec-title">Meet the squad</h2>
-      <p class="sec-sub">Nine NEAR memes, playable in every game.</p>
-    </div>
-    <div class="heroes-grid" id="heroesGrid"></div>
-  </section>
 
   <section id="hall" class="wrap section">
     <div>
@@ -147,6 +135,10 @@
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>var T = THREE;</script>
+<script src="assets/fx/models.js"></script>
+<script src="assets/fx/glow.js"></script>
 <script src="data.js"></script>
 <script src="site.js"></script>
 <script>
@@ -161,8 +153,8 @@
     a.href = 'game.html?g=' + encodeURIComponent(g.id);
     a.style.setProperty('--acc', g.accent || '#ffc93c');
     a.innerHTML =
-      '<div class="card-media"><img loading="lazy" alt=""><span class="orient"></span>' + (g.badge ? '<span class="badge"></span>' : '') + '<span class="scan"></span></div>' +
-      '<div class="card-body"><div><h3></h3><p></p></div><span class="btn">Play</span></div>';
+      '<div class="card-media"><img loading="lazy" alt=""><span class="orient"></span>' + (g.badge ? '<span class="badge"></span>' : '') + '<span class="scan"></span><span class="shine"></span></div>' +
+      '<div class="card-body"><div><h3></h3><p></p></div><span class="play-chip"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>Play</span></div>';
     var img = a.querySelector('img');
     img.src = g.shot; img.alt = g.title + ' gameplay'; img.style.objectPosition = g.pos || 'center';
     a.querySelector('.orient').textContent = g.orient === 'portrait' ? 'Portrait' : 'Landscape';
@@ -177,6 +169,11 @@
       });
       a.addEventListener('mouseleave', function () { if (v) { v.classList.remove('on'); v.pause(); } });
     }
+    if (matchMedia('(hover:hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      a.addEventListener('pointermove', function (e) { var r = a.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+        a.style.transform = 'perspective(900px) rotateX(' + (-py * 7) + 'deg) rotateY(' + (px * 9) + 'deg) translateY(-6px)'; a.style.setProperty('--mx', (px + 0.5) * 100 + '%'); a.style.setProperty('--my', (py + 0.5) * 100 + '%'); });
+      a.addEventListener('pointerleave', function () { a.style.transform = ''; });
+    }
     grid.appendChild(a);
   });
   var next = document.createElement('div');
@@ -184,21 +181,25 @@
   next.innerHTML = '<span class="plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><b>Next game loading…</b><span>New drops land here first. Follow us on <a data-link="x" href="#">X</a> for the reveal.</span>';
   grid.appendChild(next);
 
-  /* heroes */
-  var hg = $('heroesGrid');
-  HEROES.forEach(function (h) {
-    var d = document.createElement('div');
-    d.className = 'hero-tile';
-    d.tabIndex = 0;
-    d.innerHTML = '<span class="av"><img loading="lazy" alt=""></span><b></b><small class="pw"></small><span class="tip" role="tooltip"></span>';
-    d.querySelector('.av').style.background = h.col;
-    d.querySelector('img').src = h.img; d.querySelector('img').alt = h.name;
-    d.querySelector('b').textContent = h.name;
-    d.querySelector('.pw').textContent = h.power || '';
-    d.querySelector('.tip').textContent = h.desc || '';
-    hg.appendChild(d);
-  });
-  var more = document.createElement('b'); more.className = 'more-coming'; more.textContent = 'More coming'; hg.appendChild(more);
+  /* squad strip: drives the 3D camera */
+  (function () {
+    var bar = $('squad'), bub = $('bubble3d'), cur = -1;
+    HEROES.forEach(function (h) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'sq'; b.dataset.name = h.name;
+      b.innerHTML = '<span class="av"><img alt="" loading="lazy"></span><b></b>'; b.querySelector('.av').style.background = h.col; b.querySelector('img').src = h.img; b.querySelector('b').textContent = h.name;
+      b.setAttribute('aria-label', h.name + ': ' + (h.power || ''));
+      b.addEventListener('click', function () { if (window.RobinCity) RobinCity.focus(h.name); else show(HEROES.indexOf(h), h.name); });
+      bar.appendChild(b);
+    });
+    function show(i, name) {
+      bar.querySelectorAll('.sq').forEach(function (b) { b.classList.toggle('on', b.dataset.name === name); });
+      if (!name) { bub.hidden = true; cur = -1; return; }
+      var h = heroByName(name); $('bName').textContent = h.name; $('bPower').textContent = h.power || ''; $('bDesc').textContent = h.desc || ''; bub.hidden = false; cur = i;
+      if (window.coinSound) coinSound();
+    }
+    document.addEventListener('city:focus', function (e) { show(e.detail.index, e.detail.name); });
+    document.addEventListener('city:frame', function () { if (cur < 0 || !window.RobinCity) return; var p = RobinCity.screenOf(cur); if (!p) return; var c3 = $('city3d'); bub.style.transform = 'translate(' + Math.round(p.x + c3.offsetLeft) + 'px,' + Math.round(p.y + c3.offsetTop) + 'px) translate(-50%,-100%)'; });
+  })();
 
   /* token */
   $('tokenAbout').textContent = T.about;
@@ -240,62 +241,6 @@
     $('tickerTrack').innerHTML = '<div>' + html + html + '</div><div aria-hidden="true">' + html + html + '</div>';
   }
   buildTicker();
-
-  /* night sky behind the hero */
-  (function () {
-    var cv = $('sky'), x = cv.getContext('2d'), W, H, dpr, layers = [], drops = [], wins = [];
-    var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function rnd(s) { return function () { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
-    function build() {
-      var r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
-      W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0);
-      layers = []; wins = [];
-      [[0.42, 0.30, '#120d22', 7, 40, 90], [0.62, 0.42, '#1a1430', 11, 50, 110]].forEach(function (L, li) {
-        var R = rnd(L[3] + 3), bx = -20, bl = [];
-        while (bx < W + 20) {
-          var bw = L[4] + R() * L[5], bh = H * (L[1] * (0.5 + R()));
-          var b = { x: bx, w: bw, top: H - bh, spire: R() < 0.25, roof: R() < 0.3 };
-          bl.push(b);
-          if (li === 1) for (var wy = b.top + 14; wy < H - 10; wy += 18) for (var wx = bx + 8; wx < bx + bw - 10; wx += 14) if (R() < 0.16) wins.push({ x: wx, y: wy, p: R() * 6, s: 0.3 + R() * 1.4 });
-          bx += bw + 3;
-        }
-        layers.push({ col: L[2], b: bl });
-      });
-      drops = []; for (var i = 0; i < Math.round(W / 14); i++) drops.push({ x: Math.random() * W, y: Math.random() * H, v: 380 + Math.random() * 240 });
-    }
-    function draw(t) {
-      x.clearRect(0, 0, W, H);
-      var narrow = W < 760, mx = narrow ? W * 0.86 : W * 0.9, my = narrow ? H * 0.6 : H * 0.17, mr = narrow ? 30 : 52;
-      x.fillStyle = '#c9c0a8'; x.beginPath(); x.arc(mx, my, mr, 0, 7); x.fill();
-      x.fillStyle = '#0a0712'; x.globalAlpha = 0.18; x.beginPath(); x.arc(mx + mr * 0.35, my - mr * 0.2, mr * 0.85, 0, 7); x.fill(); x.globalAlpha = 1;
-      layers.forEach(function (L) {
-        x.fillStyle = L.col;
-        L.b.forEach(function (b) {
-          x.fillRect(b.x, b.top, b.w, H - b.top);
-          if (b.spire) { x.beginPath(); x.moveTo(b.x + b.w * 0.3, b.top); x.lineTo(b.x + b.w * 0.5, b.top - b.w * 0.7); x.lineTo(b.x + b.w * 0.7, b.top); x.fill(); }
-          else if (b.roof) { x.beginPath(); x.moveTo(b.x, b.top); x.lineTo(b.x + b.w / 2, b.top - b.w * 0.35); x.lineTo(b.x + b.w, b.top); x.fill(); }
-        });
-      });
-      wins.forEach(function (w) { var a = still ? 0.7 : 0.45 + 0.4 * Math.sin(t / 1000 * w.s + w.p); x.globalAlpha = Math.max(0.15, a); x.fillStyle = '#ffa63c'; x.fillRect(w.x, w.y, 4, 7); });
-      x.globalAlpha = 1;
-      x.strokeStyle = 'rgba(154,166,216,.28)'; x.lineWidth = 1.2; x.beginPath();
-      drops.forEach(function (d) { x.moveTo(d.x, d.y); x.lineTo(d.x - 4, d.y + 14); });
-      x.stroke();
-    }
-    var last = performance.now(), visible = true;
-    function loop(now) {
-      var dt = Math.min(0.05, (now - last) / 1000); last = now;
-      if (visible) {
-        drops.forEach(function (d) { d.y += d.v * dt; d.x -= d.v * dt * 0.25; if (d.y > H) { d.y = -14; d.x = Math.random() * (W + 60); } });
-        draw(now);
-      }
-      requestAnimationFrame(loop);
-    }
-    build(); draw(0);
-    addEventListener('resize', function () { build(); draw(performance.now()); });
-    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { visible = e[0].isIntersecting; }).observe(cv);
-    if (!still) requestAnimationFrame(loop);
-  })();
 
   /* daily challenge */
   (function () {
@@ -363,5 +308,6 @@
   loadPrice(); setInterval(function () { if (!document.hidden) loadPrice(); }, 30000);
 })();
 </script>
+<script src="assets/fx/city.js"></script>
 </body>
 </html>
