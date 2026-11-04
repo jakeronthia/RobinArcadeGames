@@ -1,0 +1,14 @@
+[package]
+name = "robin-vault"
+version = "0.1.0"
+edition = "2021"
+description = "ROBIN Vault: a treasury with rules for Defend the Vault"
+repository = "https://github.com/jakeronthia/RobinArcadeGames"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5"
+vault-sim = { path = "../sim" }
+

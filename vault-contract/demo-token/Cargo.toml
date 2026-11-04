@@ -1,0 +1,13 @@
+[package]
+name = "robin-demo-token"
+version = "0.1.0"
+edition = "2021"
+description = "Testnet stand-in for $ROBIN with a faucet"
+repository = "https://github.com/jakeronthia/RobinArcadeGames"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "5"
+near-contract-standards = "5"
