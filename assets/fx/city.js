@@ -104,8 +104,10 @@
   /* ---------- the $ROBIN coin ---------- */
   var coinG = new T.Group(); coinG.position.set(0, 3.5, -2.6); scene.add(coinG);
   var face = new T.TextureLoader().load('assets/robin.jpg');
-  var coin = new T.Mesh(new T.CylinderGeometry(1.55, 1.55, 0.26, 64), [new T.MeshStandardMaterial({ color: 0xffc93c, metalness: 0.9, roughness: 0.3, emissive: 0x6a4600 }), new T.MeshBasicMaterial({ map: face }), new T.MeshBasicMaterial({ map: face })]);
+  // gold body, plus the picture on two upright discs so the dog always stands straight on both sides
+  var coin = new T.Mesh(new T.CylinderGeometry(1.55, 1.55, 0.26, 64), new T.MeshStandardMaterial({ color: 0xffc93c, metalness: 0.9, roughness: 0.3, emissive: 0x6a4600 }));
   coin.rotation.x = Math.PI / 2; coinG.add(coin);
+  [1, -1].forEach(function (side) { var f = new T.Mesh(new T.CircleGeometry(1.42, 64), new T.MeshBasicMaterial({ map: face })); f.position.z = side * 0.135; if (side < 0) f.rotation.y = Math.PI; coinG.add(f); });
   var rim = new T.Mesh(new T.TorusGeometry(1.56, 0.1, 12, 64), new T.MeshStandardMaterial({ color: 0xffd966, metalness: 0.9, roughness: 0.25, emissive: 0x8a5a00 })); coinG.add(rim);
   halo(0xffc93c, 7, 0, 0, -0.4, 0.55, coinG);
   var beam = new T.Mesh(new T.CylinderGeometry(1.3, 2.4, 9, 32, 1, true), new T.MeshBasicMaterial({ color: 0xffc93c, transparent: true, opacity: 0.06, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }));
