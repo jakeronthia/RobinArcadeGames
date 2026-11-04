@@ -1,0 +1,7 @@
+date: Wed Nov  4 22:13:30 UTC 2026
+cargo 1.99.1 (5f94df478 2026-08-27)
+rustup 1.29.2 (d8c92c676 2026-10-21)
+info: This is the version for the rustup toolchain manager, not the rustc compiler.
+info: the currently active `rustc` version is `rustc 1.99.1 (58cf8f9c3 2026-10-13)`
+v24.22.1
+{"jsonrpc":"2.0","result":{"chain_id":"testnet","genesis_hash":"FWJ9kR6KFWoyMoNjpLXXGHeuiy7tEY6GmoFeCA5yuc6b","latest_protocol_version":88,"node_key":null,"node_public_key":"ed25519:vknQwA6gp5wvADawPZEX1TC1bgBvo1VAZhFLebThbsi","protocol_version":88,"rpc_addr":"0.0.0.0:3030","sync_info":{"earliest_bl
