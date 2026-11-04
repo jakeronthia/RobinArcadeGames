@@ -126,6 +126,28 @@ window.GAMES.push({
     best: function () { var s = JSON.parse(localStorage.getItem('robin-ventures') || 'null'); return s && s.ipos ? s.ipos : 0; }
 });
 
+window.GAMES.push({
+    id: 'vault',
+    accent: '#ffc93c',
+    badge: 'NEW',
+    title: 'Defend the Vault',
+    file: 'games/vault.html',
+    orient: 'portrait',
+    blurb: 'Thieves march on the ROBIN Vault. Place the squad on the rooftops and stop them.',
+    about: 'A tower defense on the Ravenport rooftops. Thieves walk the streets toward the ROBIN Vault: place heroes on the roofs along their path, upgrade them and survive 12 waves. Every hero fights differently, from Atreus and his nunchaku to Baller and his magnet ball.',
+    shot: 'assets/shots/vault.jpg',
+    clip: 'assets/clips/vault.mp4',
+    pos: 'center',
+    controls: [
+      ['Place a hero', 'Pick a card, then click a rooftop', 'pick a card, then tap a rooftop'],
+      ['Upgrade or sell', 'Click a hero', 'tap a hero'],
+      ['Start the wave', 'Start wave button', 'Start wave button'],
+      ['Game speed', 'x1 button', 'x1 button']
+    ],
+    bestLabel: 'Waves',
+    best: function () { try { return +JSON.parse(localStorage.getItem('dtv-best') || '0') || 0; } catch (e) { return 0; } }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },
