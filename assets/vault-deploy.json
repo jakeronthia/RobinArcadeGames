@@ -1,11 +1,12 @@
 {
   "network": "testnet",
-  "built": "2026-11-04T22:31:01.305Z",
-  "main": "robinarcade-1793831449-3471.testnet",
-  "error": "ENOENT: no such file or directory, open '/home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_demo_token.wasm'",
+  "built": "2026-11-04T22:35:57.327Z",
+  "main": "robinarcade-1793831745-260.testnet",
+  "error": "wasm not built: robin_vault.wasm",
   "log": [
-    "created robin.robinarcade-1793831449-3471.testnet",
-    "created vault.robinarcade-1793831449-3471.testnet",
-    "ERROR Error: ENOENT: no such file or directory, open '/home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_demo_token.wasm'\n    at Object.openSync (node:fs:621:18)\n    at Object.readFileSync (node:fs:487:35)\n    at W (file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:32:19)\n    at file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:38:44\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    "created robin.robinarcade-1793831745-260.testnet",
+    "created vault.robinarcade-1793831745-260.testnet",
+    "using /home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/target/near/robin_demo_token/robin_demo_token.wasm 152825 bytes",
+    "ERROR Error: wasm not built: robin_vault.wasm\n    at W (file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:33:97)\n    at file:///home/runner/work/RobinArcadeGames/RobinArcadeGames/vault-contract/ci/deploy.mjs:40:44\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
   ]
 }
