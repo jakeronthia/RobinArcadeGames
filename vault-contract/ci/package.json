@@ -1,1 +1,1 @@
-{ "name": "vault-ci", "private": true, "type": "module", "dependencies": { "near-api-js": "4.0.4" } }
+{ "name": "vault-ci", "private": true, "type": "module", "dependencies": { "near-api-js": "4.0.4", "playwright": "1.48.2" } }

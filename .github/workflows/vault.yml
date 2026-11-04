@@ -1,7 +1,7 @@
 name: vault
 on:
   push:
-    paths: ['vault-contract/**', 'assets/fx/vaultsim.js', '.github/workflows/vault.yml']
+    paths: ['vault-contract/**', 'assets/fx/vaultsim.js', '.github/workflows/vault.yml', 'treasury.html', 'assets/fx/robinvault.js']
 permissions:
   contents: write
 concurrency: vault
@@ -29,15 +29,26 @@ jobs:
           tail -60 ci/build.txt
       - name: Create a testnet account with the faucet
         run: |
-          MAIN="robinarcade-$(date +%s)-$RANDOM.testnet"
-          near account create-account sponsor-by-faucet-service "$MAIN" autogenerate-new-keypair save-to-legacy-keychain network-config testnet create
-          echo "MAIN=$MAIN" >> $GITHUB_ENV
+          mkdir -p ci
+          for try in 1 2 3 4; do
+            MAIN="robinarcade-$(date +%s)-$RANDOM.testnet"
+            if near account create-account sponsor-by-faucet-service "$MAIN" autogenerate-new-keypair save-to-legacy-keychain network-config testnet create >> ci/faucet.txt 2>&1; then echo "MAIN=$MAIN" >> $GITHUB_ENV; echo "ok $MAIN" >> ci/faucet.txt; break; fi
+            echo "faucet try $try failed" >> ci/faucet.txt; sleep 45
+          done
+          tail -20 ci/faucet.txt
           sleep 5
       - name: Deploy, test end to end, lock
         working-directory: vault-contract/ci
         run: |
           npm install --silent
           node deploy.mjs
+      - name: Browser check of the site against testnet
+        if: always()
+        working-directory: vault-contract/ci
+        run: |
+          mkdir -p ../../ci
+          npx playwright install --with-deps chromium > /dev/null 2>&1 || true
+          timeout 180 node uitest.mjs || true
       - name: Report back
         if: always()
         run: |
