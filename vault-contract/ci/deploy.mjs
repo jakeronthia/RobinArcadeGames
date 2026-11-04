@@ -35,7 +35,7 @@ const BURN = '0'.repeat(64);
 const result = { network: 'testnet', built: new Date().toISOString(), main: MAIN };
 try {
   // ---- production contracts ----
-  const token = await sub('robin', '3.4'), vault = await sub('vault', '3.2');
+  const token = await sub('robin', '2.1'), vault = await sub('vault', '2.7');
   await (await acct(token)).deployContract(W('robin_demo_token.wasm')); await call(token, token, 'new', {});
   await (await acct(vault)).deployContract(W('robin_vault.wasm'));
   await call(vault, vault, 'new', { token, burn_to: BURN, ticket: (10n * ONE).toString(), epoch_secs: 86400, week_days: 7, goal: 300 });
@@ -46,7 +46,7 @@ try {
   const tv = await sub('testvault', '2.6'); await (await acct(tv)).deployContract(W('robin_vault.wasm'));
   await call(tv, tv, 'new', { token, burn_to: BURN, ticket: (10n * ONE).toString(), epoch_secs: 120, week_days: 2, goal: 1 });
   await call(MAIN, token, 'register', { account_id: tv });
-  const p1 = await sub('p1', '0.4'), p2 = await sub('p2', '0.4');
+  const p1 = await sub('p1', '0.5'), p2 = await sub('p2', '0.5');
   for (const p of [p1, p2]) { await call(p, token, 'faucet', {}); say(p, 'balance', await view(token, 'ft_balance_of', { account_id: p })); }
   // wait for the start of a fresh test day so everything fits inside it
   let cfg = await view(tv, 'config'); const now = () => Math.floor(Date.now() / 1000);
