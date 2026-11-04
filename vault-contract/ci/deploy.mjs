@@ -8,7 +8,7 @@ const { connect, keyStores, KeyPair, utils } = nearAPI;
 const log = []; const say = (...a) => { const s = a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' '); console.log(s); log.push(s); };
 const ROOT = path.resolve('../..'); const OUT = path.join(ROOT, 'assets/vault-deploy.json');
 const ks = new keyStores.UnencryptedFileSystemKeyStore(path.join(os.homedir(), '.near-credentials'));
-const near = await connect({ networkId: 'testnet', nodeUrl: process.env.RPC || 'https://rpc.testnet.near.org', keyStore: ks });
+const near = await connect({ networkId: 'testnet', nodeUrl: process.env.RPC || 'https://test.rpc.fastnear.com', keyStore: ks });
 const MAIN = process.env.MAIN; // created by near-cli-rs with the faucet
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const TG = n => BigInt(n) * 10n ** 12n; const ONE = 10n ** 18n;
@@ -20,7 +20,8 @@ async function call(from, contractId, methodName, args, deposit = '0', gas = 100
   const fail = r.receipts_outcome.find(o => o.outcome.status.Failure); const logs = r.receipts_outcome.flatMap(o => o.outcome.logs);
   let val = null; try { const b = r.status.SuccessValue; if (b) val = JSON.parse(Buffer.from(b, 'base64').toString()); } catch (e) {}
   if (fail || r.status.Failure) throw new Error(methodName + ' failed: ' + JSON.stringify(fail ? fail.outcome.status.Failure : r.status.Failure));
-  return { val, logs, tx: r.transaction.hash };
+  const gas = r.receipts_outcome.reduce((g, o) => g + BigInt(o.outcome.gas_burnt), BigInt(r.transaction_outcome.outcome.gas_burnt));
+  return { val, logs, tx: r.transaction.hash, tgas: Number(gas / 10n ** 12n) };
 }
 const view = async (c, m, args = {}) => (await acct(MAIN)).viewFunction({ contractId: c, methodName: m, args });
 const enc = acts => acts.map(([t, a]) => t + ':' + (a[0] === 'place' ? 'p,' + a.slice(1).join(',') : a[0] === 'up' ? 'u,' + a.slice(1).join(',') : a[0] === 'sell' ? 's,' + a.slice(1).join(',') : 'g')).join(';');
@@ -57,9 +58,10 @@ try {
   for (const p of [p1, p2]) { const r = await call(p, token, 'ft_transfer_call', { receiver_id: tv, amount: (10n * ONE).toString(), msg: '{"a":"ticket"}' }, '1', 150); say(p, 'ticket', r.logs.join(' | ')); }
   const burnBal1 = BigInt(await view(token, 'ft_balance_of', { account_id: BURN })); say('burn address after 2 tickets', burnBal1.toString());
   const chk = await view(tv, 'check', { day, moves: bm.moves }); say('free check', chk);
-  const s1 = await call(p1, tv, 'submit', { day, moves: bm.moves }, '0', 300); say('p1 submit', s1.val, 'tx', s1.tx);
+  const s1 = await call(p1, tv, 'submit', { day, moves: bm.moves }, '0', 300); say('p1 submit', s1.val, 'tx', s1.tx, 'Tgas', s1.tgas);
   const s2 = await call(p2, tv, 'submit', { day, moves: '0:g' }, '0', 300); say('p2 submit (no heroes)', s2.val);
-  let cheat = 'accepted?!'; try { await call(p2, tv, 'submit', { day, moves: '0:p,5,0,0;0:p,5,1,0;0:p,5,2,0;0:p,5,3,0;0:g' }, '0', 300); } catch (e) { cheat = 'rejected: ' + e.message.slice(0, 120); } say('p2 tries to place heroes it cannot afford:', cheat);
+  let cheat = 'accepted?!'; try { await call(p2, tv, 'submit', { day, moves: '0:p,0,2,11;50:p,5,1,0;50:g' }, '0', 300); } catch (e) { cheat = 'rejected: ' + (e.message.match(/panicked: ([^"]+)/) || [0, e.message.slice(0, 120)])[1]; } say('p2 forges the timing of its moves:', cheat);
+  const fake = await call(p2, tv, 'submit', { day, moves: '0:p,5,0,0;0:p,5,1,0;0:p,5,2,0;0:p,5,3,0;0:g' }, '0', 300); say('p2 places heroes it cannot afford: the rules ignore them ->', fake.val);
   say('day', await view(tv, 'get_day', { day }));
   const wait = 120 - (now() % 120) + 4; say('waiting', wait, 's for the day to end'); await sleep(wait * 1000);
   const st = await call(p2, tv, 'settle_day', { day }); say('settled by p2', st.logs.join(' | '));
