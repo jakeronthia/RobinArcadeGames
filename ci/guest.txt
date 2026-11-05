@@ -1,0 +1,6 @@
+worker /api/guest -> 200 {"ok":true,"accountId":"robin-5k1055432.testnet"}
+worker static -> asset
+before: Play instantly with a free testnet account, or connect your NEAR wallet.
+after guest: Guest account robin-4c2u133i1.testnet · kept on this device
+balance: 
+ticket state: No ticket yet for today | pot 0 tROBIN -> 4 tROBIN | burned 5 tROBIN
