@@ -149,6 +149,7 @@ button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>const T=THREE;</script>
 <script src="../assets/fx/models.js"></script>
 <script src="../assets/fx/glow.js"></script>
@@ -439,7 +440,7 @@ $('pUp').addEventListener('click',e=>{e.stopPropagation();const t=G.sel;if(!t)re
 $('pSell').addEventListener('click',e=>{e.stopPropagation();const t=G.sel;if(!t)return;if(!act(['sell',t.c,t.r]))return;grid[t.r][t.c].hero=null;scene.remove(t.root);G.towers.splice(G.towers.indexOf(t),1);closePanel();hud();sfx(330,.1,'triangle',.05)});
 
 /* ---------- waves ---------- */
-$('goBtn').addEventListener('click',e=>{e.stopPropagation();ac();if(!G||G.S.inWave||G.over)return;if(!act(['go']))return;const w=G.S.wave;hud();
+$('goBtn').addEventListener('click',e=>{e.stopPropagation();ac();if(!G||G.S.inWave||G.over)return;if(!act(['go']))return;const w=G.S.wave;hud();try{if(sound)RobinSfx.play(w===5||w===10||w===12?'boss':'start')}catch(_){}
   banner('WAVE '+w+(w===VS.WAVES?' · FINAL':''),w===5||w===10||w===12?'Master thief!':w===1?'Thieves incoming':['Here they come','Hold the line','More thieves','They brought friends'][w%4]);sfx(392,.12,'square',.05);sfx(523,.2,'square',.05,.1)});
 $('spd').addEventListener('click',e=>{e.stopPropagation();if(!G)return;G.speed=G.speed===1?2:1;$('spd').textContent='×'+G.speed;$('spd').classList.toggle('on',G.speed>1)});
 function banner(a,b){const el=$('banner');$('banS').textContent=a;$('banB').textContent=b;el.classList.remove('show');void el.offsetWidth;el.classList.add('show')}
@@ -464,7 +465,7 @@ function onEvents(ev){for(const e of ev){const k=e[0];
     else if(e[3]==='slam'){ringFx(t.root.position,0x7fe3ff,tRange(t));shake=Math.max(shake,.12);sfx(90,.25,'sawtooth',.06,0,-40)}}
   else if(k==='splash'){ringFx(new T.Vector3(W2(e[1]),0,W2(e[2])),0xff7a1a,e[3]/UNIT);sfx(140,.15,'sawtooth',.05,0,-60)}
   else if(k==='crit'){const v=vtgt(e[1]);if(v)num(v.root.position,'CRIT',true,.4)}
-  else if(k==='clear'){hud();if(e[1]<VS.WAVES){banner('WAVE '+e[1]+' CLEARED','+'+e[2]+' $ROBIN bonus');sfx(659,.1,'square',.05);sfx(988,.18,'square',.05,.08)}}
+  else if(k==='clear'){hud();if(e[1]<VS.WAVES){try{if(sound)RobinSfx.play('levelup')}catch(_){}banner('WAVE '+e[1]+' CLEARED','+'+e[2]+' $ROBIN bonus');sfx(659,.1,'square',.05);sfx(988,.18,'square',.05,.08)}}
   else if(k==='end'){finish(e[1]===1)}}}
 function shoot(kind,from,v,spd){let obj;
   if(kind==='nunchaku'){obj=new T.Group();const m=lam(0x3ddc6a,{emissive:0x0a3a18});const a=new T.Mesh(new T.CylinderGeometry(.03,.03,.22,6),m),b=a.clone();a.position.x=-.08;b.position.x=.08;b.rotation.z=.6;obj.add(a,b)}
@@ -484,10 +485,10 @@ function say(t,x,y){const el=document.createElement('div');el.className='num';el
 let AC=null;function ac(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
 function sfx(f,d=.1,type='square',v=.04,delay=0,slide=0){if(!sound||!AC)return;try{const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.linearRampToValueAtTime(Math.max(40,f+slide),t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
 function sndUi(){$('wv').style.display=sound?'':'none';$('snd').setAttribute('aria-pressed',String(sound));$('snd').classList.toggle('on',sound)}sndUi();
-$('snd').addEventListener('click',e=>{e.stopPropagation();sound=!sound;store.set('sound',sound);sndUi();ac()});
+$('snd').addEventListener('click',e=>{e.stopPropagation();sound=!sound;store.set('sound',sound);sndUi();ac();try{RobinMusic.setOn(sound)}catch(_){}});
 
 /* ---------- end ---------- */
-function finish(win){if(G.over)return;G.over=true;pick(-1);closePanel();const S=G.S,w=win?VS.WAVES:Math.max(0,S.wave-1);if(MODE==='free'&&w>best){best=w;store.set('best',best)}
+function finish(win){try{if(sound&&!G.over)RobinSfx.play(win?'win':'lose')}catch(_){};if(G.over)return;G.over=true;pick(-1);closePanel();const S=G.S,w=win?VS.WAVES:Math.max(0,S.wave-1);if(MODE==='free'&&w>best){best=w;store.set('best',best)}
   const beat=MODE==='daily'&&win&&S.lives>=DAILY.target;
   $('eTag').textContent=MODE==='daily'?(beat?'TARGET BEATEN':win?'VAULT SAFE, TARGET MISSED':'THE VAULT WAS EMPTIED'):(win?'VAULT SAFE':'THE VAULT WAS EMPTIED');
   $('eBig').textContent=w;$('eText').textContent=MODE==='daily'?(beat?'waves defended with '+S.lives+' vault left. Send it to the Vault to claim your share of the pot.':'waves defended. Today’s target: clear all 12 waves with '+DAILY.target+' vault left.'):(win?'waves defended. The squad saved the $ROBIN!':(w===1?'wave defended':'waves defended'));
@@ -541,6 +542,7 @@ function frame(now){let dt=Math.min(.05,(now-last)/1000);last=now;clock+=dt;
 fit();requestAnimationFrame(frame);
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{return JSON.parse(localStorage.getItem('dtv-sound'))!==false}catch(e){return true}})());RobinMusic.play('../assets/music/vault.mp3',{volume:0.45})}catch(e){}</script>
 
 </body>
 </html>

@@ -135,6 +135,7 @@ body{margin:0;background:var(--night);color:var(--ink);font-family:var(--round);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
@@ -604,12 +605,7 @@ function mnote(f,t,d,type,v,dest){const o=AC.createOscillator(),g=AC.createGain(
 let noiseBuf=null;function getNoise(){if(!noiseBuf){const n=AC.sampleRate*.5|0;noiseBuf=AC.createBuffer(1,n,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1}return noiseBuf}
 function noiseHit(t,dur,vol,hp,dest,bp){try{const s=AC.createBufferSource();s.buffer=getNoise();const f=AC.createBiquadFilter();f.type=bp?'bandpass':'highpass';f.frequency.value=hp;const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f).connect(g).connect(dest);s.start(t);s.stop(t+dur+.02)}catch(e){}}
 function thump(dur,vol){if(!AC||!sfxOn)return;const t=AC.currentTime;noiseHit(t,dur,vol,900,AC.destination,true);try{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(50,t+dur);g.gain.setValueAtTime(vol*1.4,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur+.05);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.06)}catch(e){}}
-function musicStart(){if(!AC||musT)return;try{musicGain=AC.createGain();musicGain.gain.value=musicOn?.45:0;musicGain.connect(AC.destination);bassF=AC.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=520;bassF.connect(musicGain);
-  musNext=AC.currentTime+.1;musT=setInterval(()=>{const st=60/116/2;if(musNext<AC.currentTime-.5)musNext=AC.currentTime+.05;while(musNext<AC.currentTime+.15){const bar=Math.floor(musStep/8)%4,s=musStep%8,[b,tri]=CHORDS[bar];
-    if(s===0||s===3||s===5)mnote(mtof(b),musNext,st*1.4,'sawtooth',.08,bassF);
-    if(s===0||s===4){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(130,musNext);o.frequency.exponentialRampToValueAtTime(40,musNext+.15);g.gain.setValueAtTime(.16,musNext);g.gain.exponentialRampToValueAtTime(.0001,musNext+.2);o.connect(g).connect(musicGain);o.start(musNext);o.stop(musNext+.22)}
-    noiseHit(musNext,.03,.02,7500,musicGain);if(s===2||s===6)noiseHit(musNext,.13,.05,1700,musicGain,true);
-    mnote(mtof(tri[[0,2,1,2,0,1,2,1][s]]+12),musNext,st*.8,'square',.018);musNext+=st;musStep++}},30)}catch(e){}}
+function musicStart(){RobinMusic.play('../assets/music/brawl.mp3',{volume:0.45});RobinMusic.setOn(musicOn)}
 
 /* ---------- heroes ---------- */
 const HD=[
@@ -725,7 +721,7 @@ function spawnGem(x,z,drop){let tries=0;while(solid(tileAt(x,z))&&tries<10){x=(M
 
 /* ---------- match flow ---------- */
 function banner(t){const b=$('banner');b.innerHTML=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
-function startMatch(){window.RobinRanked&&RobinRanked.start('brawl');try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
+function startMatch(){try{if(sfxOn)RobinSfx.play('start')}catch(_){};window.RobinRanked&&RobinRanked.start('brawl');try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
   PROG.hero=sel;PROG.mode=mode;saveProg();clearMatch();preview.forEach(p=>{p.g.visible=false});genMap(mode);setTimeout(()=>banner(curMap(mode).name+'<small>'+(mode==='loot'?'Loot Grab':'Showdown')+'</small>'),200);
   const others=HD.map((_,i)=>i).filter(h=>h!==sel).sort(()=>Math.random()-.5);
   if(mode==='loot'){me=newBrawler(sel,0,0,10.5,true);newBrawler(others[0],0,-2,10.8);newBrawler(others[1],0,2,10.8);
@@ -739,7 +735,7 @@ function endMatch(){if(state!=='play')return;state='over';let win=false,txt='',b
     dt=draw?0:win?8:-5;$('rTitle').textContent=draw?'Draw':win?'Victory!':'Defeat'}
   else{const r=me.dead?(me.rank||2):1;big='#'+r;txt=r===1?'You are the last brawler standing!':'You finished '+['','1st','2nd','3rd','4th','5th','6th'][r]+' of 6.';dt=[0,10,7,4,0,-2,-4][r];$('rTitle').textContent=r===1?'Victory!':r<=3?'Nice brawl!':'Knocked out'}
   PROG.troph[sel]=Math.max(0,PROG.troph[sel]+dt);PROG.mapI=PROG.mapI||{};PROG.mapI[mode]=(PROG.mapI[mode]||0)+1;saveProg();window.RobinRanked&&RobinRanked.end('brawl',Math.max(0,dt));$('rBig').textContent=big;$('rText').textContent=txt;$('rTroph').textContent=(dt>=0?'+':'')+dt+' trophies · '+HD[sel].name+' now has '+PROG.troph[sel];
-  ['atkBtn','supBtn','joy'].forEach(id=>$(id).hidden=true);setTimeout(()=>{$('result').hidden=false;$('againBtn').focus()},900);sfx(win?784:220,.4,'square',.05,win?400:-100)}
+  ['atkBtn','supBtn','joy'].forEach(id=>$(id).hidden=true);setTimeout(()=>{$('result').hidden=false;$('againBtn').focus()},900);sfx(win?784:220,.4,'square',.05,win?400:-100);try{if(sfxOn)RobinSfx.play(win||(mode!=='loot'&&!me.dead)?'win':'lose')}catch(_){}}
 function teamGems(){let a=0,b=0;for(const o of brawlers){if(o.team===0)a+=o.gems;else b+=o.gems}return[a,b]}
 function openMenu(){state='menu';clearMatch();genMap(mode);['hudTop','pauseBtn','atkBtn','supBtn','joy','keys','result','pause'].forEach(id=>$(id).hidden=true);$('menu').hidden=false;$('title').hidden=false;showHero()}
 
@@ -758,7 +754,7 @@ $('setBtn').addEventListener('click',()=>{$('pTitle').textContent='Settings';$('
 $('optMusic').checked=musicOn;$('optSfx').checked=sfxOn;
 function saveSet(){try{localStorage.setItem('brawl-settings',JSON.stringify({music:musicOn,sfx:sfxOn,glow:glowPref}))}catch(e){}}
 $('optGlow').checked=bloom.on;$('optGlow').addEventListener('change',e=>{glowPref=bloom.on=e.target.checked;saveSet()});
-$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;if(musicGain)musicGain.gain.value=musicOn?.45:0;saveSet()});$('optSfx').addEventListener('change',e=>{sfxOn=e.target.checked;saveSet()});
+$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;RobinMusic.setOn(musicOn);saveSet()});$('optSfx').addEventListener('change',e=>{sfxOn=e.target.checked;saveSet()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();last=performance.now()});
 
 /* ---------- input ---------- */
@@ -913,5 +909,6 @@ const gasRing=new T.Mesh(new T.RingGeometry(1,1.8,64),new T.MeshBasicMaterial({c
 genMap(mode);openMenu();requestAnimationFrame(frame);
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{const st=JSON.parse(localStorage.getItem('brawl-settings'));return !st||st.music!==false}catch(e){return true}})());RobinMusic.play('../assets/music/brawl.mp3',{volume:0.45})}catch(e){}</script>
 
 </html>

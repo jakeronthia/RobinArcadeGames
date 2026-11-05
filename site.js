@@ -100,11 +100,13 @@
     b.querySelector('.mute').style.display = sound ? 'none' : '';
   }
   function setup() {
+    var mu = document.body && document.body.getAttribute('data-music');
+    if (mu && window.RobinMusic) { RobinMusic.setOn(sound); RobinMusic.play(mu, { volume: 0.4 }); }
     document.querySelectorAll('.snd').forEach(function (b) {
       paint(b);
       b.addEventListener('click', function () {
         sound = !sound; try { localStorage.setItem('arcade-sound', sound ? 'on' : 'off'); } catch (e) {}
-        document.querySelectorAll('.snd').forEach(paint); coinSound();
+        document.querySelectorAll('.snd').forEach(paint); coinSound(); if (window.RobinMusic) RobinMusic.setOn(sound);
       });
     });
   }

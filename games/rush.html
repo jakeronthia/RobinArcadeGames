@@ -206,6 +206,7 @@ body{margin:0;background:var(--night);color:var(--ink);font-family:var(--round);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
@@ -665,13 +666,7 @@ function noiseHit(t,dur,vol,hp,dest,bp){try{const s=AC.createBufferSource();s.bu
 function thump(dur,vol){if(!AC||!sfxOn)return;const t=AC.currentTime;noiseHit(t,dur,vol,900,AC.destination,true);try{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(50,t+dur);g.gain.setValueAtTime(vol*1.4,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur+.05);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+.06)}catch(e){}}
 function mnote(f,t,d,type,v,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.01);
   g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(dest||musicGain);o.start(t);o.stop(t+d+.03)}
-function musicStart(){if(!AC||musT)return;try{musicGain=AC.createGain();musicGain.gain.value=musicOn?.5:0;musicGain.connect(AC.destination);bassF=AC.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=480;bassF.connect(musicGain);
-  musNext=AC.currentTime+.1;musT=setInterval(()=>{const st=60/128/2;if(musNext<AC.currentTime-.5)musNext=AC.currentTime+.05;while(musNext<AC.currentTime+.15){const bar=Math.floor(musStep/8)%4,s=musStep%8,[b,tri]=CHORDS[bar];
-    if(s%2===0)mnote(mtof(b),musNext,st*1.4,'sawtooth',.08,bassF);
-    if(s===0||s===4){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(120,musNext);o.frequency.exponentialRampToValueAtTime(38,musNext+.16);g.gain.setValueAtTime(.16,musNext);g.gain.exponentialRampToValueAtTime(.0001,musNext+.2);o.connect(g).connect(musicGain);o.start(musNext);o.stop(musNext+.22)}
-    if(s===2||s===6){const len=AC.sampleRate*.05|0,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*(1-i/len);const n=AC.createBufferSource();n.buffer=buf;const g=AC.createGain();g.gain.value=.05;n.connect(g).connect(musicGain);n.start(musNext)}
-    noiseHit(musNext,.03,.02,7500,musicGain);if(s%4===3)noiseHit(musNext+st/2,.025,.014,8000,musicGain);
-    mnote(mtof(tri[[0,1,2,1,0,2,1,2][s]]+12),musNext,st*.9,'triangle',.03);musNext+=st;musStep++}},30)}catch(e){}}
+function musicStart(){RobinMusic.play('../assets/music/rush.mp3',{volume:0.5});RobinMusic.setOn(musicOn)}
 function thunder(){if(!AC||!sfxOn)return;try{const len=AC.sampleRate*1.6|0,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2);
   const s=AC.createBufferSource();s.buffer=buf;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=320;const g=AC.createGain();g.gain.value=.45;s.connect(f).connect(g).connect(AC.destination);s.start()}catch(e){}}
 
@@ -1004,7 +999,7 @@ function openMenu(){state='menu';['hud','powerBtn','over','pause','revive','hint
 
 /* run */
 let runUp=false;const UPL=id=>runUp?PROG.up[id]:0;const hasUps=()=>Object.values(PROG.up).some(v=>v>0);
-function startRun(){runUp=hasUps();window.RobinRanked&&RobinRanked.start('rush',!runUp);try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();
+function startRun(){try{if(sfxOn)RobinSfx.play('start')}catch(_){};runUp=hasUps();window.RobinRanked&&RobinRanked.start('rush',!runUp);try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}musicStart();
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
   PROG.hero=sel;saveProg();clearItems();setDistrict(0);
   pl={lane:1,x:0,y:0,vy:0,slide:0,air:false,jumps:0,shield:UPL('shield')>0,inv:0,lean:0,t:0,sq:1,floor:0};
@@ -1043,7 +1038,7 @@ $('powerBtn').addEventListener('pointerdown',e=>{e.preventDefault();act('power')
 addEventListener('contextmenu',e=>e.preventDefault());
 
 /* powers */
-function usePower(){if(power<100||powerOn>=0)return;power=0;powerOn=sel;powerT=HEROES[sel].dur*(1+.1*UPL('dur'));rs.powers++;tutDone(3);const H=HEROES[sel];
+function usePower(){try{if(sfxOn)RobinSfx.play('power')}catch(_){};if(power<100||powerOn>=0)return;power=0;powerOn=sel;powerT=HEROES[sel].dur*(1+.1*UPL('dur'));rs.powers++;tutDone(3);const H=HEROES[sel];
   banner(H.power+'!');flash=Math.max(flash,.35);sfx(220,.5,'sawtooth',.05,600);try{navigator.vibrate&&navigator.vibrate(50)}catch(e){}
   const px=pl.x,py=pl.y+1;ring(px,py,0,0xffc93c,4,.4);burst(px,py,0,0xffc93c,20,7,.14);
   if(sel===5||sel===6){for(const it of items)if(it.z<0&&it.z>-32&&['barrier','beam','thief','car'].includes(it.type))smash(it,true);
@@ -1062,7 +1057,7 @@ function crash(it){if(pl.inv>0)return;
 $('revYes').addEventListener('click',()=>{if(state!=='revive')return;coins-=50;revived=true;$('revive').hidden=true;for(const it of items)if(it.z>-30&&it.z<6&&it.type!=='coin')smash(it,true);
   pl.inv=2.5;pl.y=0;pl.vy=0;state='play';last=performance.now();banner('Back on track!')});
 $('revNo').addEventListener('click',()=>{$('revive').hidden=true;gameOver()});
-function gameOver(){state='over';$('revive').hidden=true;$('powerBtn').hidden=true;const fin=Math.floor(score);window.RobinRanked&&RobinRanked.end('rush',fin,!runUp);const rec=fin>PROG.best;if(rec){PROG.best=fin}PROG.bestDist=Math.max(PROG.bestDist,Math.floor(dist));PROG.bank+=coins;saveProg();
+function gameOver(){try{if(sfxOn)RobinSfx.play('lose')}catch(_){};state='over';$('revive').hidden=true;$('powerBtn').hidden=true;const fin=Math.floor(score);window.RobinRanked&&RobinRanked.end('rush',fin,!runUp);const rec=fin>PROG.best;if(rec){PROG.best=fin}PROG.bestDist=Math.max(PROG.bestDist,Math.floor(dist));PROG.bank+=coins;saveProg();
   $('overTitle').textContent=rec?'New record!':'Run over';$('overScore').textContent=fin.toLocaleString('en');$('oDist').textContent=Math.floor(dist)+' m';$('oCoins').textContent=coins;$('oHero').textContent=HEROES[sel].name;
   $('overBest').textContent='Best '+PROG.best.toLocaleString('en')+' · Multiplier x'+PROG.mult+(coins?' · +'+coins+' coins to the bank':'');$('over').hidden=false;$('againBtn').focus();submitScore(fin,Math.floor(dist))}
 $('playBtn').addEventListener('click',startRun);$('againBtn').addEventListener('click',startRun);$('heroesBtn').addEventListener('click',openMenu);
@@ -1089,7 +1084,7 @@ $('upClose').addEventListener('click',()=>{$('upgrades').hidden=true;$('upBtn').
 $('optMusic').checked=musicOn;$('optSfx').checked=sfxOn;
 function saveSet(){try{localStorage.setItem('rush-settings',JSON.stringify({music:musicOn,sfx:sfxOn,glow:glowPref}))}catch(e){}}
 $('optGlow').checked=bloom.on;$('optGlow').addEventListener('change',e=>{glowPref=bloom.on=e.target.checked;saveSet()});
-$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;if(musicGain)musicGain.gain.value=musicOn?.5:0;saveSet()});
+$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;RobinMusic.setOn(musicOn);saveSet()});
 $('optSfx').addEventListener('change',e=>{sfxOn=e.target.checked;saveSet()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();last=performance.now()});
 
@@ -1191,5 +1186,6 @@ const aq=makeAutoQuality(renderer,bloom,()=>{resize();$('optGlow').checked=bloom
 setDistrict(0);openMenu();requestAnimationFrame(frame);
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{const st=JSON.parse(localStorage.getItem('rush-settings'));return !st||st.music!==false}catch(e){return true}})());RobinMusic.play('../assets/music/rush.mp3',{volume:0.5})}catch(e){}</script>
 
 </html>

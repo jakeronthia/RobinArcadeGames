@@ -173,6 +173,7 @@ nav .dot{position:absolute;top:4px;right:calc(50% - 20px);width:9px;height:9px;b
 <div class="rotate"><div><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ffc93c" stroke-width="1.8" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright to keep building your startup</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>var T=THREE</script>
 <script src="../assets/fx/models.js"></script>
 <script src="../assets/fx/glow.js"></script>
@@ -255,15 +256,8 @@ function sfx(f,d=.07,type='square',v=.03,slide=0,delay=0){if(!sound||!ac())retur
   g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
 const cha=()=>{sfx(1318,.06,'square',.025);sfx(1760,.12,'square',.025,0,.05)};
 let musT=null,musNext=0,musStep=0,musGain=null;
-function musicStart(){if(musT||!sound||!ac())return;try{musGain=AC.createGain();musGain.gain.value=.45;musGain.connect(AC.destination);musNext=AC.currentTime+.1;
-  const prog=[[48,60,64,67],[45,57,60,64],[41,57,60,65],[43,55,59,62]],mt=m=>440*Math.pow(2,(m-69)/12);
-  musT=setInterval(()=>{if(!sound||document.hidden){musNext=AC.currentTime+.1;return}const st=60/96/2;while(musNext<AC.currentTime+.2){const ch=prog[Math.floor(musStep/8)%4],s=musStep%8;
-    const note=(f,d,type,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,musNext);g.gain.exponentialRampToValueAtTime(v,musNext+.02);g.gain.exponentialRampToValueAtTime(.0001,musNext+d);o.connect(g).connect(musGain);o.start(musNext);o.stop(musNext+d+.05)};
-    if(s===0||s===3||s===6)note(mt(ch[0]),st*1.8,'triangle',.05);note(mt(ch[1+[0,1,2,1][s%4]]+12),st*.9,'sine',.02);
-    if(s===0||s===4){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,musNext);o.frequency.exponentialRampToValueAtTime(40,musNext+.15);g.gain.setValueAtTime(.09,musNext);g.gain.exponentialRampToValueAtTime(.0001,musNext+.18);o.connect(g).connect(musGain);o.start(musNext);o.stop(musNext+.2)}
-    if(s%2===1){const n=AC.sampleRate*.03|0,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const src=AC.createBufferSource();src.buffer=b;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=AC.createGain();g.gain.value=.02;src.connect(f).connect(g).connect(musGain);src.start(musNext)}
-    musNext+=st;musStep++}},50)}catch(e){}}
-function musicStop(){if(musT){clearInterval(musT);musT=null}if(musGain){try{musGain.disconnect()}catch(e){}musGain=null}}
+function musicStart(){if(!sound)return;RobinMusic.play('../assets/music/tycoon.mp3',{volume:0.45});RobinMusic.setOn(true)}
+function musicStop(){RobinMusic.setOn(false)}
 function sndUi(){$('sndWave').style.display=sound?'':'none';$('sndMute').style.display=sound?'none':'';$('sndBtn').setAttribute('aria-pressed',String(sound))}
 $('sndBtn').addEventListener('click',()=>{sound=!sound;try{localStorage.setItem('robin-ventures-sound',sound?'on':'off')}catch(e){}sndUi();if(sound){musicStart();sfx(660)}else musicStop()});sndUi();
 addEventListener('pointerdown',()=>musicStart(),{once:true});
@@ -564,7 +558,7 @@ cv.addEventListener('pointerup',e=>{const d=drag;drag=null;if(!d||d.moved)return
   sparkBurst(px,py,5);S.taps++;sfx(900+Math.random()*120,.04,'square',.02,200)});
 
 // move to a bigger office when the valuation jumps
-function checkOffice(){let o=S.office||0;while(o<OFFICES.length-1&&valuation()>=OFFICES[o+1].v)o++;if(o>(S.office||0)){S.office=o;toast('New office: '+OFFICES[o].name+'!');confettiBurst();cha();save()}}
+function checkOffice(){let o=S.office||0;while(o<OFFICES.length-1&&valuation()>=OFFICES[o+1].v)o++;if(o>(S.office||0)){S.office=o;try{if(sound)RobinSfx.play('levelup')}catch(_){}toast('New office: '+OFFICES[o].name+'!');confettiBurst();cha();save()}}
 
 /* ---------- products ---------- */
 function start(i){if(!S.lvl[i]||S.run[i])return;S.run[i]=true;S.prog[i]=0;sfx(520,.04,'triangle',.025,120)}
@@ -599,7 +593,7 @@ function updProducts(){if(prodKey!==S.lvl.map(l=>l>0).join())buildProducts();
     el.querySelector('.cy').textContent=l?(m?'Auto · ':'Tap · ')+(ct<1?ct.toFixed(2)+'s':fmtTime(ct)):'';
     const nx=MILESTONES.find(x=>x>l);el.querySelector('.ms').textContent=l&&nx?'Speed x2 at '+nx:'';
     const b=el.querySelector('.buy');b.innerHTML=(l?'Buy '+(k>1?'x'+k:''):'Launch')+'<small></small>';b.querySelector('small').textContent=money(c);b.disabled=S.cash<c})}
-function buy(i){const{k,c}=bulk(i,buyN);if(S.cash<c)return;const was=S.lvl[i];S.cash-=c;S.lvl[i]+=k;
+function buy(i){const{k,c}=bulk(i,buyN);if(S.cash<c)return;try{if(sound)RobinSfx.play('buy',.7)}catch(_){}const was=S.lvl[i];S.cash-=c;S.lvl[i]+=k;
   if(!was){toast(PRODUCTS[i].name+' launched!');cha()}else{sfx(660,.05,'triangle',.03,220);if(speedMult(S.lvl[i])>speedMult(was)){toast(PRODUCTS[i].name+' now runs twice as fast!');sfx(990,.12,'square',.03,300,.05)}}
   save();render(true)}
 
@@ -614,7 +608,7 @@ function updTeam(){if(!$('teamList').children.length)buildTeam();
   $('teamList').querySelectorAll('.row').forEach(el=>{const i=+el.dataset.i,M=MANAGERS[i],b=el.querySelector('.buy');el.classList.toggle('done',S.mgr[i]);
     el.querySelector('em').textContent=S.mgr[i]?'Hired':!deptOwned(i)?'Launch '+PRODUCTS[M.from].name+' first':'';
     if(S.mgr[i]){b.innerHTML='Hired';b.disabled=true}else{b.innerHTML='Hire<small></small>';b.querySelector('small').textContent=money(M.cost);b.disabled=S.cash<M.cost||!deptOwned(i)}})}
-function hire(i){const M=MANAGERS[i];if(S.mgr[i]||S.cash<M.cost||!deptOwned(i))return;S.cash-=M.cost;S.mgr[i]=true;toast(M.hero+' joined as '+M.role+'!');cha();save();render(true)}
+function hire(i){const M=MANAGERS[i];if(S.mgr[i]||S.cash<M.cost||!deptOwned(i))return;try{if(sound)RobinSfx.play('buy')}catch(_){}S.cash-=M.cost;S.mgr[i]=true;toast(M.hero+' joined as '+M.role+'!');cha();save();render(true)}
 
 function buildFund(){const box=$('fundList');box.innerHTML='';
   ROUNDS.forEach((R,r)=>{const el=document.createElement('div');el.className='row';el.dataset.r=r;
@@ -632,7 +626,7 @@ function updFund(){if(!$('fundList').children.length)buildFund();
   c.querySelector('p').innerHTML=S.rounds<ROUNDS.length?'Raise all six rounds, then earn <b>'+money(IPO_NEED)+'</b> in one run to ring the bell on the Ravenport Stock Exchange.':
     'Ring the bell to list <b>'+escapeHtml(S.name)+'</b>. You keep your Founder shares (each one +2% income forever) and start a new startup.';
   const btn=c.querySelector('#ipoBtn');btn.textContent=ready?'Ring the bell · +'+sh+' shares':'IPO at '+money(IPO_NEED)+' earned';btn.disabled=!ready||sh<1;btn.addEventListener('click',()=>showModal('ipo',{sh}))}
-function raise(r){const R=ROUNDS[r];if(r!==S.rounds||S.earned<R.need||S.cash<R.cost)return;S.cash-=R.cost;S.rounds++;
+function raise(r){const R=ROUNDS[r];if(r!==S.rounds||S.earned<R.need||S.cash<R.cost)return;try{if(sound)RobinSfx.play('levelup')}catch(_){}S.cash-=R.cost;S.rounds++;
   showModal('round',{R});confettiBurst();cha();sfx(523,.15,'square',.04,0,.15);sfx(784,.25,'square',.04,0,.3);save();render(true)}
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
@@ -664,7 +658,7 @@ function tickConfetti(dt){if(!conf.length)return;cfx.clearRect(0,0,cf.width,cf.h
   conf=conf.filter(p=>p.t<2.2&&p.y<cf.height+20);if(!conf.length)cfx.clearRect(0,0,cf.width,cf.height)}
 
 /* ---------- IPO (prestige) ---------- */
-function ipo(sh){const name=S.name,keep={shares:S.shares+sh,ipos:S.ipos+1,life:S.life,name:S.name,seen:true,hypeReady:S.hypeReady,panned:S.panned};
+function ipo(sh){try{if(sound)RobinSfx.play('win')}catch(_){};const name=S.name,keep={shares:S.shares+sh,ipos:S.ipos+1,life:S.life,name:S.name,seen:true,hypeReady:S.hypeReady,panned:S.panned};
   S=Object.assign(fresh(),keep);save();window.RobinRanked&&RobinRanked.end('tycoon',1);
   for(let k=0;k<5;k++)setTimeout(()=>{sfx(1046,.5,'triangle',.05);sfx(1568,.5,'triangle',.03)},k*260);confettiBurst();setTimeout(confettiBurst,500);
   showModal('listed',{name});prodKey='';$('teamList').innerHTML='';$('fundList').innerHTML='';render(true)}
@@ -702,5 +696,6 @@ resize();render(true);requestAnimationFrame(tick);
 if(!S.seen)showModal('intro');else offline();
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{return localStorage.getItem('robin-ventures-sound')!=='off'}catch(e){return true}})());RobinMusic.play('../assets/music/tycoon.mp3',{volume:0.45})}catch(e){}</script>
 </body>
 </html>

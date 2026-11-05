@@ -160,6 +160,7 @@ button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 <div class="rotate"><div><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ffc93c" stroke-width="1.8" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>Turn your phone upright to keep patrolling</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>var T=THREE</script>
 <script src="../assets/fx/models.js"></script>
 <script src="../assets/fx/glow.js"></script>
@@ -213,14 +214,8 @@ const badgesForReset=()=>Math.floor(Math.sqrt(S.runEarned/1e6))+(owned(8)?1:0);
 /* ---------- audio ---------- */
 let AC=null;
 let musT=null,musNext=0,musStep=0,musGain=null;
-function musicStart(){if(musT||!sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume();musGain=AC.createGain();musGain.gain.value=.5;musGain.connect(AC.destination);musNext=AC.currentTime+.1;
-  const prog=[[45,57,60,64],[41,53,57,60],[48,55,60,64],[43,55,59,62]],mt=m=>440*Math.pow(2,(m-69)/12);
-  musT=setInterval(()=>{if(!sound||document.hidden){musNext=AC.currentTime+.1;return}const st=60/84/2;while(musNext<AC.currentTime+.2){const ch=prog[Math.floor(musStep/8)%4],s=musStep%8;
-    const note=(f,d,type,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,musNext);g.gain.exponentialRampToValueAtTime(v,musNext+.02);g.gain.exponentialRampToValueAtTime(.0001,musNext+d);o.connect(g).connect(musGain);o.start(musNext);o.stop(musNext+d+.05)};
-    if(s===0||s===5)note(mt(ch[0]),st*2.5,'triangle',.05);if(s%2===0)note(mt(ch[1+(s/2|0)%3]+12),st*1.6,'sine',.022);
-    if(s%2===1){const n=AC.sampleRate*.03|0,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const src=AC.createBufferSource();src.buffer=b;const f=AC.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=AC.createGain();g.gain.value=.025;src.connect(f).connect(g).connect(musGain);src.start(musNext)}
-    musNext+=st;musStep++}},50)}catch(e){}}
-function musicStop(){if(musT){clearInterval(musT);musT=null}if(musGain){try{musGain.disconnect()}catch(e){}musGain=null}}
+function musicStart(){if(!sound)return;RobinMusic.play('../assets/music/nightshift.mp3',{volume:0.45});RobinMusic.setOn(true)}
+function musicStop(){RobinMusic.setOn(false)}
 function sfx(f,d=.07,type='square',v=.03,slide=0){if(!sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(40,f+slide),t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
 function sndUi(){$('sndWave').style.display=sound?'':'none';$('sndBtn').setAttribute('aria-label',sound?'Sound on':'Sound off')}
@@ -488,10 +483,10 @@ function sparkBurst(){}
 
 /* ---------- boss ---------- */
 let boss=null;
-function startBoss(){const B=BOSSES[S.bossIdx%3];const hp=Math.max(400,cps()*22+200*Math.pow(2.2,S.bosses));boss={B,hp,max:hp,left:30+(owned(2)?10:0),x:1.9,t:0,hit:0};
+function startBoss(){try{if(sound)RobinSfx.play('boss')}catch(_){};const B=BOSSES[S.bossIdx%3];const hp=Math.max(400,cps()*22+200*Math.pow(2.2,S.bosses));boss={B,hp,max:hp,left:30+(owned(2)?10:0),x:1.9,t:0,hit:0};
   bossM.mats[0].color.set(B.col).lerp(new T.Color(0xffffff),.35);bossM.mats[1].color.set(B.acc);bossAura.material.color.set(B.acc);bossLight.color.set(B.acc);bossM.g.visible=true;bossAura.visible=true;
   $('bossBar').hidden=false;$('bossName').textContent=B.name;toast(B.name+' is on the rooftops! Tap fast!');sfx(110,.5,'sawtooth',.05,-40);if(navigator.vibrate)try{navigator.vibrate(80)}catch(e){}}
-function endBoss(win){const B=boss.B;$('bossBar').hidden=true;const L=LANES[1];
+function endBoss(win){try{if(sound)RobinSfx.play(win?'win':'lose')}catch(_){};const B=boss.B;$('bossBar').hidden=true;const L=LANES[1];
   if(win){poof(boss.x,L.y,L.z,true);coinBurst(boss.x,L.y+1.2,L.z,24,false);coinBurst(boss.x,L.y+1.2,L.z,8,true);
     const g=5+(owned(1)?2:0),c=Math.max(50,cps()*60);S.gems+=g;earn(c);S.bosses++;S.bossIdx++;showModal('boss',{name:B.name,g,c});sfx(523,.12);setTimeout(()=>sfx(784,.2),120)}
   else toast(B.name+' got away. He will be back.');
@@ -583,7 +578,7 @@ function updHeroList(){if(listKey!==S.lvl.map(l=>l>0).join())buildHeroList();
     const next=[10,25,50,100,1e9].find(m=>m>l),prev=[0,10,25,50,100].filter(m=>m<=l).pop();row.querySelector('.prog i').style.width=(l?(l-prev)/(next-prev)*100:0)+'%';
     const btn=row.querySelector('button');btn.innerHTML=(l?'Up'+(k>1?' x'+k:''):'Hire')+'<br>'+fmt(c);btn.disabled=S.coins<c;btn.classList.toggle('alt',!l&&false)})}
 function buyHero(i){const{k,c}=bulk(i,buyN);if(S.coins<c)return;const was=S.lvl[i];S.coins-=c;S.lvl[i]+=k;
-  if(!was){placeSquad();toast(HEROES[i].name+' joined the squad!');sfx(523,.1);setTimeout(()=>sfx(784,.15),100)}else{sfx(660,.06,'triangle',.04,220);if(milestone(S.lvl[i])>milestone(was))toast(HEROES[i].name+' speed doubled!')}
+  if(!was){placeSquad();toast(HEROES[i].name+' joined the squad!');try{if(sound)RobinSfx.play('levelup')}catch(_){}sfx(523,.1);setTimeout(()=>sfx(784,.15),100)}else{sfx(660,.06,'triangle',.04,220);if(milestone(S.lvl[i])>milestone(was))toast(HEROES[i].name+' speed doubled!')}
   save();render(true)}
 function distArt(c,d){const x=c.getContext('2d'),D=DISTRICTS[d];c.width=704;c.height=168;const g=x.createLinearGradient(0,0,0,168);g.addColorStop(0,D.sky[0]);g.addColorStop(1,D.sky[1]);x.fillStyle=g;x.fillRect(0,0,704,168);
   let s=3+d;const R=()=>(s=(s*16807)%2147483647)/2147483647;let bx=0;while(bx<704){const bw=40+R()*60,bh=50+R()*80;x.fillStyle=D.bld;x.fillRect(bx,168-bh,bw,bh);x.fillStyle=D.win;for(let k=0;k<3;k++)if(R()<.7)x.fillRect(bx+8+R()*(bw-20),168-bh+10+R()*(bh-30),7,10);bx+=bw+4}}
@@ -597,7 +592,7 @@ function buildMap(){const box=$('distList');box.innerHTML='';DISTRICTS.forEach((
   const nb=badgesForReset();$('prestigeTxt').textContent=nb>0?`Reset districts, heroes and coins for ${nb} Moon Badge${nb>1?'s':''}. You have ${S.badges} (+${S.badges*10}% forever).`:`Earn ${fmt(1e6)} coins this night to earn a Moon Badge. You have ${S.badges}.`;
   $('prestigeBtn').disabled=nb<1;mapKey=mapSig()}
 let mapKey='';const mapSig=()=>[S.district,S.unlocked,S.caught>=300,S.bosses>=1,S.coins>=DISTRICTS[Math.min(2,S.unlocked)].cost,badgesForReset(),S.badges].join();
-function openDistrict(d){const D=DISTRICTS[d];if(S.coins<D.cost)return;S.coins-=D.cost;S.unlocked=d+1;S.district=d;buildBg();toast('Welcome to '+D.name+'! Every thief is worth x'+D.mult);sfx(392,.15);setTimeout(()=>sfx(587,.2),130);save();render(true)}
+function openDistrict(d){try{if(sound&&S.coins>=DISTRICTS[d].cost)RobinSfx.play('levelup')}catch(_){};const D=DISTRICTS[d];if(S.coins<D.cost)return;S.coins-=D.cost;S.unlocked=d+1;S.district=d;buildBg();toast('Welcome to '+D.name+'! Every thief is worth x'+D.mult);sfx(392,.15);setTimeout(()=>sfx(587,.2),130);save();render(true)}
 $('prestigeBtn').addEventListener('click',()=>{const nb=badgesForReset();if(nb<1)return;showModal('prestige',{nb})});
 const SHOP=[
  {id:'tap',name:'Stronger taps',desc:()=>`Each tap catches ${fmt(perThief()*(2+S.tapLvl)*(owned(7)?1.5:1))} worth`,price:()=>Math.ceil(50*Math.pow(2.4,S.tapLvl)),cur:'coin',col:'#ffc93c',ic:'TAP',buy:()=>{S.tapLvl++}},
@@ -665,5 +660,6 @@ if(!S.seen&&!HEROES.some((_,i)=>owned(i)))showModal('intro');else{$('tapHint').h
 render(true);requestAnimationFrame(tick);
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{return localStorage.getItem('nightshift-sound')!=='off'}catch(e){return true}})());RobinMusic.play('../assets/music/nightshift.mp3',{volume:0.45})}catch(e){}</script>
 
 </html>

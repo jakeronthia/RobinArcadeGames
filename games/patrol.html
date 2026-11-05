@@ -288,6 +288,7 @@ body.lefty .pad.r{right:auto;left:max(18px,calc(env(safe-area-inset-left,0px) + 
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/fx/music.js"></script>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
@@ -1057,7 +1058,7 @@ function nightDone(){if(state!=='play')return;const n=wave/9,bonus=5000*n;addSco
   for(let k=0;k<4;k++)setTimeout(()=>{burst(pl.x+(Math.random()-.5)*6,pl.y+2+Math.random()*3,[0xffc93c,0xff4fa3,0x3ff2ff,0x7dffb8][k],22,8,.16);sfx(523*[1,1.25,1.5,2][k],.25,'square',.05)},k*180);
   PROG.nights=Math.max(PROG.nights||0,n);saveProg()}
 function banner(t){const b=$('banner');b.innerHTML=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show')}
-function nextWave(){wave++;if(wave>=10&&!dailyMode)unlock('wave10');hostT=(wave%3!==0&&wave>=2&&Math.random()<.5)?5+Math.random()*6:-1;const q=[];const boss=wave%3===0;
+function nextWave(){try{if(soundOn&&wave>0)RobinSfx.play('levelup')}catch(_){};wave++;if(wave>=10&&!dailyMode)unlock('wave10');hostT=(wave%3!==0&&wave>=2&&Math.random()<.5)?5+Math.random()*6:-1;const q=[];const boss=wave%3===0;
   if(boss){q.push('boss');for(let i=0;i<1+Math.floor(wave/6);i++)q.push('thug')}
   else{for(let i=0;i<2+wave;i++)q.push('thug');for(let i=0;i<Math.floor(wave/2);i++)q.push('gun');
     for(let i=0;i<Math.floor((wave-1)/2);i++)q.push('drone');for(let i=0;i<Math.floor(wave/3);i++)q.push('acro');if(wave>=4)for(let i=0;i<Math.floor(wave/4);i++)q.push('shield');if(wave>=5)for(let i=0;i<1+Math.floor(wave/8);i++)q.push('sniper');if(wave>=2)for(let i=0;i<1+Math.floor(wave/5);i++)q.push('runner');for(let i=q.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[q[i],q[j]]=[q[j],q[i]]}}
@@ -1612,22 +1613,14 @@ function thump(dur,vol){if(!AC||!soundOn)return;const t=AC.currentTime;noiseHit(
 function mnote(f,t,d,type,v,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(.0001,t);
   g.gain.exponentialRampToValueAtTime(v,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(dest||musicGain);o.start(t);o.stop(t+d+.03)}
 const bossOn=()=>enemies.some(e=>e.type==='boss');
-function musicStart(){if(!AC||musT)return;try{musicGain=AC.createGain();musicGain.gain.value=musicOn?.55:0;musicGain.connect(AC.destination);
-  bassF=AC.createBiquadFilter();bassF.type='lowpass';bassF.frequency.value=420;bassF.connect(musicGain);musNext=AC.currentTime+.1;
-  musT=setInterval(()=>{const st=60/96/2;if(musNext<AC.currentTime-.5)musNext=AC.currentTime+.05;while(musNext<AC.currentTime+.15){const bar=Math.floor(musStep/8)%4,s=musStep%8,[b,tri]=CHORDS[bar];
-    if(s===0||s===3||s===6)mnote(mtof(b),musNext,st*1.7,'sawtooth',.09,bassF);
-    if(s===0||s===4){const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(120,musNext);o.frequency.exponentialRampToValueAtTime(38,musNext+.18);
-      g.gain.setValueAtTime(.16,musNext);g.gain.exponentialRampToValueAtTime(.0001,musNext+.24);o.connect(g).connect(musicGain);o.start(musNext);o.stop(musNext+.26)}
-    if(s%2===1)noiseHit(musNext,.035,.022,7500,musicGain);if(s===2||s===6)noiseHit(musNext,.14,.055,1600,musicGain,true);
-    if(bossOn()||musStep%2===0)mnote(mtof(tri[[0,1,2,1,0,2,1,2][s]]+12),musNext,st*.9,'triangle',.03);
-    musNext+=st;musStep++}},30)}catch(e){}}
+function musicStart(){RobinMusic.play('../assets/music/patrol.mp3',{volume:0.5});RobinMusic.setOn(musicOn)}
 
 /* ---------- settings ---------- */
 try{const st=JSON.parse(localStorage.getItem('ravenport3d-settings'));if(st){musicOn=st.music!==false;soundOn=st.sfx!==false}}catch(e){}
 $('optMusic').checked=musicOn;$('optSfx').checked=soundOn;
 function saveSettings(){try{localStorage.setItem('ravenport3d-settings',JSON.stringify({music:musicOn,sfx:soundOn,glow:glowPref}))}catch(e){}}
 $('optGlow').checked=bloom.on;$('optGlow').addEventListener('change',e=>{glowPref=bloom.on=e.target.checked;saveSettings()});
-$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;if(musicGain)musicGain.gain.value=musicOn?.55:0;saveSettings()});
+$('optMusic').addEventListener('change',e=>{musicOn=e.target.checked;RobinMusic.setOn(musicOn);saveSettings()});
 $('optSfx').addEventListener('change',e=>{soundOn=e.target.checked;if(rainGain)rainGain.gain.value=soundOn?.03:0;saveSettings()});
 let pausedBySettings=false;
 function toggleSettings(force){const open=force!==undefined?force:$('settings').hidden;$('settings').hidden=!open;$('gear').setAttribute('aria-expanded',String(open));
@@ -1683,7 +1676,7 @@ function start(mode){mode=typeof mode==='string'?mode:'normal';dailyMode=mode===
   rainSound();musicStart();toggleSettings(false);if(mode==='normal')clearRun();const sv=mode==='continue'?loadRun():null;if(sv&&DIFFS[sv.diff]){diff=sv.diff;setDiffUI()}
   reset();state='play';$('overlay').hidden=true;rankedRun=!dailyMode&&!sv;window.RobinRanked&&RobinRanked.start('patrol',rankedRun);if(sv)resumeRun(sv);else if(!PROG.tut&&!dailyMode)tutStep(0)}
 let rankedRun=false;
-function gameOver(){state='over';tut=-1;window.RobinRanked&&RobinRanked.end('patrol',score,rankedRun);$('hint').hidden=true;if(dailyMode){submitDaily(score,wave);unlock('daily')}else{submitScore(score,wave);clearRun()}saveProg();refreshTitle();$('cardBtn').hidden=!DL;const rec=score>best.score;if(rec){best={score,wave};try{localStorage.setItem('ravenport3d-best',JSON.stringify(best))}catch(e){}}
+function gameOver(){try{if(soundOn)RobinSfx.play('lose')}catch(_){};state='over';tut=-1;window.RobinRanked&&RobinRanked.end('patrol',score,rankedRun);$('hint').hidden=true;if(dailyMode){submitDaily(score,wave);unlock('daily')}else{submitScore(score,wave);clearRun()}saveProg();refreshTitle();$('cardBtn').hidden=!DL;const rec=score>best.score;if(rec){best={score,wave};try{localStorage.setItem('ravenport3d-best',JSON.stringify(best))}catch(e){}}
   $('oTitle').textContent=rec?'New record!':'Patrol over';
   $('oText').textContent=rec?'The city sleeps a little safer tonight.':'The thieves got away this time. Back up on the beams!';
   $('oHeroes').hidden=true;const r=$('oResult');r.hidden=false;
@@ -1693,5 +1686,6 @@ $('go').addEventListener('click',()=>start('normal'));$('dailyBtn').addEventList
 hud();requestAnimationFrame(loop);
 })();
 </script>
+<script>/* menu music: starts with the first tap */try{RobinMusic.setOn((()=>{try{const st=JSON.parse(localStorage.getItem('ravenport3d-settings'));return !st||st.music!==false}catch(e){return true}})());RobinMusic.play('../assets/music/patrol.mp3',{volume:0.5})}catch(e){}</script>
 
 </html>
