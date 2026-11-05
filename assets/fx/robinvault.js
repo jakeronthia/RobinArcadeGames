@@ -44,10 +44,38 @@
       const modal = setupModal(selector, { contractId: c.vault, theme: 'dark', description: 'Connect to play for the ROBIN Vault.' });
       RV._sel = { selector, modal }; return RV._sel;
     },
-    async account() { const { selector } = await RV.wallet(); const st = selector.store.getState(); const a = st.accounts && st.accounts.find(x => x.active) || (st.accounts || [])[0]; return a ? a.accountId : null; },
+    /* ---------- guest accounts: a NEAR testnet account created on the spot, key kept on this device ---------- */
+    guestId() { try { const g = JSON.parse(localStorage.getItem('rv-guest') || 'null'); return g && g.id ? g.id : null; } catch (e) { return null; } },
+    async nearJs() { if (!RV._nj) RV._nj = import('https://esm.sh/near-api-js@4.0.4?bundle'); return RV._nj; },
+    async guestAccount() {
+      const id = RV.guestId(); if (!id) throw new Error('no guest account'); const c = await RV.ready(); const nj = await RV.nearJs();
+      if (!RV._gnear) { const ks = new nj.keyStores.BrowserLocalStorageKeyStore(window.localStorage, 'robinvault:'); RV._gnear = await nj.connect({ networkId: c.network, nodeUrl: (RPCS[c.network] || RPCS.testnet)[0], keyStore: ks }); }
+      return RV._gnear.account(id);
+    },
+    async createGuest(onStep) {
+      const c = await RV.ready(); if (c.network !== 'testnet') throw new Error('guest accounts are for testnet only');
+      const step = t => { try { onStep && onStep(t); } catch (e) {} };
+      step('Creating your account…'); const nj = await RV.nearJs(); const kp = nj.KeyPair.fromRandom('ed25519');
+      const r = await fetch(new URL('/api/guest', location.href).href, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ publicKey: kp.getPublicKey().toString() }) });
+      const j = await r.json().catch(() => ({})); if (!j.ok) throw new Error(j.error || ('guest service ' + r.status));
+      const ks = new nj.keyStores.BrowserLocalStorageKeyStore(window.localStorage, 'robinvault:'); await ks.setKey(c.network, j.accountId, kp);
+      localStorage.setItem('rv-guest', JSON.stringify({ id: j.accountId, at: Date.now() })); RV._gnear = null;
+      step('Waiting for NEAR to confirm it…');
+      for (let k = 0; k < 20; k++) { try { await RV.rpc({ method: 'query', params: { request_type: 'view_account', finality: 'final', account_id: j.accountId } }); break; } catch (e) { await new Promise(res => setTimeout(res, 1500)); } }
+      step('Getting your free tROBIN…'); try { await RV.send(c.token, 'faucet', {}, '0', 30); } catch (e) {}
+      return j.accountId;
+    },
+    async account() {
+      const g = RV.guestId(); if (g) return g;
+      const { selector } = await RV.wallet(); const st = selector.store.getState(); const a = st.accounts && st.accounts.find(x => x.active) || (st.accounts || [])[0]; return a ? a.accountId : null;
+    },
     async signIn() { const { modal } = await RV.wallet(); modal.show(); },
-    async signOut() { const { selector } = await RV.wallet(); const w = await selector.wallet(); await w.signOut(); },
+    async signOut() {
+      if (RV.guestId()) { localStorage.setItem('rv-guest-old', localStorage.getItem('rv-guest')); localStorage.removeItem('rv-guest'); RV._gnear = null; return; }
+      const { selector } = await RV.wallet(); const w = await selector.wallet(); await w.signOut();
+    },
     async send(receiverId, methodName, args, deposit, tgas) {
+      if (RV.guestId()) { const a = await RV.guestAccount(); return a.functionCall({ contractId: receiverId, methodName, args: args || {}, gas: BigInt(tgas || 100) * 10n ** 12n, attachedDeposit: BigInt(deposit || '0') }); }
       const { selector } = await RV.wallet(); const w = await selector.wallet();
       return w.signAndSendTransaction({ receiverId, actions: [{ type: 'FunctionCall', params: { methodName, args: args || {}, gas: String(BigInt(tgas || 100) * 10n ** 12n), deposit: String(deposit || '0') } }] });
     },

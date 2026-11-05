@@ -112,10 +112,11 @@ input.amt{width:120px;background:#0d0920;border:2px solid var(--line);border-rad
   </section>
 
   <div class="walletbar"><div class="wrap">
-    <div class="who" id="who">Connect a NEAR wallet to play for the pot.</div>
+    <div class="who" id="who">Play instantly with a free testnet account, or connect your NEAR wallet.</div>
     <span class="state" id="bal"></span>
     <button class="btn sm ghost" id="faucetBtn" type="button" hidden>Get free tROBIN</button>
-    <button class="btn sm" id="connectBtn" type="button">Connect wallet</button>
+    <button class="btn sm" id="guestBtn" type="button">Play instantly</button>
+    <button class="btn sm ghost" id="connectBtn" type="button">Connect wallet</button>
   </div></div>
 
   <div class="wrap section">
@@ -241,13 +242,21 @@ function renderBadges(bits){const box=$('badges');box.innerHTML='';RV.BADGES.for
 function renderRun(){const box=$('runBox');let p=null;try{p=JSON.parse(localStorage.getItem('dtv-pending')||'null')}catch(e){}
   if(!p||!cfg||p.day!==cfg.today||!p.moves){box.hidden=true;return}box.hidden=false;const beat=p.win&&p.lives>=VS.daily(p.day).target;box.classList.toggle('win',beat);
   box.innerHTML='<b>Your last defense today: '+p.waves+' waves, '+p.lives+' vault left'+(beat?' · target beaten':'')+'</b><span class="note" id="chk">Checking it against the contract…</span>';
-  const row=document.createElement('div');row.className='row';const s=document.createElement('button');s.className='btn';s.type='button';s.textContent=ME?'Send it to the Vault':'Connect to send it';
-  s.addEventListener('click',async()=>{if(!ME){RV.signIn();return}const out=await tx('Sending your defense',C.vault,'submit',{day:p.day,moves:p.moves},'0',300);const v=RV.result(out);if(v)toast(v.winner?'Verified: you are a winner today!':'Verified: '+v.waves+' waves, '+v.lives+' vault.');if(p.bonus!==cfg.hero_of_week)toast('Note: the hero of the week changed since you played.')});
+  const row=document.createElement('div');row.className='row';const s=document.createElement('button');s.className='btn';s.type='button';s.textContent=ME?'Send it to the Vault':'Play instantly to send it';
+  s.addEventListener('click',async()=>{if(!ME){$('guestBtn').click();return}const out=await tx('Sending your defense',C.vault,'submit',{day:p.day,moves:p.moves},'0',300);const v=RV.result(out);if(v)toast(v.winner?'Verified: you are a winner today!':'Verified: '+v.waves+' waves, '+v.lives+' vault.');if(p.bonus!==cfg.hero_of_week)toast('Note: the hero of the week changed since you played.')});
   row.appendChild(s);box.appendChild(row);
   RV.vaultView('check',{day:p.day,moves:p.moves}).then(v=>{$('chk').textContent=v.ok?'The contract agrees: '+(v.win?'all 12 waves, ':v.waves+' waves, ')+v.lives+' vault left (target '+v.target+').':'The contract cannot replay this defense.'}).catch(()=>{$('chk').textContent='Free check unavailable right now.'})}
 function countdown(){const ms=86400000-Date.now()%86400000;const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);$('ends').textContent=h+'h '+m+'m'}
 
-$('connectBtn').addEventListener('click',async()=>{if(ME){await RV.signOut();ME=null;$('who').textContent='Connect a NEAR wallet to play for the pot.';$('connectBtn').textContent='Connect wallet';$('bal').textContent='';$('faucetBtn').hidden=true;refresh();return}RV.signIn()});
+const WHO0='Play instantly with a free testnet account, or connect your NEAR wallet.';
+function paintWho(){const g=RV.guestId();$('who').innerHTML=ME?(g?'Guest account <b>'+ME+'</b> · kept on this device':'Playing as <b>'+ME+'</b>'):WHO0;$('connectBtn').textContent=ME?'Sign out':'Connect wallet';$('guestBtn').hidden=!!ME||(C&&C.network!=='testnet')}
+$('connectBtn').addEventListener('click',async()=>{if(ME){if(RV.guestId()&&!confirm('Sign out of the guest account? Its key stays saved on this device, so you can come back with "Play instantly".'))return;await RV.signOut();ME=null;paintWho();$('bal').textContent='';$('faucetBtn').hidden=true;refresh();return}RV.signIn()});
+$('guestBtn').addEventListener('click',async()=>{const b=$('guestBtn');b.disabled=true;
+  try{let old=null;try{old=JSON.parse(localStorage.getItem('rv-guest-old')||'null')}catch(e){}
+    if(old&&old.id){localStorage.setItem('rv-guest',JSON.stringify(old));localStorage.removeItem('rv-guest-old')}
+    else await RV.createGuest(t=>{$('who').textContent=t});
+    ME=RV.guestId();paintWho();toast('Welcome, '+ME+'! You have free tROBIN to play with.');await refresh()}
+  catch(e){toast('Could not create the account: '+String(e.message||e).slice(0,120));paintWho()}finally{b.disabled=false}});
 $('faucetBtn').addEventListener('click',()=>tx('Getting free tROBIN',C.token,'faucet',{},'0',30));
 $('ticketBtn').addEventListener('click',()=>tx('Buying a ticket',C.token,'ft_transfer_call',{receiver_id:C.vault,amount:cfg.ticket,msg:JSON.stringify({a:'ticket'})},'1',150));
 $('voteBtn').addEventListener('click',()=>{if(pickHero<0)return;const n=Math.max(1,Math.floor(+$('voteAmt').value||0));tx('Locking your vote',C.token,'ft_transfer_call',{receiver_id:C.vault,amount:(BigInt(n)*10n**18n).toString(),msg:JSON.stringify({a:'vote',h:pickHero})},'1',150)});
@@ -260,10 +269,11 @@ $('settleWeekBtn').addEventListener('click',()=>tx('Closing last week',C.vault,'
   $('addrNote').innerHTML='Vault contract: <a target="_blank" rel="noopener" href="'+explorer(C.vault)+'">'+C.vault+'</a> · token: <a target="_blank" rel="noopener" href="'+explorer(C.token)+'">'+C.token+'</a> · burn address: <a target="_blank" rel="noopener" href="'+explorer(C.burn_to)+'">'+C.burn_to.slice(0,10)+'…</a>';
   if(!C.locked)$('lockTag').hidden=true;
   try{await refresh()}catch(e){$('offline').hidden=false;$('offline').textContent='Could not reach NEAR right now: '+e.message}
-  try{const {selector}=await RV.wallet();const upd=async()=>{ME=await RV.account();$('who').innerHTML=ME?'Playing as <b>'+ME+'</b>':'Connect a NEAR wallet to play for the pot.';$('connectBtn').textContent=ME?'Disconnect':'Connect wallet';try{await refresh()}catch(e){}};
+  if(RV.guestId()){ME=RV.guestId();paintWho();try{await refresh()}catch(e){}}else paintWho();
+  try{const {selector}=await RV.wallet();const upd=async()=>{ME=await RV.account();paintWho();try{await refresh()}catch(e){}};
     selector.store.observable.subscribe(()=>upd());await upd();
     if(new URLSearchParams(location.search).get('transactionHashes'))toast('Transaction confirmed');
-    if(new URLSearchParams(location.search).get('submit')&&!ME)RV.signIn()}catch(e){$('who').textContent='Wallet unavailable: '+String(e.message||e).slice(0,100)}
+    if(new URLSearchParams(location.search).get('submit')&&!ME)toast('Press "Play instantly" or connect a wallet to send your defense')}catch(e){if(!ME)$('who').textContent='Wallet unavailable: '+String(e.message||e).slice(0,100)}
   setInterval(()=>refresh().catch(()=>{}),30000)})();
 })();
 </script>
