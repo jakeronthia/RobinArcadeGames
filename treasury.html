@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>The Vault · ROBIN Arcade</title>
-<meta name="description" content="The ROBIN Vault: a treasury that only follows its rules. Daily rituals, burns, a community goal and the hero of the week, all on NEAR.">
+<title>Prize Pool · ROBIN Arcade</title>
+<meta name="description" content="Play any ROBIN Arcade game for the pot: an instant jackpot, a weekly prize pool and burns, all run by a contract on NEAR.">
 <meta name="theme-color" content="#0a0712">
 <link rel="icon" href="assets/icon.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -70,6 +70,28 @@ input.amt{width:120px;background:#0d0920;border:2px solid var(--line);border-rad
 .offline{padding:16px;border:2px dashed var(--line);border-radius:18px;color:var(--dim)}
 @media (max-width:520px){.ctr b{font-size:21px}}
 @media (max-width:860px){.vhero .wrap{grid-template-columns:1fr;padding-top:28px}.grid2{grid-template-columns:1fr}.badges{grid-template-columns:repeat(2,1fr)}.walletbar{top:56px}}
+.gamegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gamegrid a{display:flex;flex-direction:column;gap:4px;border:2px solid var(--line);border-radius:14px;padding:6px;text-decoration:none;color:var(--ink);font-weight:800;font-size:13px;background:#120d28}
+.gamegrid a img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:9px}
+.gamegrid a:hover{border-color:var(--gold)}
+.split{display:flex;border-radius:12px;overflow:hidden;font-size:11px;font-weight:900;color:#140a28}
+.split span{flex:0 0 var(--w);background:var(--c);padding:6px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed{display:flex;flex-direction:column;gap:6px;max-height:420px;overflow:auto}
+.fd{display:grid;grid-template-columns:1fr auto;gap:2px 10px;background:#120d28;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}
+.fd b{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fd span{color:var(--dim);font-size:12.5px}
+.fd em{font-style:normal;font-weight:900;color:var(--mute);text-align:right}
+.fd.win{border-color:var(--gold);background:rgba(255,201,60,.12)}.fd.win em{color:var(--gold)}
+.board{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;counter-reset:b}
+.board li{counter-increment:b;display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;background:#120d28;border:1px solid var(--line);border-radius:12px;padding:7px 12px;font-size:14px}
+.board li::before{content:counter(b);font-family:var(--display);color:var(--gold)}
+.board li b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board li span{color:var(--dim);font-variant-numeric:tabular-nums}
+.board li em{font-style:normal;font-weight:900;color:var(--green);font-variant-numeric:tabular-nums}
+.board li.me{border-color:var(--gold)}
+.board .empty{grid-template-columns:1fr;color:var(--mute)}.board .empty::before{content:none}
+.ctr.jackpot b{font-size:34px;text-shadow:0 0 24px rgba(255,201,60,.5)}
+@media (max-width:520px){.gamegrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body data-music="assets/music/home.mp3">
@@ -79,7 +101,7 @@ input.amt{width:120px;background:#0d0920;border:2px solid var(--line);border-rad
     <a class="logo" href="./">ROBIN <span>Arcade</span></a>
     <nav class="nav" aria-label="Main">
       <a href="./#games">Games</a>
-      <a href="treasury.html" aria-current="page">The Vault</a>
+      <a href="treasury.html" aria-current="page">Prize Pool</a>
       <a href="./#heroes">Heroes</a>
       <a href="./#token">Token</a>
       <a href="kit.html">Meme kit</a>
@@ -98,15 +120,15 @@ input.amt{width:120px;background:#0d0920;border:2px solid var(--line);border-rad
     <div class="wrap">
       <div>
         <span class="pill-tag">On NEAR · <span id="net">testnet</span></span>
-        <h1>The <em>Vault</em></h1>
-        <p>A treasury that only follows its rules. Every ticket burns $ROBIN, every day ends with a ritual anyone can run, and the contract replays your whole defense before it pays you. No owner, no withdraw button.</p>
+        <h1>Play for the <em>pot</em></h1>
+        <p>Every game on ROBIN Arcade can be played for free or for the pot. A game for the pot costs about $0.10 in $ROBIN, rolls the instant jackpot and counts for the weekly prize pool. A contract on NEAR runs every rule: no owner, no withdraw button.</p>
         <span class="lock" id="lockTag">Contract locked: nobody holds its keys · <a id="srcLink" href="https://github.com/jakeronthia/RobinArcadeGames/tree/main/vault-contract" target="_blank" rel="noopener">read the code</a></span>
       </div>
       <div class="counters">
-        <div class="ctr burn"><small>Burned forever</small><b id="cBurn">–</b><span>sent to an address with no key</span></div>
-        <div class="ctr pot"><small>Today's pot</small><b id="cPot">–</b><span id="cPotS">winners split it at midnight UTC</span></div>
-        <div class="ctr"><small>Weekly reserve</small><b id="cRes">–</b><span id="cResS">shared if the goal is met</span></div>
-        <div class="ctr"><small>Defenses verified</small><b id="cRuns">–</b><span id="cTix">replayed onchain</span></div>
+        <div class="ctr pot jackpot"><small>Instant jackpot</small><b id="cJack">–</b><span id="cJackS">1 in 2,000 on every game for the pot</span></div>
+        <div class="ctr"><small>Weekly prize pool</small><b id="cPool">–</b><span id="cPoolS">shared on Sunday night (UTC)</span></div>
+        <div class="ctr burn"><small>Burned forever</small><b id="cBurn">–</b><span>15% of every game for the pot</span></div>
+        <div class="ctr"><small>Games for the pot</small><b id="cPlays">–</b><span id="cPlaysS">and free rolls</span></div>
       </div>
     </div>
   </section>
@@ -122,160 +144,68 @@ input.amt{width:120px;background:#0d0920;border:2px solid var(--line);border-rad
   <div class="wrap section">
     <div id="offline" class="offline" hidden></div>
     <div class="grid2">
-      <div class="panel" id="today">
-        <span class="k">Daily ritual · ends in <span id="ends">–</span></span>
-        <h2 id="twName">Today's challenge</h2>
-        <p id="twText"></p>
-        <div class="row"><span class="state" id="tixState">Ticket: –</span></div>
-        <div class="row">
-          <button class="btn" id="ticketBtn" type="button" disabled>Buy a ticket</button>
-          <a class="btn ghost" href="game.html?g=vault">Play Defend the Vault</a>
-        </div>
-        <p class="note" id="ticketNote">A ticket costs 10 tROBIN: 5 are burned at once, 4 go to today's pot, 1 to the weekly reserve. Playing without a ticket is free and still counts for the community goal and badges.</p>
+      <div class="panel">
+        <span class="k">Pick a game</span>
+        <h2>Free or for the pot</h2>
+        <p>Open any game and choose. For the pot: <b id="priceT">1 tROBIN</b> a game, a 1 in <span id="oddsP">2,000</span> shot at the jackpot. Free with an account: up to <span id="freeN">10</span> free rolls a day at 1 in <span id="oddsF">200,000</span>.</p>
+        <div class="gamegrid" id="games"></div>
+        <div class="split"><span style="--w:50%;--c:var(--gold)">50% weekly pool</span><span style="--w:30%;--c:#ff7ab8">30% jackpot</span><span style="--w:15%;--c:#ff5a78">15% burned</span><span style="--w:5%;--c:var(--sky,#7fe3ff)">5%</span></div>
+        <p class="note">Where every game for the pot goes. The last 5% seeds next week's pool. A jackpot winner takes 90%, the other 10% starts the next jackpot.</p>
+      </div>
+      <div class="panel">
+        <span class="k">Live · last games</span>
+        <h2>Who just played</h2>
+        <div class="feed" id="feed"><p class="note">No games yet. Be the first.</p></div>
+      </div>
+      <div class="panel">
+        <span class="k">Vault Cup · 60% of the pool · ends in <span id="ends">–</span></span>
+        <h2 id="cupName">Defend the Vault</h2>
+        <p id="cupText">The best Defend the Vault scores of the week. The contract replays every defense before it counts.</p>
+        <ol class="board" id="cup"></ol>
         <div class="run" id="runBox" hidden></div>
       </div>
-
       <div class="panel">
-        <span class="k">Community goal · week <span id="wkN">–</span></span>
-        <h2><span id="wkWaves">0</span> / <span id="wkGoal">–</span> waves</h2>
-        <div class="bar"><i id="wkBar"></i></div>
-        <p>Every verified defense adds the waves it cleared (your best of the day). Reach the goal together and the weekly reserve is split between everyone who played. Miss it and the reserve is burned.</p>
-        <div class="row"><span class="state" id="wkPlayers">0 players</span><span class="note" id="wkKeeper"></span></div>
+        <span class="k">Most active · 40% of the pool</span>
+        <h2>The regulars</h2>
+        <p>Everyone who plays for the pot, in any game, climbs this list. Payments cannot be faked, so neither can this ranking.</p>
+        <ol class="board" id="active"></ol>
       </div>
-
       <div class="panel">
-        <span class="k">Hero of the week</span>
-        <h2 id="howTitle">Vote with your tokens</h2>
-        <p>Lock tROBIN on a hero. The hero with the most locked tokens hits 25% harder in Defend the Vault next week, for everyone. Your tokens come back when the week ends.</p>
-        <div class="heroes" id="heroes"></div>
-        <div class="row"><input class="amt" id="voteAmt" type="number" min="1" value="20" aria-label="Amount to lock"><button class="btn" id="voteBtn" type="button" disabled>Lock and vote</button></div>
-        <p class="note" id="voteNote"></p>
-      </div>
-
-      <div class="panel">
-        <span class="k">Rituals anyone can run</span>
-        <h2>Close the day, close the week</h2>
-        <p>The contract never acts on its own and nobody can act for it. Anyone can close a finished day or week, and the rules decide what happens to the tokens.</p>
-        <div class="row"><button class="btn ghost" id="settleDayBtn" type="button" disabled>Close yesterday</button><button class="btn ghost" id="settleWeekBtn" type="button" disabled>Close last week</button></div>
-        <p class="note" id="settleNote"></p>
+        <span class="k">You</span>
+        <h2 id="youT">Your week</h2>
+        <div class="row"><span class="state" id="youS">Sign in to see your games, rolls and prizes.</span></div>
         <div class="claims" id="claims"></div>
+        <div class="row"><button class="btn ghost" id="settleBtn" type="button" disabled>Close last week</button></div>
+        <p class="note" id="settleNote">Anyone can close a finished week: the contract pays the two top 10s and rolls the rest into the new week.</p>
       </div>
-    </div>
-
-    <div class="panel">
-      <span class="k">Your badges · soulbound, stored in the contract</span>
-      <div class="badges" id="badges"></div>
+      <div class="panel">
+        <span class="k">Badges · stored in the contract</span>
+        <div class="badges" id="badges"></div>
+      </div>
     </div>
 
     <div class="panel">
       <span class="k">The rules, as the contract runs them</span>
       <ol class="rules">
-        <li><div><b>Tickets burn.</b> A daily ticket costs 10 tokens: half is sent to an address nobody controls, 40% fills today's pot, 10% the weekly reserve.</div></li>
-        <li><div><b>Moves, not scores.</b> You send the list of moves you made. The contract replays the whole defense with the same rules as the game and decides if you beat today's target.</div></li>
-        <li><div><b>Midnight ritual.</b> Once the day is over anyone can close it. Ticket holders who beat the target split the pot. If nobody did, the thieves take it: the pot is burned.</div></li>
-        <li><div><b>The city plays together.</b> Every verified defense counts toward the weekly goal. Goal met: the reserve goes to every player of the week. Missed: it is burned.</div></li>
-        <li><div><b>Holders steer the game.</b> Locked votes pick the hero of the week, who is stronger in everyone's next defense.</div></li>
-        <li><div><b>Records that stay.</b> Badges are written to your player record and cannot be sold or moved. The player with the most wins in a week becomes Vault Keeper.</div></li>
+        <li><div><b>Free or for the pot.</b> Every game can be played for free. A game for the pot costs about $0.10 in $ROBIN (1 tROBIN on testnet).</div></li>
+        <li><div><b>Instant jackpot.</b> Each game for the pot has a 1 in 2,000 chance to win the jackpot on the spot. Free players with an account get a few free rolls a day at 1 in 200,000.</div></li>
+        <li><div><b>Burned on every game.</b> 15% of each game for the pot goes to an address nobody controls. The more people play, the less $ROBIN there is.</div></li>
+        <li><div><b>The weekly pool.</b> Half of every game for the pot fills the weekly pool. 60% goes to the Vault Cup top 10, 40% to the 10 most active players. Ranks get 25, 18, 13, 10, 8, 7, 6, 5, 4 and 4% of each part.</div></li>
+        <li><div><b>Moves, not scores.</b> Vault Cup players send their moves. The contract replays the whole defense with the game's own rules, so a score cannot be invented.</div></li>
+        <li><div><b>No owner.</b> Anyone can close a finished week, and the contract has no withdraw method and no keys.</div></li>
       </ol>
       <p class="note" id="addrNote"></p>
     </div>
   </div>
 </main>
 
-<footer class="site-foot"><div class="wrap"><span>ROBIN Arcade · The Vault runs on NEAR <span id="net2">testnet</span> with a demo token while the hackathon lasts.</span></div></footer>
+<footer class="site-foot"><div class="wrap"><span>ROBIN Arcade · the prize pool runs on NEAR <span id="net2">testnet</span> with a demo token while the hackathon lasts.</span></div></footer>
 
 <script src="data.js"></script>
 <script src="assets/fx/music.js"></script>
 <script src="site.js"></script>
 <script src="assets/fx/vaultsim.js"></script>
 <script src="assets/fx/robinvault.js"></script>
-<script>
-(()=>{
-const $=id=>document.getElementById(id),RV=window.RobinVault,VS=window.VaultSim;
-const HERO_IMG=['atreus','frazzle','hoot','baller','ilia','leonidas'];
-let C=null,ME=null,ST=null,cfg=null,pickHero=-1;
-const toast=t=>{const el=document.createElement('div');el.className='toast2';el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),4200)};
-const T=x=>RV.fmt(x)+' tROBIN';
-const explorer=a=>(C.network==='mainnet'?'https://nearblocks.io/address/':'https://testnet.nearblocks.io/address/')+a;
-
-async function tx(label,receiver,method,args,deposit,tgas){
-  try{toast(label+'…');const out=await RV.send(receiver,method,args,deposit,tgas);toast(label+': done');setTimeout(refresh,1500);return out}
-  catch(e){toast(label+' failed: '+String(e.message||e).slice(0,140));throw e}}
-
-async function refresh(){
-  cfg=await RV.vaultView('config');const day=cfg.today,week=cfg.week;
-  const [d,w,prev]=await Promise.all([RV.vaultView('get_day',{day}),RV.vaultView('get_week',{week}),RV.vaultView('get_day',{day:day-1})]);
-  $('cBurn').textContent=T(cfg.burned);$('cPot').textContent=T(d.pot);$('cPotS').textContent=d.tickets+' ticket'+(d.tickets===1?'':'s')+' today · '+d.winners+' winner'+(d.winners===1?'':'s')+' so far';
-  $('cRes').textContent=T(w.reserve);$('cRuns').textContent=cfg.runs.toLocaleString('en');$('cTix').textContent=cfg.tickets+' tickets sold · '+T(cfg.paid)+' paid out';
-  $('wkN').textContent=week;$('wkWaves').textContent=w.waves;$('wkGoal').textContent=cfg.goal;$('wkBar').style.width=Math.min(100,w.waves/cfg.goal*100)+'%';
-  $('wkPlayers').textContent=w.players+' player'+(w.players===1?'':'s')+' this week';$('wkKeeper').textContent=w.keeper?'Vault Keeper so far: '+w.keeper+' ('+w.keeper_wins+' wins)':'';
-  const dl=VS.daily(day);$('twName').textContent=dl.name;$('twText').textContent=dl.text+(cfg.hero_of_week>=0?' Hero of the week: '+RV.HEROES[cfg.hero_of_week]+' (+25%).':'');
-  // votes
-  const box=$('heroes');box.innerHTML='';const votes=w.votes.map(v=>BigInt(v));const top=votes.reduce((m,v,i)=>v>votes[m]?i:m,0);
-  RV.HEROES.forEach((n,i)=>{const b=document.createElement('button');b.type='button';b.className='hv'+(i===pickHero?' on':'')+(votes[i]>0n&&i===top?' top':'');b.innerHTML='<img alt="" src="assets/heroes/'+HERO_IMG[i]+'.png"><b>'+n+'</b><span>'+RV.fmt(votes[i])+'</span>';
-    b.addEventListener('click',()=>{pickHero=i;box.querySelectorAll('.hv').forEach((x,k)=>x.classList.toggle('on',k===i));$('voteBtn').disabled=!ME});box.appendChild(b)});
-  $('howTitle').textContent=cfg.hero_of_week>=0?'This week: '+RV.HEROES[cfg.hero_of_week]+' +25%':'Vote with your tokens';
-  // rituals
-  $('settleDayBtn').disabled=!ME||prev.settled||(prev.tickets===0&&BigInt(prev.pot)===0n);
-  $('settleNote').textContent=prev.settled?'Yesterday is closed: '+(prev.winners?prev.winners+' winner(s) got '+T(prev.share)+' each.':'no winner, '+T(prev.burned)+' burned.'):(prev.tickets?'Yesterday is waiting to be closed ('+T(prev.pot)+' in the pot).':'Nothing to close for yesterday.');
-  if(week>0){const lw=await RV.vaultView('get_week',{week:week-1});$('settleWeekBtn').disabled=!ME||lw.settled||(BigInt(lw.reserve)===0n&&lw.players===0);
-    if(lw.settled)$('settleNote').textContent+=' Last week: '+(lw.goal_met?'goal met, '+T(lw.share)+' for each player.':'goal missed, reserve burned.')}
-  await refreshMe(day,week);
-}
-async function refreshMe(day,week){
-  if(!ME){$('ticketBtn').disabled=true;$('voteBtn').disabled=true;$('tixState').textContent='Connect a wallet to buy a ticket';renderBadges(0);renderRun();return}
-  const [bal,p,st]=await Promise.all([RV.tokenView('ft_balance_of',{account_id:ME}),RV.vaultView('get_player',{account_id:ME}),RV.vaultView('status',{account_id:ME,day})]);ST=st;
-  $('bal').textContent=T(bal);$('faucetBtn').hidden=BigInt(bal)>=1000n*10n**18n||C.network!=='testnet';
-  $('tixState').textContent=st.ticket?(st.winner?'Ticket ✓ · you beat today’s target!':'Ticket ✓ · beat the target to win a share'):'No ticket yet for today';
-  $('ticketBtn').disabled=st.ticket||BigInt(bal)<BigInt(cfg.ticket);$('ticketBtn').textContent=st.ticket?'Ticket bought':'Buy a ticket · '+T(cfg.ticket);
-  $('voteBtn').disabled=pickHero<0;$('voteNote').textContent=st.vote?'You locked '+T(st.vote.amount)+' on '+RV.HEROES[st.vote.hero]+' this week.':'';
-  renderBadges(p.badges);
-  const cl=$('claims');cl.innerHTML='';
-  for(const d of p.days_to_claim){const info=await RV.vaultView('get_day',{day:d});const el=document.createElement('div');el.className='claim';el.innerHTML='<span>Day '+d+' pot'+(info.settled?' · '+T(info.share):' · waiting to be closed')+'</span>';
-    const b=document.createElement('button');b.className='btn sm';b.type='button';b.textContent=info.settled?'Claim':'Close day';b.addEventListener('click',()=>info.settled?tx('Claiming',C.vault,'claim_day',{day:d},'0',60):tx('Closing day '+d,C.vault,'settle_day',{day:d},'0',60));el.appendChild(b);cl.appendChild(el)}
-  for(const w of [week-1,week-2])if(w>=0){const wk=await RV.vaultView('get_week',{week:w});const s=await RV.vaultView('status',{account_id:ME,day:w*cfg.week_days});
-    if(wk.settled&&wk.goal_met&&s.week_played===1){const el=document.createElement('div');el.className='claim';el.innerHTML='<span>Week '+w+' reward · '+T(wk.share)+'</span>';const b=document.createElement('button');b.className='btn sm';b.type='button';b.textContent='Claim';b.addEventListener('click',()=>tx('Claiming',C.vault,'claim_week',{week:w},'0',60));el.appendChild(b);cl.appendChild(el)}
-    if(s.vote&&w<week){const el=document.createElement('div');el.className='claim';el.innerHTML='<span>Vote of week '+w+' · '+T(s.vote.amount)+' locked</span>';const b=document.createElement('button');b.className='btn sm ghost';b.type='button';b.textContent='Unlock';b.addEventListener('click',()=>tx('Unlocking',C.vault,'unlock',{week:w},'0',60));el.appendChild(b);cl.appendChild(el)}}
-  renderRun();
-}
-function renderBadges(bits){const box=$('badges');box.innerHTML='';RV.BADGES.forEach(([bit,n,t],i)=>{const got=(bits&bit)!==0;const el=document.createElement('div');el.className='bd'+(got?' got':'');el.innerHTML='<i>'+(got?'★':(i+1))+'</i><b>'+n+'</b><span>'+t+'</span>';box.appendChild(el)})}
-function renderRun(){const box=$('runBox');let p=null;try{p=JSON.parse(localStorage.getItem('dtv-pending')||'null')}catch(e){}
-  if(!p||!cfg||p.day!==cfg.today||!p.moves){box.hidden=true;return}box.hidden=false;const beat=p.win&&p.lives>=VS.daily(p.day).target;box.classList.toggle('win',beat);
-  box.innerHTML='<b>Your last defense today: '+p.waves+' waves, '+p.lives+' vault left'+(beat?' · target beaten':'')+'</b><span class="note" id="chk">Checking it against the contract…</span>';
-  const row=document.createElement('div');row.className='row';const s=document.createElement('button');s.className='btn';s.type='button';s.textContent=ME?'Send it to the Vault':'Play instantly to send it';
-  s.addEventListener('click',async()=>{if(!ME){$('guestBtn').click();return}const out=await tx('Sending your defense',C.vault,'submit',{day:p.day,moves:p.moves},'0',300);const v=RV.result(out);if(v)toast(v.winner?'Verified: you are a winner today!':'Verified: '+v.waves+' waves, '+v.lives+' vault.');if(p.bonus!==cfg.hero_of_week)toast('Note: the hero of the week changed since you played.')});
-  row.appendChild(s);box.appendChild(row);
-  RV.vaultView('check',{day:p.day,moves:p.moves}).then(v=>{$('chk').textContent=v.ok?'The contract agrees: '+(v.win?'all 12 waves, ':v.waves+' waves, ')+v.lives+' vault left (target '+v.target+').':'The contract cannot replay this defense.'}).catch(()=>{$('chk').textContent='Free check unavailable right now.'})}
-function countdown(){const ms=86400000-Date.now()%86400000;const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000);$('ends').textContent=h+'h '+m+'m'}
-
-const WHO0='Play instantly with a free testnet account, or connect your NEAR wallet.';
-function paintWho(){const g=RV.guestId();$('who').innerHTML=ME?(g?'Guest account <b>'+ME+'</b> · kept on this device':'Playing as <b>'+ME+'</b>'):WHO0;$('connectBtn').textContent=ME?'Sign out':'Connect wallet';$('guestBtn').hidden=!!ME||(C&&C.network!=='testnet')}
-$('connectBtn').addEventListener('click',async()=>{if(ME){if(RV.guestId()&&!confirm('Sign out of the guest account? Its key stays saved on this device, so you can come back with "Play instantly".'))return;await RV.signOut();ME=null;paintWho();$('bal').textContent='';$('faucetBtn').hidden=true;refresh();return}RV.signIn()});
-$('guestBtn').addEventListener('click',async()=>{const b=$('guestBtn');b.disabled=true;
-  try{let old=null;try{old=JSON.parse(localStorage.getItem('rv-guest-old')||'null')}catch(e){}
-    if(old&&old.id){localStorage.setItem('rv-guest',JSON.stringify(old));localStorage.removeItem('rv-guest-old')}
-    else await RV.createGuest(t=>{$('who').textContent=t});
-    ME=RV.guestId();paintWho();toast('Welcome, '+ME+'! You have free tROBIN to play with.');await refresh()}
-  catch(e){toast('Could not create the account: '+String(e.message||e).slice(0,120));paintWho()}finally{b.disabled=false}});
-$('faucetBtn').addEventListener('click',()=>tx('Getting free tROBIN',C.token,'faucet',{},'0',30));
-$('ticketBtn').addEventListener('click',()=>tx('Buying a ticket',C.token,'ft_transfer_call',{receiver_id:C.vault,amount:cfg.ticket,msg:JSON.stringify({a:'ticket'})},'1',150));
-$('voteBtn').addEventListener('click',()=>{if(pickHero<0)return;const n=Math.max(1,Math.floor(+$('voteAmt').value||0));tx('Locking your vote',C.token,'ft_transfer_call',{receiver_id:C.vault,amount:(BigInt(n)*10n**18n).toString(),msg:JSON.stringify({a:'vote',h:pickHero})},'1',150)});
-$('settleDayBtn').addEventListener('click',()=>tx('Closing yesterday',C.vault,'settle_day',{day:cfg.today-1},'0',60));
-$('settleWeekBtn').addEventListener('click',()=>tx('Closing last week',C.vault,'settle_week',{week:cfg.week-1},'0',60));
-
-(async()=>{countdown();setInterval(countdown,30000);
-  try{C=await RV.ready()}catch(e){$('offline').hidden=false;$('offline').textContent='The Vault contract is being deployed. Come back in a few minutes.';return}
-  $('net').textContent=C.network;$('net2').textContent=C.network;
-  $('addrNote').innerHTML='Vault contract: <a target="_blank" rel="noopener" href="'+explorer(C.vault)+'">'+C.vault+'</a> · token: <a target="_blank" rel="noopener" href="'+explorer(C.token)+'">'+C.token+'</a> · burn address: <a target="_blank" rel="noopener" href="'+explorer(C.burn_to)+'">'+C.burn_to.slice(0,10)+'…</a>';
-  if(!C.locked)$('lockTag').hidden=true;
-  try{await refresh()}catch(e){$('offline').hidden=false;$('offline').textContent='Could not reach NEAR right now: '+e.message}
-  if(RV.guestId()){ME=RV.guestId();paintWho();try{await refresh()}catch(e){}}else paintWho();
-  try{const {selector}=await RV.wallet();const upd=async()=>{ME=await RV.account();paintWho();try{await refresh()}catch(e){}};
-    selector.store.observable.subscribe(()=>upd());await upd();
-    if(new URLSearchParams(location.search).get('transactionHashes'))toast('Transaction confirmed');
-    if(new URLSearchParams(location.search).get('submit')&&!ME)toast('Press "Play instantly" or connect a wallet to send your defense')}catch(e){if(!ME)$('who').textContent='Wallet unavailable: '+String(e.message||e).slice(0,100)}
-  setInterval(()=>refresh().catch(()=>{}),30000)})();
-})();
-</script>
+<script src="treasury.js"></script>
 </body>
 </html>

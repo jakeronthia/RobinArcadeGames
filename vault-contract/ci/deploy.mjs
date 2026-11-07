@@ -49,13 +49,13 @@ try {
   say('production config', await view(vault, 'config'));
   // ---- fast test pool: 1-minute weeks, the jackpot always hits ----
   const tv = await sub('testvault', '2.6'); await (await acct(tv)).deployContract(W('robin_vault.wasm'));
-  await call(tv, tv, 'new', { token, burn_to: BURN, price: PRICE, odds_paid: 1, odds_free: 1, free_per_day: 2, epoch_secs: 60, week_days: 1 });
+  await call(tv, tv, 'new', { token, burn_to: BURN, price: PRICE, odds_paid: 1, odds_free: 1, free_per_day: 2, epoch_secs: 60, week_days: 3 });
   await call(MAIN, token, 'register', { account_id: tv });
   const p1 = await sub('p1', '0.5'), p2 = await sub('p2', '0.5');
   for (const p of [p1, p2]) { await call(p, token, 'faucet', {}); }
   const bal = async a => BigInt(await view(token, 'ft_balance_of', { account_id: a }));
   const now = () => Math.floor(Date.now() / 1000);
-  let left = 60 - (now() % 60); if (left < 45) { say('waiting', left, 's for a fresh test week'); await sleep((left + 2) * 1000); }
+  let left = 180 - (now() % 180); if (left < 150) { say('waiting', left, 's for a fresh test week'); await sleep((left + 2) * 1000); }
   let cfg = await view(tv, 'config'); const week = cfg.week; say('test week', week);
   const bm = bestMoves(week, -1); say('bot defense for the cup', bm.rp);
   // p1 funds the test jackpot, then a paid play wins it at once (odds 1 in 1)
@@ -69,7 +69,7 @@ try {
   let noCredit = 'accepted?!'; try { await call(p2, tv, 'submit', { week, moves: bm.moves }, '0', 300); } catch (e) { noCredit = 'rejected: ' + (e.message.match(/panicked: ([^"]+)/) || [0, e.message.slice(0, 100)])[1]; } say('p2 submits again without paying:', noCredit);
   const fr = await call(p1, tv, 'free_roll', { game: 'patrol' }); say('p1 free roll', fr.val, fr.logs.join(' | '));
   say('test week', await view(tv, 'get_week', { week })); say('feed', (await view(tv, 'feed')).map(f => f.account.split('.')[0] + ':' + f.game + ':' + (f.paid ? 'paid' : 'free') + ':' + f.won).join(', '));
-  const wait = 60 - (now() % 60) + 3; say('waiting', wait, 's for the test week to end'); await sleep(wait * 1000);
+  const wait = 180 - (now() % 180) + 4; say('waiting', wait, 's for the test week to end'); await sleep(wait * 1000);
   const st = await call(p1, tv, 'settle_week', { week }); say('week closed:', st.logs.join(' | '));
   const w2 = await view(tv, 'get_week', { week }); say('shares cup', w2.cup_shares, 'active', w2.active_shares);
   const c0 = await bal(p2); await call(p2, tv, 'claim', { week }, '0', 100); const c1 = await bal(p2); say('p2 claimed', ((c1 - c0) * 1000n / ONE).toString(), '/1000 tROBIN');

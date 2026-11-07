@@ -27,9 +27,8 @@
     // the moves the game records, in the compact form the contract parses
     encode(moves) { return moves.map(([t, a]) => t + ':' + (a[0] === 'place' ? 'p,' + a.slice(1).join(',') : a[0] === 'up' ? 'u,' + a.slice(1).join(',') : a[0] === 'sell' ? 's,' + a.slice(1).join(',') : 'g')).join(';'); },
     HEROES: ['Atreus', 'Frazzle', 'Hoot', 'Baller', 'Ilia', 'Leonidas'],
-    BADGES: [[1, 'First defense', 'Sent a verified defense to the Vault'], [2, 'Vault safe', 'Cleared all 12 waves'], [4, 'Untouched', 'Cleared all 12 waves without losing any vault'],
-      [8, 'Daily champion', 'Beat a daily target with a ticket'], [16, 'Seven nights', 'Beat the daily target 7 days in a row'], [32, 'Ritual', 'Bought a ticket'],
-      [64, 'Voter', 'Voted a hero of the week'], [128, 'Vault Keeper', 'Most wins of the week']],
+    BADGES: [[1, 'Player', 'Played a game for the pot'], [2, 'Jackpot!', 'Won the instant jackpot'], [4, 'Cup finalist', 'Top 10 of a Vault Cup'], [8, 'Regular', 'Top 10 most active players of a week'],
+      [16, 'Untouched', 'Cleared Defend the Vault without losing any vault'], [32, 'Vault safe', 'Cleared all 12 waves'], [64, 'Fifty', '50 games played for the pot'], [128, 'Lucky', 'Used a free jackpot roll']],
 
     /* ---------- wallet (loaded on demand) ---------- */
     async wallet() {

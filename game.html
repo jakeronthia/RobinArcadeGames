@@ -12,6 +12,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Press+Start+2P&display=swap">
 <link rel="stylesheet" href="styles.css">
+<style>
+.player .choose{position:absolute;inset:0;z-index:3;background:rgba(10,7,18,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;gap:14px;padding:clamp(14px,3vw,28px);overflow:auto}
+.ch-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ch-head b{font-family:var(--display);font-size:clamp(22px,3vw,32px)}
+.jp{font-weight:900;color:var(--gold);border:2px solid var(--gold);border-radius:999px;padding:6px 14px;font-size:15px;box-shadow:0 0 24px rgba(255,201,60,.25)}
+.jp em{font-style:normal;font-family:var(--display);font-size:20px}
+.ch-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ch-card{text-align:left;border:2px solid var(--line);background:#150f2c;color:var(--ink);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;cursor:pointer;font:inherit;transition:transform .15s,border-color .15s}
+.ch-card:hover{transform:translateY(-2px);border-color:var(--sky,#7fe3ff)}
+.ch-card small{font-size:11px;font-weight:900;letter-spacing:.16em;color:var(--mute)}
+.ch-card b{font-family:var(--display);font-size:26px;line-height:1.05}
+.ch-card span{color:var(--dim);font-size:14px;line-height:1.4}
+.ch-card i{font-style:normal;font-size:12.5px;font-weight:800;color:var(--sky,#7fe3ff)}
+.ch-card.pot{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,201,60,.16),rgba(255,61,138,.08)),#150f2c}
+.ch-card.pot small{color:var(--gold)}
+.ch-card:disabled{opacity:.6;cursor:wait}
+.ch-acct{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--dim);font-weight:700}
+.ch-acct .btn{font-size:14px;padding:8px 14px;box-shadow:none}
+.ch-res{border-radius:18px;padding:16px;background:#150f2c;border:2px solid var(--line);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.ch-res b{font-family:var(--display);font-size:24px}
+.ch-res.win{border-color:var(--gold);background:radial-gradient(120% 140% at 0% 0%,rgba(255,201,60,.35),transparent 60%),#150f2c;animation:jp 1s ease-in-out 3}
+@keyframes jp{50%{box-shadow:0 0 60px rgba(255,201,60,.7)}}
+@media (max-width:600px){.ch-cards{grid-template-columns:1fr}.ch-card b{font-size:21px}.ch-card{padding:12px}}
+</style>
 </head>
 <body>
 
@@ -20,7 +44,7 @@
     <a class="logo" href="./">ROBIN <span>Arcade</span></a>
     <nav class="nav" aria-label="Main">
       <a href="./#games" aria-current="page">Games</a>
-      <a href="treasury.html">The Vault</a>
+      <a href="treasury.html">Prize Pool</a>
       <a href="./#heroes">Heroes</a>
       <a href="./#token">Token</a>
       <a href="kit.html">Meme kit</a>
@@ -50,6 +74,15 @@
         </button>
         <b id="startTitle"></b>
         <span id="startHint"></span>
+      </div>
+      <div class="choose" id="choose" hidden>
+        <div class="ch-head"><b>How do you want to play?</b><span class="jp">Jackpot <em id="jpAmt">–</em> tROBIN</span></div>
+        <div class="ch-cards">
+          <button type="button" class="ch-card" id="freeCard"><small>FREE</small><b>Just play</b><span>No wallet needed.</span><i id="freeNote">Sign in for free jackpot rolls (1 in 200,000).</i></button>
+          <button type="button" class="ch-card pot" id="potCard"><small>FOR THE POT</small><b id="potPrice">1 tROBIN</b><span>1 in 2,000 chance to win the jackpot right now, and every play counts for the weekly prize pool.</span><i id="potNote">≈ $0.10 per game</i></button>
+        </div>
+        <div class="ch-acct" id="chAcct"></div>
+        <div class="ch-res" id="chRes" hidden></div>
       </div>
     </div>
     <div class="player-bar">
@@ -126,6 +159,7 @@
 
 <script src="data.js"></script>
 <script src="site.js"></script>
+<script src="assets/fx/robinvault.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
@@ -199,11 +233,12 @@
   /* play */
   var frame = null;
   var smallTouch = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
-  function start() {
-    if (smallTouch) { location.href = g.file; return; } // phones: the game takes the whole screen
+  function start() { startWith(g.file); }
+  function startWith(file) {
+    if (smallTouch) { location.href = file; return; } // phones: the game takes the whole screen
     if (frame) return;
     frame = document.createElement('iframe');
-    frame.src = g.file; frame.title = g.title;
+    frame.src = file; frame.title = g.title;
     frame.allow = 'fullscreen; autoplay; gamepad';
     frame.setAttribute('allowfullscreen', '');
     var ld = document.createElement('div'); ld.className = 'loading'; ld.setAttribute('role', 'status');
@@ -212,7 +247,60 @@
     $('start').hidden = true;
     frame.addEventListener('load', function () { setTimeout(function () { ld.classList.add('done'); setTimeout(function () { ld.remove(); }, 400); }, 250); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} });
   }
-  $('playBtn').addEventListener('click', start);
+  /* play free or for the pot */
+  var RV = window.RobinVault, CFG = null, ME = null, potOn = false;
+  var fmt = function (x) { return RV ? RV.fmt(x) : x; };
+  function showChoose() { $('start').hidden = true; $('choose').hidden = false; loadPot(); }
+  async function loadPot() {
+    if (!RV) return;
+    try { await RV.ready(); CFG = await RV.vaultView('config'); potOn = true; $('jpAmt').textContent = fmt(CFG.jackpot); $('potPrice').textContent = fmt(CFG.price) + ' tROBIN';
+      $('potCard').querySelector('span').textContent = '1 in ' + Number(CFG.odds_paid).toLocaleString('en') + ' chance to win the jackpot right now, and every play counts for the weekly prize pool.';
+    } catch (e) { potOn = false; $('jpAmt').textContent = 'offline'; $('potCard').disabled = true; $('potNote').textContent = 'The prize pool is offline right now.'; }
+    ME = RV.guestId() || null;
+    if (!ME) { try { ME = await RV.account(); } catch (e) {} }
+    paintAcct();
+  }
+  function paintAcct() {
+    var el = $('chAcct');
+    if (ME) { el.innerHTML = 'Playing as <b>' + ME + '</b>'; RV.vaultView('status', { account_id: ME }).then(function (st) { $('freeNote').textContent = st.free_left > 0 ? 'Free jackpot roll included (1 in ' + Number(CFG.odds_free).toLocaleString('en') + ', ' + st.free_left + ' left today).' : 'No free rolls left today.'; }).catch(function () {}); return; }
+    el.innerHTML = '';
+    var a = document.createElement('button'); a.className = 'btn'; a.type = 'button'; a.textContent = 'Play instantly (free account)';
+    a.addEventListener('click', async function () { a.disabled = true; try { await RV.createGuest(function (t) { a.textContent = t; }); ME = RV.guestId(); paintAcct(); } catch (e) { a.textContent = 'Could not create it, try again'; a.disabled = false; } });
+    var w = document.createElement('button'); w.className = 'btn ghost'; w.type = 'button'; w.textContent = 'Connect wallet'; w.addEventListener('click', function () { RV.signIn(); var n = 0, iv = setInterval(async function () { n++; var m = null; try { m = await RV.account(); } catch (e) {} if (m || n > 60) { clearInterval(iv); if (m) { ME = m; paintAcct(); } } }, 1500); });
+    var t = document.createElement('span'); t.textContent = 'An account is needed to play for the pot.';
+    el.appendChild(a); el.appendChild(w); el.appendChild(t);
+  }
+  function result(won, paid, extra) {
+    var r = $('chRes'); r.hidden = false; r.className = 'ch-res' + (BigInt(won || 0) > 0n ? ' win' : '');
+    r.innerHTML = BigInt(won || 0) > 0n ? '<b>JACKPOT! You won ' + fmt(won) + ' tROBIN</b><span>It is already in your account.</span>' : '<b>' + (paid ? 'No jackpot this time' : 'Good luck!') + '</b><span>' + (extra || '') + '</span>';
+    var go = document.createElement('button'); go.className = 'btn'; go.type = 'button'; go.textContent = 'Start the game'; go.addEventListener('click', function () { launch(paid); }); r.appendChild(go); go.focus();
+    try { if (BigInt(won || 0) > 0n && window.RobinSfx) RobinSfx.play('win'); } catch (e) {}
+  }
+  function wonFrom(out, me) { var won = '0'; try { (out.receipts_outcome || []).forEach(function (o) { (o.outcome.logs || []).forEach(function (l) { var m = l.match(/^JACKPOT (\S+) won (\d+)/); if (m && m[1] === me) won = m[2]; }); }); } catch (e) {} return won; }
+  $('freeCard').addEventListener('click', async function () {
+    if (!ME || !potOn) { launch(false); return; }
+    var b = this; b.disabled = true;
+    try { var out = await RV.send(CFG && RV.cfg.vault, 'free_roll', { game: g.id }, '0', 30); result(wonFrom(out, ME), false, 'Your free roll did not hit the jackpot. Have fun!'); }
+    catch (e) { launch(false); } finally { b.disabled = false; }
+  });
+  $('potCard').addEventListener('click', async function () {
+    if (!potOn) return; if (!ME) { $('chAcct').querySelector('.btn') && $('chAcct').querySelector('.btn').focus(); $('chAcct').animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], 300); return; }
+    var b = this; b.disabled = true; $('potNote').textContent = 'Paying ' + fmt(CFG.price) + ' tROBIN…';
+    try {
+      var bal = await RV.tokenView('ft_balance_of', { account_id: ME });
+      if (BigInt(bal) < BigInt(CFG.price)) { if (RV.guestId()) await RV.send(RV.cfg.token, 'faucet', {}, '0', 30); else { $('potNote').textContent = 'Not enough tROBIN: get free ones on The Vault page.'; b.disabled = false; return; } }
+      sessionStorage.setItem('rv-paid-' + g.id, String(Date.now()));
+      var out = await RV.send(RV.cfg.token, 'ft_transfer_call', { receiver_id: RV.cfg.vault, amount: CFG.price, msg: JSON.stringify({ a: 'play', g: g.id }) }, '1', 200);
+      result(wonFrom(out, ME), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.'); loadPot();
+    } catch (e) { $('potNote').textContent = 'Payment failed: ' + String(e.message || e).slice(0, 90); }
+    finally { b.disabled = false; }
+  });
+  // back from a wallet redirect after paying
+  if (new URLSearchParams(location.search).get('transactionHashes') && sessionStorage.getItem('rv-paid-' + g.id)) {
+    showChoose(); setTimeout(async function () { try { var me = await RV.account(); var p = await RV.vaultView('get_player', { account_id: me }); result(p.last && p.last.paid ? p.last.won : '0', true, 'Your play counts for this week\u2019s prize pool.'); } catch (e) { result('0', true, ''); } }, 1200);
+  }
+  function launch(paid) { $('choose').hidden = true; var f = g.file + (paid ? (g.file.indexOf('?') < 0 ? '?' : '&') + 'pot=1' : ''); startWith(f); }
+  $('playBtn').addEventListener('click', showChoose);
 
   $('fsBtn').addEventListener('click', function () {
     var p = $('player');

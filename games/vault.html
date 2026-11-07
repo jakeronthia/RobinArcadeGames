@@ -131,8 +131,8 @@ button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
         <div><b>Earn $ROBIN</b>Every thief you catch pays out.</div>
         <div><b>12 waves</b>Master thieves show up on waves 5, 10 and 12.</div>
       </div>
-      <div class="daily"><small>DAILY VAULT CHALLENGE</small><b id="dName">Loading…</b><span id="dText"></span><em id="dPot"></em>
-        <button class="bigbtn" id="dailyBtn" type="button" disabled>Play today’s challenge</button></div>
+      <div class="daily"><small>VAULT CUP OF THE WEEK</small><b id="dName">Loading…</b><span id="dText"></span><em id="dPot"></em>
+        <button class="bigbtn" id="dailyBtn" type="button" disabled>Play the Vault Cup</button></div>
       <button class="bigbtn ghost" id="play" type="button">Free play</button>
     </div>
   </div>
@@ -142,7 +142,7 @@ button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
       <div class="big" id="eBig">12</div>
       <p id="eText">waves defended</p>
       <div class="stats"><div><small>CAUGHT</small><b id="eKills">0</b></div><div><small>VAULT</small><b id="eLives">20</b></div><div><small id="eBestL">BEST</small><b id="eBest">0</b></div></div>
-      <button class="bigbtn" id="sendBtn" type="button" hidden>Send to the Vault</button>
+      <button class="bigbtn" id="sendBtn" type="button" hidden>Send to the Cup</button>
       <button class="bigbtn ghost" id="again" type="button">Play again</button>
     </div>
   </div>
@@ -489,27 +489,29 @@ $('snd').addEventListener('click',e=>{e.stopPropagation();sound=!sound;store.set
 
 /* ---------- end ---------- */
 function finish(win){try{if(sound&&!G.over)RobinSfx.play(win?'win':'lose')}catch(_){};if(G.over)return;G.over=true;pick(-1);closePanel();const S=G.S,w=win?VS.WAVES:Math.max(0,S.wave-1);if(MODE==='free'&&w>best){best=w;store.set('best',best)}
-  const beat=MODE==='daily'&&win&&S.lives>=DAILY.target;
-  $('eTag').textContent=MODE==='daily'?(beat?'TARGET BEATEN':win?'VAULT SAFE, TARGET MISSED':'THE VAULT WAS EMPTIED'):(win?'VAULT SAFE':'THE VAULT WAS EMPTIED');
-  $('eBig').textContent=w;$('eText').textContent=MODE==='daily'?(beat?'waves defended with '+S.lives+' vault left. Send it to the Vault to claim your share of the pot.':'waves defended. Today’s target: clear all 12 waves with '+DAILY.target+' vault left.'):(win?'waves defended. The squad saved the $ROBIN!':(w===1?'wave defended':'waves defended'));
-  $('eKills').textContent=S.kills;$('eLives').textContent=Math.max(0,S.lives);$('eBest').textContent=MODE==='daily'?DAILY.target:best;$('eBestL').textContent=MODE==='daily'?'TARGET':'BEST';
-  $('sendBtn').hidden=MODE!=='daily';
-  if(MODE==='daily'){try{localStorage.setItem('dtv-pending',JSON.stringify({day:DAILY.day,moves:window.RobinVault?RobinVault.encode(G.moves):'',win,lives:S.lives,waves:w,kills:S.kills,bonus:BONUS,at:Date.now()}))}catch(e){}}
+  const score=w*100+Math.max(0,S.lives);
+  $('eTag').textContent=MODE==='daily'?'VAULT CUP SCORE '+score:(win?'VAULT SAFE':'THE VAULT WAS EMPTIED');
+  $('eBig').textContent=w;$('eText').textContent=MODE==='daily'?('waves defended with '+Math.max(0,S.lives)+' vault left. '+(PAID?'Send it to the Cup: the top 10 of the week share 60% of the prize pool.':'Play it for the pot to enter the Cup.')):(win?'waves defended. The squad saved the $ROBIN!':(w===1?'wave defended':'waves defended'));
+  $('eKills').textContent=S.kills;$('eLives').textContent=Math.max(0,S.lives);$('eBest').textContent=MODE==='daily'?score:best;$('eBestL').textContent=MODE==='daily'?'SCORE':'BEST';
+  $('sendBtn').hidden=MODE!=='daily'||!PAID;
+  if(MODE==='daily'){try{localStorage.setItem('dtv-pending',JSON.stringify({week:DAILY.day,score,day:DAILY.day,moves:window.RobinVault?RobinVault.encode(G.moves):'',win,lives:S.lives,waves:w,kills:S.kills,bonus:BONUS,at:Date.now()}))}catch(e){}}
   setTimeout(()=>{$('end').hidden=false;$(MODE==='daily'?'sendBtn':'again').focus()},win?900:600);
   if(win){for(let k=0;k<4;k++)setTimeout(()=>{sfx(784,.15,'square',.05);sfx(1046,.2,'square',.05,.1)},k*220)}else sfx(110,.6,'sawtooth',.06,0,-50);hud()}
 $('play').addEventListener('click',()=>{ac();MODE='free';$('start').hidden=true;newGame();banner('DEFEND THE VAULT','Place your heroes');sfx(523,.1,'square',.05);sfx(784,.16,'square',.05,.08)});
-$('dailyBtn').addEventListener('click',()=>{ac();if(!DAILY)return;MODE='daily';$('start').hidden=true;newGame();banner(DAILY.name.toUpperCase(),'Keep '+DAILY.target+' vault or more');sfx(523,.1,'square',.05);sfx(784,.16,'square',.05,.08)});
+$('dailyBtn').addEventListener('click',()=>{ac();if(!DAILY)return;MODE='daily';$('start').hidden=true;newGame();banner('VAULT CUP',DAILY.name);sfx(523,.1,'square',.05);sfx(784,.16,'square',.05,.08)});
 $('again').addEventListener('click',()=>{$('end').hidden=true;$('start').hidden=false;loadDaily()});
 $('sendBtn').addEventListener('click',()=>{const u=new URL('../treasury.html?submit=1',location.href).href;try{(window.top||window).location.href=u}catch(e){location.href=u}});
 addEventListener('keydown',e=>{if(e.code==='Escape'){if(G){pick(-1);closePanel()}}if(e.code==='Space'&&G&&!G.S.inWave&&!G.over&&$('start').hidden){e.preventDefault();$('goBtn').click()}});
 
 /* ---------- the daily challenge from the ROBIN Vault ---------- */
-function dailyHud(){const el=$('dailyTag');if(!el)return;el.hidden=MODE!=='daily';if(MODE==='daily')el.textContent=DAILY.name+' · keep '+DAILY.target+'+'+(BONUS>=0?' · '+HEROES[BONUS].name+' +25%':'')}
-async function loadDaily(){const d=VS.daily(Math.floor(Date.now()/86400000));DAILY=d;$('dName').textContent=d.name;$('dText').textContent=d.text;$('dailyBtn').disabled=false;
-  let extra='';try{if(window.RobinVault){const c=await RobinVault.vaultView('config');BONUS=c.hero_of_week;if(c.today!==d.day){DAILY=VS.daily(c.today)}const day=await RobinVault.vaultView('get_day',{day:DAILY.day});
-      extra='Pot today: '+RobinVault.fmt(day.pot)+' tROBIN · '+day.tickets+' ticket'+(day.tickets===1?'':'s')+(BONUS>=0?' · Hero of the week: '+HEROES[BONUS].name+' (+25%)':'')}}
-  catch(e){extra='The Vault is offline right now, you can still practise.'}
+function dailyHud(){const el=$('dailyTag');if(!el)return;el.hidden=MODE!=='daily';if(MODE==='daily')el.textContent='Vault Cup · '+DAILY.name+(PAID?' · for the pot':' · practice')}
+async function loadDaily(){const wk=Math.floor(Math.floor(Date.now()/86400000)/7);DAILY=VS.daily(wk);BONUS=-1;$('dName').textContent=DAILY.name;$('dText').textContent=DAILY.text.replace(/ Keep \d+ vault or more\./,'')+' Score = waves × 100 + vault left.';$('dailyBtn').disabled=false;
+  let extra=PAID?'Paid play: this defense can enter the Vault Cup. ':'Play it for the pot from the game page to enter the Cup. ';
+  try{if(window.RobinVault){const c=await RobinVault.vaultView('config');if(c.week!==DAILY.day){DAILY=VS.daily(c.week)}const w=await RobinVault.vaultView('get_week',{week:DAILY.day});
+      extra+='Cup pool: '+RobinVault.fmt(BigInt(w.pool)*6n/10n)+' tROBIN · jackpot '+RobinVault.fmt(c.jackpot)+' tROBIN'}}
+  catch(e){extra+='The prize pool is offline right now, you can still practise.'}
   $('dPot').textContent=extra}
+const PAID=new URLSearchParams(location.search).get('pot')==='1';
 loadDaily();
 
 /* ---------- loop: fixed 30 ticks per second, drawn smoothly in between ---------- */
