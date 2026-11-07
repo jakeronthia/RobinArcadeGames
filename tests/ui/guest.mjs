@@ -16,13 +16,18 @@ pg.on('console', m => { if (m.type() === 'error') say('console error: ' + m.text
 await pg.route('**/api/guest', async route => { const res = await worker.fetch(new Request('http://x/api/guest', { method: 'POST', body: route.request().postData() }), { ASSETS: assets }); route.fulfill({ status: res.status, body: await res.text(), contentType: 'application/json' }); });
 const txt = id => pg.evaluate(i => document.getElementById(i).textContent, id);
 try {
-  await pg.goto('http://localhost:8799/treasury.html'); await pg.waitForTimeout(6000);
-  say('before: ' + await txt('who'));
-  await pg.click('#guestBtn');
-  for (let k = 0; k < 40 && !(await txt('who')).includes('Guest account'); k++) await pg.waitForTimeout(1500);
-  say('after guest: ' + await txt('who')); await pg.waitForTimeout(6000); say('balance: ' + await txt('bal'));
-  const pot0 = await txt('cPot'); await pg.click('#ticketBtn'); await pg.waitForTimeout(12000);
-  say('ticket state: ' + await txt('tixState') + ' | pot ' + pot0 + ' -> ' + await txt('cPot') + ' | burned ' + await txt('cBurn'));
+  await pg.goto('http://localhost:8799/game.html?g=rush'); await pg.waitForTimeout(3000);
+  await pg.click('#playBtn'); await pg.waitForTimeout(5000);
+  say('jackpot before: ' + await txt('jpAmt'));
+  await pg.click('#chAcct .btn');
+  for (let k = 0; k < 40 && !(await txt('chAcct')).includes('Playing as'); k++) await pg.waitForTimeout(1500);
+  say('account: ' + await txt('chAcct')); await pg.waitForTimeout(4000);
+  await pg.click('#potCard');
+  for (let k = 0; k < 30 && await pg.evaluate(() => document.getElementById('chRes').hidden); k++) await pg.waitForTimeout(1500);
+  say('result: ' + await txt('chRes') + ' | note: ' + await txt('potNote'));
   await pg.screenshot({ path: '../../ci/ui_guest.png', fullPage: false });
+  await pg.goto('http://localhost:8799/treasury.html'); await pg.waitForTimeout(8000);
+  say('pool page: jackpot ' + await txt('cJack') + ' | you: ' + await txt('youS') + ' | feed: ' + (await txt('feed')).slice(0, 160));
+  await pg.screenshot({ path: '../../ci/ui_treasury.png', fullPage: true });
 } catch (e) { say('ERROR ' + e.message); }
 await b.close(); srv.kill(); fs.mkdirSync('../../ci', { recursive: true }); fs.writeFileSync('../../ci/guest.txt', out.join('\n'));

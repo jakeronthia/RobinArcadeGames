@@ -1,7 +1,7 @@
 name: ui
 on:
   push:
-    paths: ['treasury.html', 'assets/fx/robinvault.js', 'worker/**', 'tests/ui/**', '.github/workflows/ui.yml']
+    paths: ['treasury.html', 'treasury.js', 'game.html', 'assets/fx/robinvault.js', 'worker/**', 'tests/ui/**', '.github/workflows/ui.yml']
 permissions:
   contents: write
 concurrency: ui
