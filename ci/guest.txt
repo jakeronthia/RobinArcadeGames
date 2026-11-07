@@ -1,6 +1,6 @@
-worker /api/guest -> 200 {"ok":true,"accountId":"robin-6m1y4o403.testnet"}
+worker /api/guest -> 200 {"ok":true,"accountId":"robin-3a34683s1.testnet"}
 worker static -> asset
-jackpot before: 200
-account: Playing as robin-5x2r413o3.testnet
-result: No jackpot this timeYour play counts for this week’s prize pool. The jackpot keeps growing.Start the game | note: Paying 1 tROBIN…
-pool page: jackpot 200.3 tROBIN | you: 1 game for the pot this week · 0 Cup entries ready · 10 free rolls left today | feed: robin-5x2r….testnetfor the potRavenport Rush6s ago
+jackpot before: 200.3
+account: Playing as robin-611b2p141.testnet
+result: No jackpot this timeYour play counts for this week’s prize pool. The jackpot keeps growing.Start the game | note: ≈ $0.10 per game
+pool page: jackpot 200.6 tROBIN | you: 1 game for the pot this week · 0 Cup entries ready · 10 free rolls left today | feed: robin-611b….testnetfor the potRavenport Rush4s agorobin-5x2r….testnetfor the potRavenport Rush1m ago
