@@ -1,9 +1,9 @@
-counters: ["0 tROBIN","0 tROBIN","0 tROBIN","0","Skeleton crew","Connect a NEAR wallet to play for the pot."]
+counters: ["–","–","–","–","Today's challenge","Play instantly with a free testnet account, or connect your NEAR wallet."]
 modal open: true
-console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0601C00A4280000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
-console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0901C00A4280000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
-console warning: [.WebGL-0x2dec036fe300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x2dec036fe300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x2dec036fe300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x2dec036fe300]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
-game daily: ["Skeleton crew","Pot today: 0 tROBIN · 0 tickets"]
+console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0601C000C270000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
+console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0901C000C270000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
+console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+game daily: ["Skeleton crew","The Vault is offline right now, you can still practise."]
