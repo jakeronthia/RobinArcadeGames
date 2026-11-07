@@ -39,39 +39,43 @@ try {
   const token = await sub('robin', '2.1'), vault = await sub('vault', '2.7');
   await (await acct(token)).deployContract(W('robin_demo_token.wasm')); await call(token, token, 'new', {});
   await (await acct(vault)).deployContract(W('robin_vault.wasm'));
-  await call(vault, vault, 'new', { token, burn_to: BURN, ticket: (10n * ONE).toString(), epoch_secs: 86400, week_days: 7, goal: 300 });
+  const PRICE = ONE.toString();
+  await call(vault, vault, 'new', { token, burn_to: BURN, price: PRICE, odds_paid: 2000, odds_free: 200000, free_per_day: 10, epoch_secs: 86400, week_days: 7 });
   for (const a of [vault, BURN]) await call(MAIN, token, 'register', { account_id: a });
-  Object.assign(result, { token, vault, burn_to: BURN, ticket: (10n * ONE).toString(), decimals: 18, epoch_secs: 86400, week_days: 7, goal: 300 });
+  // seed the jackpot so the demo starts with something to win
+  await call(MAIN, token, 'faucet', {});
+  await call(MAIN, token, 'ft_transfer_call', { receiver_id: vault, amount: (200n * ONE).toString(), msg: '{"a":"jackpot"}' }, '1', 150);
+  Object.assign(result, { token, vault, burn_to: BURN, price: PRICE, decimals: 18, epoch_secs: 86400, week_days: 7, odds_paid: 2000, odds_free: 200000 });
   say('production config', await view(vault, 'config'));
-  // ---- fast test vault: 2-minute days, 2-day weeks ----
+  // ---- fast test pool: 1-minute weeks, the jackpot always hits ----
   const tv = await sub('testvault', '2.6'); await (await acct(tv)).deployContract(W('robin_vault.wasm'));
-  await call(tv, tv, 'new', { token, burn_to: BURN, ticket: (10n * ONE).toString(), epoch_secs: 120, week_days: 2, goal: 1 });
+  await call(tv, tv, 'new', { token, burn_to: BURN, price: PRICE, odds_paid: 1, odds_free: 1, free_per_day: 2, epoch_secs: 60, week_days: 1 });
   await call(MAIN, token, 'register', { account_id: tv });
   const p1 = await sub('p1', '0.5'), p2 = await sub('p2', '0.5');
-  for (const p of [p1, p2]) { await call(p, token, 'faucet', {}); say(p, 'balance', await view(token, 'ft_balance_of', { account_id: p })); }
-  // wait for the start of a fresh test day so everything fits inside it
-  let cfg = await view(tv, 'config'); const now = () => Math.floor(Date.now() / 1000);
-  const left = 120 - (now() % 120); if (left < 75) { say('waiting', left, 's for a fresh test day'); await sleep((left + 3) * 1000); }
-  cfg = await view(tv, 'config'); const day = cfg.today; say('test day', day, 'hero of week', cfg.hero_of_week);
-  const bm = bestMoves(day, cfg.hero_of_week); say('bot defense', bm.rp, 'target', bm.target, 'moves', bm.moves.length, 'chars');
-  const supply0 = BigInt(await view(token, 'ft_total_supply'));
-  for (const p of [p1, p2]) { const r = await call(p, token, 'ft_transfer_call', { receiver_id: tv, amount: (10n * ONE).toString(), msg: '{"a":"ticket"}' }, '1', 150); say(p, 'ticket', r.logs.join(' | ')); }
-  const burnBal1 = BigInt(await view(token, 'ft_balance_of', { account_id: BURN })); say('burn address after 2 tickets', burnBal1.toString());
-  const chk = await view(tv, 'check', { day, moves: bm.moves }); say('free check', chk);
-  const s1 = await call(p1, tv, 'submit', { day, moves: bm.moves }, '0', 300); say('p1 submit', s1.val, 'tx', s1.tx, 'Tgas', s1.tgas);
-  const s2 = await call(p2, tv, 'submit', { day, moves: '0:g' }, '0', 300); say('p2 submit (no heroes)', s2.val);
-  let cheat = 'accepted?!'; try { await call(p2, tv, 'submit', { day, moves: '0:p,0,2,11;50:p,5,1,0;50:g' }, '0', 300); } catch (e) { cheat = 'rejected: ' + (e.message.match(/panicked: ([^"]+)/) || [0, e.message.slice(0, 120)])[1]; } say('p2 forges the timing of its moves:', cheat);
-  const fake = await call(p2, tv, 'submit', { day, moves: '0:p,5,0,0;0:p,5,1,0;0:p,5,2,0;0:p,5,3,0;0:g' }, '0', 300); say('p2 places heroes it cannot afford: the rules ignore them ->', fake.val);
-  say('day', await view(tv, 'get_day', { day }));
-  const wait = 120 - (now() % 120) + 4; say('waiting', wait, 's for the day to end'); await sleep(wait * 1000);
-  const st = await call(p2, tv, 'settle_day', { day }); say('settled by p2', st.logs.join(' | '));
-  const dayInfo = await view(tv, 'get_day', { day }); say('day after settle', dayInfo);
-  if (dayInfo.winners > 0) { const b0 = BigInt(await view(token, 'ft_balance_of', { account_id: p1 })); await call(p1, tv, 'claim_day', { day }, '0', 100); const b1 = BigInt(await view(token, 'ft_balance_of', { account_id: p1 })); say('p1 claimed', (b1 - b0).toString()); }
-  say('p1 player', await view(tv, 'get_player', { account_id: p1 }));
-  const supply1 = BigInt(await view(token, 'ft_total_supply')); const burnBal = BigInt(await view(token, 'ft_balance_of', { account_id: BURN }));
-  say('tokens at the burn address', burnBal.toString(), 'supply', supply1.toString(), 'vs', supply0.toString());
-  say('test vault config', await view(tv, 'config'));
-  result.e2e = { ok: true, testVault: tv, day, players: [p1, p2], botLives: bm.rp.lives, target: bm.target, cheat, burned: burnBal.toString(), winners: dayInfo.winners, share: dayInfo.share };
+  for (const p of [p1, p2]) { await call(p, token, 'faucet', {}); }
+  const bal = async a => BigInt(await view(token, 'ft_balance_of', { account_id: a }));
+  const now = () => Math.floor(Date.now() / 1000);
+  let left = 60 - (now() % 60); if (left < 45) { say('waiting', left, 's for a fresh test week'); await sleep((left + 2) * 1000); }
+  let cfg = await view(tv, 'config'); const week = cfg.week; say('test week', week);
+  const bm = bestMoves(week, -1); say('bot defense for the cup', bm.rp);
+  // p1 funds the test jackpot, then a paid play wins it at once (odds 1 in 1)
+  await call(p1, token, 'ft_transfer_call', { receiver_id: tv, amount: (50n * ONE).toString(), msg: '{"a":"jackpot"}' }, '1', 150);
+  const b0 = await bal(p1); const pl = await call(p1, token, 'ft_transfer_call', { receiver_id: tv, amount: PRICE, msg: '{"a":"play","g":"rush"}' }, '1', 200);
+  const b1 = await bal(p1); say('p1 paid play in rush:', pl.logs.filter(l => /JACKPOT|BURN/.test(l)).join(' | '), '| balance change', ((b1 - b0) * 100n / ONE).toString(), '/100 tROBIN');
+  // p2 pays for Defend the Vault and sends a defense to the cup
+  await call(p2, token, 'ft_transfer_call', { receiver_id: tv, amount: PRICE, msg: '{"a":"play","g":"vault"}' }, '1', 200);
+  say('p2 status', await view(tv, 'status', { account_id: p2 }));
+  const sub1 = await call(p2, tv, 'submit', { week, moves: bm.moves }, '0', 300); say('p2 cup submit', sub1.val, 'Tgas', sub1.tgas);
+  let noCredit = 'accepted?!'; try { await call(p2, tv, 'submit', { week, moves: bm.moves }, '0', 300); } catch (e) { noCredit = 'rejected: ' + (e.message.match(/panicked: ([^"]+)/) || [0, e.message.slice(0, 100)])[1]; } say('p2 submits again without paying:', noCredit);
+  const fr = await call(p1, tv, 'free_roll', { game: 'patrol' }); say('p1 free roll', fr.val, fr.logs.join(' | '));
+  say('test week', await view(tv, 'get_week', { week })); say('feed', (await view(tv, 'feed')).map(f => f.account.split('.')[0] + ':' + f.game + ':' + (f.paid ? 'paid' : 'free') + ':' + f.won).join(', '));
+  const wait = 60 - (now() % 60) + 3; say('waiting', wait, 's for the test week to end'); await sleep(wait * 1000);
+  const st = await call(p1, tv, 'settle_week', { week }); say('week closed:', st.logs.join(' | '));
+  const w2 = await view(tv, 'get_week', { week }); say('shares cup', w2.cup_shares, 'active', w2.active_shares);
+  const c0 = await bal(p2); await call(p2, tv, 'claim', { week }, '0', 100); const c1 = await bal(p2); say('p2 claimed', ((c1 - c0) * 1000n / ONE).toString(), '/1000 tROBIN');
+  say('p2 player', await view(tv, 'get_player', { account_id: p2 }));
+  say('tokens at the burn address', (await bal(BURN)).toString()); say('test pool config', await view(tv, 'config'));
+  result.e2e = { ok: true, testVault: tv, week, jackpotDelta: (b1 - b0).toString(), cup: sub1.val, noCredit, claimed: (c1 - c0).toString() };
   // ---- lock the production contracts: no key can change them any more ----
   for (const id of [token, vault]) { const a = await acct(id); const keys = await a.getAccessKeys(); for (const k of keys) await a.deleteKey(k.public_key); say('locked', id, '(keys left:', (await a.getAccessKeys()).length + ')'); }
   result.locked = true;
