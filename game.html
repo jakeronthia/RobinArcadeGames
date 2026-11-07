@@ -291,7 +291,7 @@
       if (BigInt(bal) < BigInt(CFG.price)) { if (RV.guestId()) await RV.send(RV.cfg.token, 'faucet', {}, '0', 30); else { $('potNote').textContent = 'Not enough tROBIN: get free ones on the Prize Pool page.'; b.disabled = false; return; } }
       sessionStorage.setItem('rv-paid-' + g.id, String(Date.now()));
       var out = await RV.send(RV.cfg.token, 'ft_transfer_call', { receiver_id: RV.cfg.vault, amount: CFG.price, msg: JSON.stringify({ a: 'play', g: g.id }) }, '1', 200);
-      result(wonFrom(out, ME), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.'); loadPot();
+      $('potNote').textContent = '\u2248 $0.10 per game'; result(wonFrom(out, ME), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.'); loadPot();
     } catch (e) { $('potNote').textContent = 'Payment failed: ' + String(e.message || e).slice(0, 90); }
     finally { b.disabled = false; }
   });
