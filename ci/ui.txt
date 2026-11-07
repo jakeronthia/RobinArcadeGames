@@ -1,9 +1,6 @@
-counters: ["–","–","–","–","Today's challenge","Play instantly with a free testnet account, or connect your NEAR wallet."]
-modal open: true
-console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0601C000C270000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
-console warning: [GroupMarkerNotSet(crbug.com/242999)!:A0901C000C270000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader flag to opt in to lower security guarantees for trusted content.
-console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
-console warning: [.WebGL-0x292405ba5500]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
-game daily: ["Skeleton crew","The Vault is offline right now, you can still practise."]
+ERROR page.evaluate: TypeError: Cannot read properties of null (reading 'textContent')
+    at eval (eval at evaluate (:234:30), <anonymous>:1:94)
+    at Array.map (<anonymous>)
+    at eval (eval at evaluate (:234:30), <anonymous>:1:59)
+    at UtilityScript.evaluate (<anonymous>:236:17)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
