@@ -401,3 +401,13 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;line-height:1.05}
   .nav{gap:18px;font-size:14px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
   .nav::-webkit-scrollbar{display:none}
 }
+
+/* on-chain promise */
+.onchain{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;border:1px solid rgba(255,201,60,.35);background:rgba(255,201,60,.07);margin:0 0 22px}
+.onchain .ic{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,201,60,.16);color:var(--yellow,#ffc93c)}
+.onchain b{display:block;font-family:Fredoka,sans-serif;font-size:18px;margin-bottom:4px}
+.onchain p{margin:0;font-size:14.5px;line-height:1.5;color:var(--dim,#cfc5f5)}
+.onchain.slim{align-items:center;padding:12px 16px}
+.onchain.slim p{color:inherit;font-weight:700}
+.onchain.slim a{margin-left:auto;white-space:nowrap}
+@media (max-width:640px){.onchain.slim{flex-wrap:wrap}.onchain.slim a{margin-left:0}}

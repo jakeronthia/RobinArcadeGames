@@ -28,6 +28,8 @@
 .ch-card.pot{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,201,60,.16),rgba(255,61,138,.08)),#150f2c}
 .ch-card.pot small{color:var(--gold)}
 .ch-card:disabled{opacity:.6;cursor:wait}
+.ch-chain{margin:2px 0 0;font-size:13px;font-weight:700;color:var(--dim);display:flex;gap:6px;align-items:center}
+.ch-chain:before{content:"";flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#ffc93c;box-shadow:0 0 8px #ffc93c}
 .ch-acct{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px;color:var(--dim);font-weight:700}
 .ch-acct .btn{font-size:14px;padding:8px 14px;box-shadow:none}
 .ch-res{border-radius:18px;padding:16px;background:#150f2c;border:2px solid var(--line);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -81,6 +83,7 @@
           <button type="button" class="ch-card" id="freeCard"><small>FREE</small><b>Just play</b><span>No wallet needed.</span><i id="freeNote">Sign in for free jackpot rolls (1 in 200,000).</i></button>
           <button type="button" class="ch-card pot" id="potCard"><small>FOR THE POT</small><b id="potPrice">1 tROBIN</b><span>1 in 2,000 chance to win the jackpot right now, and every play counts for the weekly prize pool.</span><i id="potNote">≈ $0.10 per game</i></button>
         </div>
+        <p class="ch-chain">Every play for the pot is on-chain. No one can change the rules, the draws or the payouts &mdash; not even us.</p>
         <div class="ch-acct" id="chAcct"></div>
         <div class="ch-res" id="chRes" hidden></div>
       </div>
