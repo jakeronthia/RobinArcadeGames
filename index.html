@@ -33,17 +33,29 @@ body.city #c{touch-action:none}
 /* cabinet stage */
 #cabUi{position:fixed;inset:0;z-index:3;pointer-events:none;transition:opacity .4s}
 body.city #cabUi,body.diving #cabUi{opacity:0}
-#cabUi .hint{position:absolute;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);min-height:48px;padding:0 20px;border:0;background:transparent;cursor:pointer;pointer-events:auto;font:400 20px 'Press Start 2P',monospace;letter-spacing:2px;color:var(--y);text-shadow:0 0 14px rgba(255,201,60,.85),0 0 2px #000;animation:blink 1.1s steps(1) infinite}
+#cabUi .hint{position:absolute;left:50%;bottom:calc(64px + env(safe-area-inset-bottom));transform:translateX(-50%);min-height:48px;padding:0 20px;border:0;background:transparent;cursor:pointer;pointer-events:auto;font:400 20px 'Press Start 2P',monospace;letter-spacing:2px;color:var(--y);text-shadow:0 0 14px rgba(255,201,60,.85),0 0 2px #000;animation:blink 1.1s steps(1) infinite}
 #cabUi .hint:focus-visible{outline:3px solid var(--c);outline-offset:4px}
 @keyframes blink{60%{opacity:.12}}
 #cabUi .tl{position:absolute;left:24px;top:20px;font:700 22px Fredoka,sans-serif;pointer-events:auto}
 #cabUi .tl span{color:var(--y)}
 #cabUi .allg{position:absolute;right:20px;top:18px;pointer-events:auto;background:rgba(20,16,44,.55);border:1px solid rgba(255,255,255,.18)}
 .allg2{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:999px;color:#fff;text-decoration:none;font:800 14px Nunito,sans-serif;border:1px solid rgba(255,255,255,.2);background:rgba(20,16,44,.45)}
-#skip{position:absolute;right:20px;bottom:calc(18px + env(safe-area-inset-bottom));pointer-events:auto;background:transparent;border:0;color:var(--y);text-decoration:underline}
+#skip{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom));pointer-events:auto;background:transparent;border:0;color:rgba(255,255,255,.5);font-size:13px;font-weight:700;text-decoration:underline}
+body.picking #skip{opacity:0;pointer-events:none}
 /* city stage */
 #top{position:fixed;left:0;right:0;top:0;z-index:4;height:68px;display:flex;align-items:center;gap:26px;padding:0 max(24px,env(safe-area-inset-left,0px));background:linear-gradient(180deg,rgba(8,6,20,.88),rgba(8,6,20,.55) 70%,rgba(8,6,20,0));transform:translateY(-100%);transition:transform .6s cubic-bezier(.2,.8,.2,1)}
-body.city #top{transform:none}
+#top{transform:none;transition:opacity .4s}
+body.diving #top{opacity:0;pointer-events:none}
+.menuBtn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(20,16,44,.55);backdrop-filter:blur(10px);color:#fff;font:800 15px Nunito,sans-serif;cursor:pointer}
+.menuBtn:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+#menu{position:fixed;z-index:8;top:calc(66px + env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right,0px));width:min(260px,calc(100vw - 32px));display:flex;flex-direction:column;padding:8px;border-radius:18px;background:rgba(14,11,34,.94);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+#menu[hidden]{display:none}
+#menu a,#menu .mi{display:flex;align-items:center;gap:10px;min-height:46px;padding:0 14px;border-radius:12px;border:0;background:transparent;color:#fff;text-decoration:none;font:800 15px Nunito,sans-serif;text-align:left;cursor:pointer}
+#menu a:hover,#menu .mi:hover{background:rgba(255,255,255,.07)}
+#menu a:focus-visible,#menu .mi:focus-visible{outline:3px solid var(--c);outline-offset:-3px}
+#menu .dot{width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 10px var(--y)}
+#menu .mi{border-top:1px solid rgba(255,255,255,.1);border-radius:0 0 12px 12px;margin-top:4px;color:var(--mut)}
+#menu .mi .off{display:none}#menu .mi.muted .on{display:none}#menu .mi.muted .off{display:block}
 #top .logo{display:flex;align-items:center;gap:10px;font:700 22px Fredoka,sans-serif;color:#fff;text-decoration:none;letter-spacing:.2px}
 #top .logo i{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,#ffc93c 45%,#b8860b);box-shadow:0 0 18px rgba(255,201,60,.55),inset 0 -2px 0 rgba(0,0,0,.25)}
 #top .logo span{color:var(--y)}
@@ -109,7 +121,7 @@ body.city #replay{opacity:1;pointer-events:auto}
 #load small{font:800 12px Nunito,sans-serif;letter-spacing:1px;color:rgba(255,255,255,.5)}
 #load .bar i{display:block;height:100%;width:0;background:var(--y);box-shadow:0 0 12px var(--y);transition:width .3s}
 @media (max-width:440px){.jp{display:none}}
-@media (max-width:760px){#cabUi #skip{top:70px;bottom:auto;right:12px}.allg2{min-height:40px;padding:0 12px;font-size:13px;white-space:nowrap}#cabUi .allg{right:12px;top:14px}}
+
 @media (max-width:760px){
   #top{height:58px;padding:0 12px;gap:8px}
   #top .logo{font-size:19px;gap:8px}
@@ -135,17 +147,12 @@ body.city #replay{opacity:1;pointer-events:auto}
 /* hero picker, coins, weather */
 #cabUi .pick{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:auto;transition:opacity .4s,transform .4s}
 body:not(.picking) #cabUi .pick{opacity:0;transform:translateY(20px);pointer-events:none}
-body.picking #pressStart,body.picking #pChange{opacity:0;pointer-events:none}
-#pressStart,#pChange{transition:opacity .5s}
+body:not(.title) #pressStart{opacity:0;pointer-events:none;animation:none}
+#pressStart{transition:opacity .5s}
 #cabUi .pick .ph{position:fixed;left:0;right:0;top:calc(88px + env(safe-area-inset-top));text-align:center;font-size:13px;letter-spacing:5px;color:var(--y);text-shadow:0 0 14px rgba(255,201,60,.6)}
 #roomTip{position:fixed;z-index:6;transform:translate(-50%,-100%);padding:6px 12px;border-radius:10px;background:rgba(10,8,26,.9);border:1px solid rgba(255,201,60,.6);color:#ffd35a;font:400 11px 'Press Start 2P',monospace;letter-spacing:1px;pointer-events:none;opacity:0;transition:opacity .15s;white-space:nowrap}
 #roomTip.on{opacity:1}
-#cabUi .roomnav{display:none}
-body.city #cabUi .roomnav{display:none}
-@media (max-width:760px){#cabUi .roomnav{display:flex;position:absolute;left:0;right:0;top:calc(62px + env(safe-area-inset-top));gap:6px;padding:0 12px;overflow-x:auto;scrollbar-width:none;pointer-events:auto}
-  #cabUi .roomnav a{flex:0 0 auto;min-height:36px;display:flex;align-items:center;padding:0 12px;border-radius:999px;background:rgba(20,16,44,.65);border:1px solid rgba(255,255,255,.16);color:#fff;text-decoration:none;font:800 12px Nunito,sans-serif}
-  #cabUi .pick .ph{top:calc(158px + env(safe-area-inset-top))}
-  #cabUi #skip{top:110px}}
+@media (max-width:760px){#cabUi .pick .ph{top:calc(76px + env(safe-area-inset-top))}}
 #cabUi .prow{display:flex;align-items:center;gap:18px}
 #cabUi .pname{min-width:220px;text-align:center;font:700 44px Fredoka,sans-serif;color:#fff;text-shadow:0 0 24px rgba(255,201,60,.45),0 4px 18px #000}
 #cabUi .parr{width:52px;height:52px}
@@ -195,7 +202,7 @@ body.city #wx{opacity:1;pointer-events:auto}
 @media (prefers-reduced-motion: reduce){#cabUi .hint{animation:none}#card,#top,#welcome{transition:none}}
 </style>
 </head>
-<body class="picking">
+<body class="title">
 <canvas id="c" aria-label="3D view of the ROBIN Arcade cabinet and the city of Ravenport"></canvas>
 <div id="scroll"></div>
 <div id="load"><div>LOADING RAVENPORT&hellip;</div><div class="bar"><i id="loadBar" style="width:12%"></i></div><small id="loadStep">Building the city</small></div>
@@ -203,31 +210,30 @@ body.city #wx{opacity:1;pointer-events:auto}
 <div id="roomTip" aria-hidden="true"></div>
 
 <div id="cabUi">
-  <div class="tl">ROBIN <span>Arcade</span></div>
   <div class="pick" id="pickUi"><div class="ph">CHOOSE YOUR HERO</div>
     <div class="prow"><button class="ico parr" id="pPrev" type="button" aria-label="Previous hero"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="pname" id="pName" aria-live="polite">Hoot</div>
       <button class="ico parr" id="pNext" type="button" aria-label="Next hero"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
     <button class="btn y pgo" id="pGo" type="button">Choose</button></div>
   <button class="hint" id="pressStart" type="button">PRESS START</button>
-  <button class="btn chg" id="pChange" type="button">Change hero</button>
-  <button class="btn" id="skip" type="button">Skip intro</button>
-  <a class="btn ghost allg" id="allG1" href="#">All games</a>
-  <nav class="roomnav" aria-label="Arcade"><a href="treasury.html">Prize Pool</a><a href="arcade.html#hall">Leaderboard</a><a href="arcade.html#token">$ROBIN</a><a href="kit.html">Meme kit</a><a href="faq.html">FAQ</a></nav>
+  <button class="btn" id="skip" type="button">Skip</button>
 </div>
 
 <header id="top">
   <a class="logo" href="./"><i></i>ROBIN <span>Arcade</span></a>
-  <nav aria-label="Main">
-    <a href="treasury.html">Prize Pool</a>
-    <a href="arcade.html#top">Heroes</a>
-    <a href="faq.html">FAQ</a>
-  </nav>
   <div class="sp"></div>
-  <a class="allg2" id="allG2" href="#">All games</a>
-  <a class="jp" href="treasury.html"><span class="dot"></span>Jackpot live</a>
-  <button class="ico" id="snd" type="button" aria-label="Sound on"><svg class="on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg></button>
+  <button class="menuBtn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu">Menu<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 </header>
+<nav id="menu" aria-label="Main" hidden>
+  <a id="allG2" href="#">All games</a>
+  <a href="treasury.html"><span class="dot"></span>Prize Pool</a>
+  <a href="arcade.html#hall">Leaderboard</a>
+  <a href="arcade.html#top">Heroes</a>
+  <a href="arcade.html#token">$ROBIN token</a>
+  <a href="kit.html">Meme kit</a>
+  <a href="faq.html">FAQ</a>
+  <button class="mi" id="snd" type="button" aria-label="Sound on"><svg class="on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg><span>Sound</span></button>
+</nav>
 
 <div id="welcome"><small>YOU ARE ABOVE RAVENPORT</small><h1>Welcome to <span>Ravenport</span></h1><p>Scroll down the avenue. Every district is a game.</p><div class="mouse" aria-hidden="true"></div><div class="lbl">SCROLL TO TAKE OFF</div></div>
 
@@ -1627,7 +1633,7 @@ const ROOM_ANIM = [];
 const ROOM = [];
 function roomObj(label, href, x, z, build, signCol, signY, signW) {
   const g = new T.Group(); g.position.set(x, 0, z); g.lookAt(x * .3, 0, 4.4); A.add(g); build(g);
-  const sg = neon(label, signCol, (signW || .9) * 1.15, .3, label.length > 9 ? 34 : 44, "'Press Start 2P'"); sg.position.set(0, signY, .02); sg.material.color.setScalar(1.6); g.add(sg); signs.push(sg);
+  const sg = neon(label, signCol, (signW || .9) * 1.15, .3, label.length > 9 ? 34 : 44, "'Press Start 2P'"); sg.position.set(0, signY, .02); sg.material.color.setScalar(1.6); sg.visible = false; g.add(sg);
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.userData.room = ROOM.length; } });
   ROOM.push({ g, label, href, sign: sg, hover: 0 }); return g;
 }
@@ -1644,20 +1650,6 @@ roomObj('LEADERBOARD', 'arcade.html#hall', -1.38, .1, g => {
   cup(0, 1.03, gold, 1.5); cup(-.3, 1.03, silver, 1.1); cup(.3, 1.03, bronze, 1.1); cup(-.25, .58, gold, .9); cup(.05, .58, silver, .9); cup(.32, .58, gold, .8);
   M2(roundedBox(.22, .16, .12, .03, 2), TM(0xd8344f), -.3, .18, 0, g); M2(new T.SphereGeometry(.08, 20, 14), gold, .25, .18, 0, g);
 }, '#ffc93c', 1.66, .95);
-// LEFT: coin changer -> $ROBIN token
-roomObj('$ROBIN', 'arcade.html#token', -2.18, .15, g => {
-  M2(roundedBox(.56, 1.4, .44, .06, 3), TM(0x2a5aa8), 0, .7, 0, g);
-  M2(roundedBox(.44, .3, .03, .03, 2), GL(0x9dff9a, 1.6), 0, 1.12, .22, g);
-  M2(roundedBox(.12, .04, .03, .01, 2), TM(0x14121a), -.1, .86, .225, g); M2(new T.CylinderGeometry(.05, .05, .03, 20).rotateX(Math.PI / 2), TM(0xd8344f), .12, .86, .225, g);
-  M2(roundedBox(.3, .1, .14, .03, 2), TM(0x14121a), 0, .38, .25, g);
-  for (let k = 0; k < 4; k++) M2(new T.CylinderGeometry(.04, .04, .012, 16), TM(0xffc93c, { emissive: 0x6a4a00, emissiveIntensity: .5 }), -.06 + k * .04, .44 + k * .005, .27, g);
-}, '#9dff9a', 1.98, .7);
-// LEFT BACK: poster wall -> heroes and memes
-roomObj('MEME KIT', 'kit.html', -2.25, -2.9, g => {
-  const pt = tex(512, 640, (x, w, h) => { x.fillStyle = '#ff6ad5'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffd35a'; x.fillRect(16, 16, w - 32, h - 32); x.fillStyle = '#241a52'; x.font = "700 64px Fredoka, sans-serif"; x.textAlign = 'center'; x.fillText('THE SQUAD', w / 2, 92); });
-  M2(roundedBox(1, 1.24, .05, .02, 2), TM(0x1a1428), 0, 1.95, -.03, g); const poster = M2(new T.PlaneGeometry(.9, 1.12), new T.MeshBasicMaterial({ map: pt.t, color: new T.Color(1.1, 1.1, 1.1) }), 0, 1.95, 0, g);
-  ['hoot', 'leonidas', 'trey', 'frazzle'].forEach((n, k) => { const im = new Image(); im.onload = () => { pt.x.drawImage(im, 40 + (k % 2) * 220, 140 + Math.floor(k / 2) * 240, 210, 210); pt.t.needsUpdate = true; }; im.src = 'assets/heroes/' + n + '.png'; });
-}, '#ff6ad5', 2.75, 1);
 // LEFT FAR: exit door -> all games
 roomObj('ALL GAMES', 'arcade.html#games', -1.05, -2.9, g => {
   M2(roundedBox(1.1, 2.15, .12, .03, 2), TM(0x3a3246), 0, 1.07, -.05, g);
@@ -1667,7 +1659,7 @@ roomObj('ALL GAMES', 'arcade.html#games', -1.05, -2.9, g => {
   M2(roundedBox(.5, .16, .05, .03, 2), GL(0x30ff8a, 2.4), 0, 2.32, .02, g);
 }, '#30ff8a', 2.62, 1.1);
 // RIGHT: cork board -> FAQ
-roomObj('FAQ', 'faq.html', 1.38, .1, g => {
+roomObj('FAQ', 'faq.html', 1.62, -.45, g => {
   for (const [sx, rz] of [[-.36, .12], [.36, -.12]]) { const l = M2(new T.CylinderGeometry(.025, .03, 1.55, 10), TM(0x6a4630), sx, .76, -.08, g); l.rotation.z = rz; }
   M2(roundedBox(.98, .72, .06, .03, 2), TM(0x6a4630), 0, 1.1, 0, g);
   M2(new T.PlaneGeometry(.88, .62), TM(0xc8945a), 0, 1.1, .035, g);
@@ -1677,34 +1669,25 @@ roomObj('FAQ', 'faq.html', 1.38, .1, g => {
   M2(new T.PlaneGeometry(.18, .18), new T.MeshBasicMaterial({ map: q.t, transparent: true }), .02, 1.26, .045, g);
 }, '#7fe3ff', 1.68, .7);
 // RIGHT: golden safe -> prize pool
-roomObj('PRIZE POOL', 'treasury.html', 2.2, .15, g => {
+roomObj('PRIZE POOL', 'treasury.html', 1.22, .55, g => {
   M2(roundedBox(.78, .82, .6, .08, 4), TM(0x3a3060), 0, .41, 0, g);
   const door = M2(new T.CylinderGeometry(.27, .27, .06, 40).rotateX(Math.PI / 2), TM(0xffc93c, { emissive: 0x6a4a00, emissiveIntensity: .5 }), 0, .45, .31, g);
   const wheel = new T.Group(); wheel.position.set(0, .45, .35); g.add(wheel); for (let k = 0; k < 3; k++) { const sp = new T.Mesh(new T.CylinderGeometry(.012, .012, .36, 8), TM(0x8a6a1a)); sp.rotation.z = k * Math.PI / 3; wheel.add(sp); }
   ROOM_ANIM.push(t => { wheel.rotation.z = t * .7; });
   for (let k = 0; k < 3; k++) M2(roundedBox(.22, .1, .12, .03, 2), TM(0xffc93c, { emissive: 0x8a5a00, emissiveIntensity: .6 }), -.18 + k * .18, .88 + (k % 2) * .06, 0, g);
 }, '#ffc93c', 1.3, 1);
-// RIGHT FAR: jukebox -> music on/off
-roomObj('MUSIC', '#music', 1.0, -2.9, g => {
-  M2(roundedBox(.8, 1.15, .5, .06, 3), TM(0x8a2a48), 0, .58, 0, g);
-  const top = M2(new T.CylinderGeometry(.4, .4, .5, 40, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), TM(0x8a2a48), 0, 1.15, 0, g);
-  M2(new T.CylinderGeometry(.33, .33, .52, 40, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2), GL(0xff9a3c, 1.8), 0, 1.15, .01, g);
-  const bars = []; [0xff4f88, 0x7fe3ff, 0xffd35a, 0x9dff9a].forEach((c, k) => { bars.push(M2(roundedBox(.08, .55, .04, .03, 2), GL(c, 2.2), -.24 + k * .16, .62, .26, g)); });
-  ROOM_ANIM.push(t => bars.forEach((b, k) => { const on = SND.on ? .6 + .4 * Math.abs(Math.sin(t * 3 + k)) : .25; b.material.color.setScalar(on * 2.2); b.material.color.multiply(new T.Color([0xff4f88, 0x7fe3ff, 0xffd35a, 0x9dff9a][k])); }));
-  M2(roundedBox(.5, .2, .05, .03, 2), TM(0xe8dcc8), 0, .3, .26, g);
-}, '#ff4f88', 1.62, .7);
 // side lights so the objects read in the dark room
-{ const l1 = new T.PointLight(0xffb070, 1.1, 4.5, 2); l1.position.set(-2.1, 2.3, .9); A.add(l1); const l2 = new T.PointLight(0x9ab8ff, 1.1, 4.5, 2); l2.position.set(2.1, 2.3, .9); A.add(l2); }
+const ROOML = [new T.PointLight(0xffb070, 1.1, 4.5, 2), new T.PointLight(0x9ab8ff, 1.1, 4.5, 2)]; ROOML[0].position.set(-2.1, 2.3, .9); ROOML[1].position.set(2.1, 2.3, .9); A.add(ROOML[0], ROOML[1]);
 
 toonify(B); toonify(A);
 for (const k in MAT) if (TOONC.has(MAT[k])) MAT[k] = TOONC.get(MAT[k]);
 WET[3] = MAT.roof;
 // ---------- room objects: hover label and navigation ----------
 let roomHover = -1;
-function roomHit(e) { ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObjects(ROOM.map(o => o.g), true)[0]; return h ? h.object.userData.room : -1; }
+function roomHit(e) { if (stage !== 'title') return -1; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObjects(ROOM.map(o => o.g), true)[0]; return h ? h.object.userData.room : -1; }
 function roomGo(i) { const o = ROOM[i]; if (!o) return; SND.start(); SND.tick && SND.tick(); if (o.href === '#music') { SND.toggle(); sndUi(); return; } location.href = o.href; }
-canvas.addEventListener('pointermove', e => { if (stage !== 'pick' && stage !== 'cab') { roomHover = -1; return; } roomHover = roomHit(e); if (roomHover >= 0) canvas.style.cursor = 'pointer'; else if (stage === 'pick') canvas.style.cursor = ''; const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].label === 'MUSIC' ? (SND.on ? 'Music: on' : 'Music: off') : ROOM[roomHover].label; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
-canvas.addEventListener('click', e => { if (stage !== 'pick' && stage !== 'cab') return; const i = roomHit(e); if (i >= 0) { e.stopImmediatePropagation(); roomGo(i); } }, true);
+canvas.addEventListener('pointermove', e => { if (stage !== 'title') { roomHover = -1; $('roomTip').classList.remove('on'); return; } roomHover = roomHit(e); const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].label === 'MUSIC' ? (SND.on ? 'Music: on' : 'Music: off') : ROOM[roomHover].label; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
+canvas.addEventListener('click', e => { if (stage !== 'title') return; const i = roomHit(e); if (i >= 0) { e.stopImmediatePropagation(); roomGo(i); } }, true);
 // ---------- 3D hero carousel in front of the cabinet ----------
 const CAR = new T.Group(); CAR.position.set(0, 0, 1.95); A.add(CAR);
 const CN = HERO_LIST.length, CSTEP = Math.PI * 2 / CN, CRAD = 1.3, MK = { makeCorgi, makeBeagle, makeOwl, makeTrey, makeBaller, makeFrazzle, makeIlia, makeSpud, makePlop };
@@ -1726,7 +1709,6 @@ function carReset() { if (chosenObj) { CAR.attach(chosenObj); const a = carSel *
   CAR.visible = true; CAR.scale.setScalar(1); CAR.position.y = 0; stage = 'pick'; document.body.classList.add('picking'); $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; }
 $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name;
 $('pPrev').addEventListener('click', () => carGo(-1)); $('pNext').addEventListener('click', () => carGo(1)); $('pGo').addEventListener('click', carChoose);
-$('pChange').addEventListener('click', () => { if (stage === 'cab') { pickFrom.copy(cam.position); carReset(); } });
 let swX = null; canvas.addEventListener('pointerdown', e => { swX = e.clientX; });
 canvas.addEventListener('pointerup', e => { if (stage !== 'pick' || swX == null) return; if (roomHit(e) >= 0) { swX = null; return; } const dx = e.clientX - swX; swX = null; if (Math.abs(dx) > 40) { carGo(dx < 0 ? 1 : -1); e.preventDefault(); return; }
   ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const hit = ray.intersectObject(CAR, true).find(x => x.object.userData.slot != null);
@@ -1739,29 +1721,33 @@ function tickCarousel(dt, time) {
   const on = stage === 'pick' ? 1 : stage === 'zoom' ? 1 - Math.min(1, zoomT / .8) : 0; carLight.intensity = 2.4 * on; carFill.intensity = .9 * on;
 }
 /* ================= flow ================= */
-let stage = 'pick', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, prog = 0, sprog = 0;
+let stage = 'title', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, prog = 0, sprog = 0;
 const camA0 = new T.Vector3(), lookA = new T.Vector3(0, 1.12, 0);
 function camIdle() { const port = W < H; camA0.set(0, port ? 1.25 : 1.28, port ? 4.5 : 3.8); cam.fov = port ? 62 : 44; cam.updateProjectionMatrix(); }
-camIdle(); pickPose(); cam.position.copy(pickPos); cam.lookAt(pickLook);
+camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA);
+function goPick() { if (stage !== 'title') return; SND.start(); SND.coin && SND.coin(); carReset(); document.body.classList.remove('title'); roomHover = -1; $('roomTip').classList.remove('on'); canvas.style.cursor = ''; }
+function goTitle() { carReset(); stage = 'title'; document.body.classList.remove('picking', 'city', 'diving'); document.body.classList.add('title'); }
 let mx = 0, my = 0; addEventListener('pointermove', e => { mx = e.clientX / W * 2 - 1; my = e.clientY / H * 2 - 1; });
 const ray = new T.Raycaster(), ndc = new T.Vector2();
-canvas.addEventListener('click', e => { if (stage !== 'cab') return; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); if (ray.intersectObject(cab, true).length) dive(); });
-canvas.addEventListener('pointermove', e => { if (stage !== 'cab') { canvas.style.cursor = ''; return; } ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); canvas.style.cursor = ray.intersectObject(cab, true).length ? 'pointer' : ''; });
-addEventListener('keydown', e => { if (stage === 'cab' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); dive(); } });
-$('allG1').href = GAMES_URL; $('allG2').href = GAMES_URL;
+canvas.addEventListener('click', e => { if (stage !== 'title') return; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); if (ray.intersectObject(cab, true).length) goPick(); });
+canvas.addEventListener('pointermove', e => { if (stage !== 'title') { canvas.style.cursor = ''; return; } ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); canvas.style.cursor = (roomHover >= 0 || ray.intersectObject(cab, true).length) ? 'pointer' : ''; });
+addEventListener('keydown', e => { if (stage === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); goPick(); } });
+$('allG2').href = GAMES_URL;
+{ const mb = $('menuBtn'), mn = $('menu'); const set = o => { mn.hidden = !o; mb.setAttribute('aria-expanded', o ? 'true' : 'false'); };
+  mb.addEventListener('click', e => { e.stopPropagation(); set(mn.hidden); }); addEventListener('click', e => { if (!mn.hidden && !mn.contains(e.target)) set(false); }, true); addEventListener('keydown', e => { if (e.key === 'Escape' && !mn.hidden) { set(false); mb.focus(); } }); }
 $('skip').addEventListener('click', () => { SND.start(); askTilt(); toCity(true); });
 // (hero choice happens on the 3D carousel)
 $('wxTime').addEventListener('click', () => { const order = ['dusk', 'night', 'day', 'auto']; WORLD.mode = order[(order.indexOf(WORLD.mode) + 1) % order.length]; applyWorld(); });
 $('navPrev').addEventListener('click', () => step(-1)); $('navNext').addEventListener('click', () => step(1));
 $('wxRain').addEventListener('click', () => { WORLD.rain = !WORLD.rain; applyWorld(); });
-$('pressStart').addEventListener('click', () => dive());
+$('pressStart').addEventListener('click', () => goPick());
 const sndBtn = $('snd'); const sndUi = () => { sndBtn.classList.toggle('muted', !SND.on); sndBtn.setAttribute('aria-label', SND.on ? 'Sound on' : 'Sound off'); }; sndUi();
 sndBtn.addEventListener('click', () => { SND.start(); SND.toggle(); sndUi(); if (stage !== 'cab') SND.city(true); });
-$('replay').addEventListener('click', () => { cam.near = .05; carReset(); pickPose(); cam.position.copy(pickPos); document.body.classList.remove('city', 'diving'); scrollTo(0, 0); scrMode = 'attract'; camIdle(); pickPose(); cam.position.copy(pickPos); cam.lookAt(pickLook); $('card').classList.remove('on'); SND.city(false); vids.forEach(v => v.pause()); });
+$('replay').addEventListener('click', () => { cam.near = .05; goTitle(); scrollTo(0, 0); scrMode = 'attract'; camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA); $('card').classList.remove('on'); SND.city(false); vids.forEach(v => v.pause()); });
 const camFrom = new T.Vector3(), diveTo = SC_C.clone().addScaledVector(SC_N, .03), diveLook = SC_C.clone().addScaledVector(SC_N, -1);
 function dive() { if (stage !== 'cab') return; SND.start(); askTilt(); SND.coin(); setTimeout(() => SND.whoosh(), 150); stage = 'dive'; diveT = 0; camFrom.copy(cam.position); scrMode = 'dive'; scrT = 0; document.body.classList.add('diving'); if (reduce) toCity(true); }
 function toCity(skip) {
-  cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
+  cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking', 'title'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
   $('welcome').classList.add('on'); SND.city(true); try { localStorage.setItem('rv-intro-seen', '1'); } catch (e) {}
 }
 // dots
@@ -1813,20 +1799,21 @@ const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
-  if (stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
+  if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
+    CAR.visible = stage === 'pick' || stage === 'zoom'; ROOM.forEach(o => o.g.visible = stage === 'title'); ROOML.forEach(l => l.intensity = stage === 'title' ? 1.1 : 0);
     tickCarousel(dt, time); ROOM_ANIM.forEach(f => f(time)); ROOM.forEach((o, i) => { o.hover += ((i === roomHover ? 1 : 0) - o.hover) * Math.min(1, dt * 8); const k = 1 + o.hover * .05; o.g.scale.setScalar(k); o.sign.material.color.setScalar(1.6 + o.hover * 1.6 + (stage === 'dive' ? 0 : 0)); });
     if (now - lastScr > 66) { lastScr = now; if (stage === 'dive') scrT = Math.min(1, diveT / 1.1); screenT.redraw(time); }
-    const dim = stage === 'pick' ? .22 : stage === 'zoom' ? lerp(.22, 1, Math.min(1, zoomT / 1.3)) : 1;
+    const dim = stage === 'pick' ? .06 : stage === 'zoom' ? lerp(.06, 1, Math.min(1, zoomT / 1.3)) : 1;
     const L = (stage === 'dive' ? 1 : flick(time)) * dim; spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
     if (stage === 'pick') {
       tmp.set(pickPos.x + mx * .35, pickPos.y - my * .15, pickPos.z); cam.position.lerp(tmp, .06); cam.lookAt(pickLook);
     } else if (stage === 'zoom') {
       zoomT += dt; const k = Math.min(1, zoomT / 1.6), e = easeIO(k);
       cam.position.lerpVectors(pickFrom, camA0, e); cl.lerpVectors(pickLook, lookA, e); cam.lookAt(cl);
-      CAR.scale.setScalar(Math.max(.001, 1 - e)); CAR.position.y = -e * .6; CAR.visible = e < .99;
+      CAR.scale.setScalar(Math.max(.001, 1 - e)); CAR.position.y = -e * .6; if (e >= .99) CAR.visible = false;
       if (chosenObj) { chosenObj.position.lerpVectors(chosenObj.userData.from, chosenAt, e); chosenObj.scale.setScalar(lerp(1.28, 1.1, e)); chosenObj.rotation.y = chosenObj.userData.ry - .55 * e + e * Math.PI * 2; }
-      if (k >= 1) stage = 'cab';
-    } else if (stage === 'cab') {
+      if (k >= 1) { stage = 'cab'; dive(); }
+    } else if (stage === 'cab' || stage === 'title') {
       tmp.set(camA0.x + mx * .28 + (TILT.dev ? TILT.tx * .3 : 0), camA0.y - my * .12 + Math.sin(time * .6) * .02, camA0.z);
       cam.position.lerp(tmp, .06); cam.lookAt(lookA);
     } else {
