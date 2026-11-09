@@ -133,7 +133,16 @@ body.city #replay{opacity:1;pointer-events:auto}
   #end{bottom:150px}
 }
 /* hero picker, coins, weather */
-#cabUi .pick{position:absolute;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:auto}
+#cabUi .pick{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:auto;transition:opacity .4s,transform .4s}
+body:not(.picking) #cabUi .pick{opacity:0;transform:translateY(20px);pointer-events:none}
+body.picking #pressStart,body.picking #pChange{opacity:0;pointer-events:none}
+#pressStart,#pChange{transition:opacity .5s}
+#cabUi .pick .ph{position:fixed;left:0;right:0;top:calc(88px + env(safe-area-inset-top));text-align:center;font-size:13px;letter-spacing:5px;color:var(--y);text-shadow:0 0 14px rgba(255,201,60,.6)}
+#cabUi .prow{display:flex;align-items:center;gap:18px}
+#cabUi .pname{min-width:220px;text-align:center;font:700 44px Fredoka,sans-serif;color:#fff;text-shadow:0 0 24px rgba(255,201,60,.45),0 4px 18px #000}
+#cabUi .parr{width:52px;height:52px}
+#cabUi .pgo{min-width:200px;min-height:50px;font-size:17px;pointer-events:auto}
+#cabUi .chg{position:absolute;left:20px;bottom:calc(18px + env(safe-area-inset-bottom));pointer-events:auto;background:rgba(20,16,44,.55);border:1px solid rgba(255,255,255,.18)}
 #cabUi .ph{font:400 10px 'Press Start 2P',monospace;letter-spacing:3px;color:rgba(255,255,255,.55)}
 #heroChips{display:flex;gap:8px;max-width:calc(100vw - 32px);overflow-x:auto;padding:4px 8px;scrollbar-width:none}
 #heroChips::-webkit-scrollbar{display:none}
@@ -164,7 +173,8 @@ body.city .navb{opacity:1;pointer-events:auto}
 body.city #wx{opacity:1;pointer-events:auto}
 #wxLbl{font:800 12px Nunito,sans-serif;color:rgba(255,255,255,.75);text-shadow:0 2px 8px #000;white-space:nowrap}
 @media (max-width:760px){
-  #cabUi .pick{bottom:calc(76px + env(safe-area-inset-bottom))}
+  #cabUi .pname{min-width:150px;font-size:32px}
+  #cabUi .chg{bottom:calc(84px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);min-height:40px;font-size:13px}
   #heroChips button{width:58px}
   #heroChips button img{width:32px;height:32px}
   #wxLbl{display:none}
@@ -177,7 +187,7 @@ body.city #wx{opacity:1;pointer-events:auto}
 @media (prefers-reduced-motion: reduce){#cabUi .hint{animation:none}#card,#top,#welcome{transition:none}}
 </style>
 </head>
-<body>
+<body class="picking">
 <canvas id="c" aria-label="3D view of the ROBIN Arcade cabinet and the city of Ravenport"></canvas>
 <div id="scroll"></div>
 <div id="load"><div>LOADING RAVENPORT&hellip;</div><div class="bar"><i id="loadBar" style="width:12%"></i></div><small id="loadStep">Building the city</small></div>
@@ -185,8 +195,13 @@ body.city #wx{opacity:1;pointer-events:auto}
 
 <div id="cabUi">
   <div class="tl">ROBIN <span>Arcade</span></div>
-  <div class="pick"><div class="ph">WHO FLIES OVER RAVENPORT?</div><div id="heroChips" role="group" aria-label="Choose your hero"></div></div>
+  <div class="pick" id="pickUi"><div class="ph">CHOOSE YOUR HERO</div>
+    <div class="prow"><button class="ico parr" id="pPrev" type="button" aria-label="Previous hero"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="pname" id="pName" aria-live="polite">Hoot</div>
+      <button class="ico parr" id="pNext" type="button" aria-label="Next hero"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
+    <button class="btn y pgo" id="pGo" type="button">Choose</button></div>
   <button class="hint" id="pressStart" type="button">PRESS START</button>
+  <button class="btn chg" id="pChange" type="button">Change hero</button>
   <button class="btn" id="skip" type="button">Skip intro</button>
   <a class="btn ghost allg" id="allG1" href="#">All games</a>
 </div>
@@ -265,7 +280,7 @@ const aq = makeAutoQuality(R, glow, (lv) => { glowA.on = glow.on; if (lv >= 1) {
 const cam = new T.PerspectiveCamera(48, 1, .05, 900);
 let W = 1, H = 1;
 function fit() { W = innerWidth; H = innerHeight; R.setSize(W, H, false); glow.setSize(W, H); glowA.setSize(W, H); cam.aspect = W / H; cam.updateProjectionMatrix(); }
-addEventListener('resize', fit); fit();
+addEventListener('resize', () => { fit(); if (typeof pickPose === 'function') { camIdle(); pickPose(); } }); fit();
 
 const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const easeIn = t => t * t * t;
@@ -1185,6 +1200,7 @@ const SND = (() => {
     // mix: { trackName: weight }, crossfaded every frame from the district weights
     mix(w) { if (!ctx || !inCity) return; TRACKS.forEach(n => { const t = TR[n]; if (!t) return; const v = (w[n] || 0) * .3; if (Math.abs(v - t.v) > .01) { t.v = v; ramp(t.g, v, .8); } if (v > .005 && t.el.paused) t.el.play().catch(() => {}); if (v <= .005 && !t.el.paused && t.g.gain.value < .01) t.el.pause(); }); },
     coin(quiet) { if (!ctx || !on) return; const n = performance.now(); if (quiet && n - lastCoin < 120) return; lastCoin = n; const a = new Audio('assets/sfx/coin.mp3'); a.volume = quiet ? .25 : .7; a.play().catch(() => {}); },
+    tick() { if (!ctx || !on) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(660, t); o.frequency.exponentialRampToValueAtTime(990, t + .06); o.connect(g); g.connect(master); g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.001, t + .12); o.start(t); o.stop(t + .14); },
     buzz() { if (!ctx || !on) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = 118; f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = .8; o.connect(f); f.connect(g); g.connect(master);
       g.gain.setValueAtTime(0, t); for (let k = 0; k < 7; k++) { g.gain.setValueAtTime(k % 2 ? 0 : .07, t + k * .07); } g.gain.setValueAtTime(.045, t + .5); g.gain.exponentialRampToValueAtTime(.001, t + 1.4); o.start(t); o.stop(t + 1.5);
       const p = ctx.createOscillator(), pg = ctx.createGain(); p.type = 'triangle'; p.frequency.value = 880; p.connect(pg); pg.connect(master); pg.gain.setValueAtTime(0, t + .5); pg.gain.linearRampToValueAtTime(.06, t + .52); pg.gain.exponentialRampToValueAtTime(.001, t + 1.1); p.start(t + .5); p.stop(t + 1.2); },
@@ -1599,11 +1615,44 @@ anim.push(t => { if (JB.ok) JB.shown += (JB.jack - JB.shown) * .04; if (t - jbLa
 toonify(B); toonify(A);
 for (const k in MAT) if (TOONC.has(MAT[k])) MAT[k] = TOONC.get(MAT[k]);
 WET[3] = MAT.roof;
+// ---------- 3D hero carousel in front of the cabinet ----------
+const CAR = new T.Group(); CAR.position.set(0, 0, 1.95); A.add(CAR);
+const CN = HERO_LIST.length, CSTEP = Math.PI * 2 / CN, CRAD = 1.3, MK = { makeCorgi, makeBeagle, makeOwl, makeTrey, makeBaller, makeFrazzle, makeIlia, makeSpud, makePlop };
+const CH = HERO_LIST.map(([name, fn], i) => { const slot = new T.Group(); const a = i * CSTEP; slot.position.set(Math.sin(a) * CRAD, 0, Math.cos(a) * CRAD); CAR.add(slot);
+  let h = null; try { h = hero(MK[fn], .62); } catch (e) { h = new T.Group(); } h.rotation.y = Math.atan2(-Math.cos(a), Math.sin(a)); slot.add(h);
+  h.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.slot = i; } });
+  const ped = new T.Mesh(new T.CylinderGeometry(.26, .3, .08, 40), new T.MeshStandardMaterial({ color: 0x2a2250, roughness: .4, metalness: .5 })); ped.position.y = .04; ped.receiveShadow = true; slot.add(ped);
+  const ring = new T.Mesh(new T.TorusGeometry(.29, .018, 10, 48).rotateX(Math.PI / 2), new T.MeshBasicMaterial({ color: new T.Color(0xffc93c) })); ring.position.y = .085; slot.add(ring); ring.userData.noInk = true;
+  h.position.y = .08; return { slot, h, ring, name }; });
+const carLight = new T.SpotLight(0xfff0d8, 0, 9, .55, .6, 1.2); carLight.position.set(0, 3.4, 5.2); carLight.target.position.set(0, .3, 3.2); A.add(carLight, carLight.target);
+const carFill = new T.PointLight(0x9a7cff, 0, 5); carFill.position.set(0, 1.4, 4.2); A.add(carFill);
+let carSel = heroIdx, carRot = -heroIdx * CSTEP, chosenObj = null, zoomT = 0;
+const pickFrom = new T.Vector3(), pickPos = new T.Vector3(), pickLook = new T.Vector3(0, .42, 1.6), chosenAt = new T.Vector3(.86, 0, .72);
+function pickPose() { const port = W < H; pickPos.set(0, port ? 2.1 : 1.75, port ? 8.6 : 6.6); }
+function carGo(d) { if (stage !== 'pick') return; carSel = (carSel + d + CN) % CN; $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; SND.start(); SND.tick && SND.tick(); }
+function carChoose() { if (stage !== 'pick') return; setFlyer(carSel); stage = 'zoom'; zoomT = 0; pickFrom.copy(cam.position); document.body.classList.remove('picking');
+  const c = CH[carSel]; chosenObj = c.slot; c.slot.userData.from = c.slot.getWorldPosition(new T.Vector3()); A.attach(c.slot); c.slot.userData.ry = c.slot.rotation.y; SND.start(); SND.coin(true); }
+function carReset() { if (chosenObj) { CAR.attach(chosenObj); const a = carSel * CSTEP; chosenObj.position.set(Math.sin(a) * CRAD, 0, Math.cos(a) * CRAD); chosenObj.rotation.set(0, 0, 0); chosenObj.scale.setScalar(1); chosenObj = null; }
+  CAR.visible = true; CAR.scale.setScalar(1); CAR.position.y = 0; stage = 'pick'; document.body.classList.add('picking'); $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; }
+$('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name;
+$('pPrev').addEventListener('click', () => carGo(-1)); $('pNext').addEventListener('click', () => carGo(1)); $('pGo').addEventListener('click', carChoose);
+$('pChange').addEventListener('click', () => { if (stage === 'cab') { pickFrom.copy(cam.position); carReset(); } });
+let swX = null; canvas.addEventListener('pointerdown', e => { swX = e.clientX; });
+canvas.addEventListener('pointerup', e => { if (stage !== 'pick' || swX == null) return; const dx = e.clientX - swX; swX = null; if (Math.abs(dx) > 40) { carGo(dx < 0 ? 1 : -1); e.preventDefault(); return; }
+  ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const hit = ray.intersectObject(CAR, true).find(x => x.object.userData.slot != null);
+  if (hit) { const k = hit.object.userData.slot; if (k === carSel) carChoose(); else { let d = k - carSel; if (d > CN / 2) d -= CN; if (d < -CN / 2) d += CN; carGo(d); } } });
+addEventListener('keydown', e => { if (stage !== 'pick') return; if (e.key === 'ArrowLeft') { e.preventDefault(); carGo(-1); } if (e.key === 'ArrowRight') { e.preventDefault(); carGo(1); } if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); carChoose(); } });
+function tickCarousel(dt, time) {
+  const tgt = -carSel * CSTEP; let dd = tgt - carRot; dd = Math.atan2(Math.sin(dd), Math.cos(dd)); carRot += dd * Math.min(1, dt * 6); CAR.rotation.y = carRot;
+  CH.forEach((c, i) => { const front = i === carSel && stage === 'pick'; const s2 = c.slot === chosenObj ? c.slot.scale.x : lerp(c.slot.scale.x, front ? 1.28 : 1, Math.min(1, dt * 6)); if (c.slot !== chosenObj) c.slot.scale.setScalar(s2);
+    c.h.position.y = .08 + (front ? Math.abs(Math.sin(time * 3)) * .05 : 0); c.ring.material.color.setScalar(front ? 3.2 : .35); if (front) c.ring.material.color.setRGB(3.2, 2.3, .6); });
+  const on = stage === 'pick' ? 1 : stage === 'zoom' ? 1 - Math.min(1, zoomT / .8) : 0; carLight.intensity = 2.4 * on; carFill.intensity = .9 * on;
+}
 /* ================= flow ================= */
-let stage = 'cab', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, prog = 0, sprog = 0;
+let stage = 'pick', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, prog = 0, sprog = 0;
 const camA0 = new T.Vector3(), lookA = new T.Vector3(0, 1.12, 0);
 function camIdle() { const port = W < H; camA0.set(0, port ? 1.25 : 1.28, port ? 4.5 : 3.8); cam.fov = port ? 62 : 44; cam.updateProjectionMatrix(); }
-camIdle(); cam.position.copy(camA0); cam.lookAt(lookA);
+camIdle(); pickPose(); cam.position.copy(pickPos); cam.lookAt(pickLook);
 let mx = 0, my = 0; addEventListener('pointermove', e => { mx = e.clientX / W * 2 - 1; my = e.clientY / H * 2 - 1; });
 const ray = new T.Raycaster(), ndc = new T.Vector2();
 canvas.addEventListener('click', e => { if (stage !== 'cab') return; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); if (ray.intersectObject(cab, true).length) dive(); });
@@ -1611,18 +1660,18 @@ canvas.addEventListener('pointermove', e => { if (stage !== 'cab') { canvas.styl
 addEventListener('keydown', e => { if (stage === 'cab' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); dive(); } });
 $('allG1').href = GAMES_URL; $('allG2').href = GAMES_URL;
 $('skip').addEventListener('click', () => { SND.start(); askTilt(); toCity(true); });
-HERO_LIST.forEach(([name, , img], i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', i === heroIdx ? 'true' : 'false'); b.innerHTML = '<img src="assets/heroes/' + img + '.png" alt="">' + name; b.addEventListener('click', e => { e.stopPropagation(); setFlyer(i); [...$('heroChips').children].forEach((c, j) => c.setAttribute('aria-pressed', j === i ? 'true' : 'false')); }); $('heroChips').appendChild(b); });
+// (hero choice happens on the 3D carousel)
 $('wxTime').addEventListener('click', () => { const order = ['dusk', 'night', 'day', 'auto']; WORLD.mode = order[(order.indexOf(WORLD.mode) + 1) % order.length]; applyWorld(); });
 $('navPrev').addEventListener('click', () => step(-1)); $('navNext').addEventListener('click', () => step(1));
 $('wxRain').addEventListener('click', () => { WORLD.rain = !WORLD.rain; applyWorld(); });
 $('pressStart').addEventListener('click', () => dive());
 const sndBtn = $('snd'); const sndUi = () => { sndBtn.classList.toggle('muted', !SND.on); sndBtn.setAttribute('aria-label', SND.on ? 'Sound on' : 'Sound off'); }; sndUi();
 sndBtn.addEventListener('click', () => { SND.start(); SND.toggle(); sndUi(); if (stage !== 'cab') SND.city(true); });
-$('replay').addEventListener('click', () => { cam.near = .05; stage = 'cab'; document.body.classList.remove('city', 'diving'); scrollTo(0, 0); scrMode = 'attract'; camIdle(); cam.position.copy(camA0); cam.lookAt(lookA); $('card').classList.remove('on'); SND.city(false); vids.forEach(v => v.pause()); });
+$('replay').addEventListener('click', () => { cam.near = .05; carReset(); pickPose(); cam.position.copy(pickPos); document.body.classList.remove('city', 'diving'); scrollTo(0, 0); scrMode = 'attract'; camIdle(); pickPose(); cam.position.copy(pickPos); cam.lookAt(pickLook); $('card').classList.remove('on'); SND.city(false); vids.forEach(v => v.pause()); });
 const camFrom = new T.Vector3(), diveTo = SC_C.clone().addScaledVector(SC_N, .03), diveLook = SC_C.clone().addScaledVector(SC_N, -1);
 function dive() { if (stage !== 'cab') return; SND.start(); askTilt(); SND.coin(); setTimeout(() => SND.whoosh(), 150); stage = 'dive'; diveT = 0; camFrom.copy(cam.position); scrMode = 'dive'; scrT = 0; document.body.classList.add('diving'); if (reduce) toCity(true); }
 function toCity(skip) {
-  cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
+  cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
   $('welcome').classList.add('on'); SND.city(true); try { localStorage.setItem('rv-intro-seen', '1'); } catch (e) {}
 }
 // dots
@@ -1674,10 +1723,20 @@ const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
-  if (stage === 'cab' || stage === 'dive') {
+  if (stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
+    tickCarousel(dt, time);
     if (now - lastScr > 66) { lastScr = now; if (stage === 'dive') scrT = Math.min(1, diveT / 1.1); screenT.redraw(time); }
-    const L = stage === 'dive' ? 1 : flick(time); spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
-    if (stage === 'cab') {
+    const dim = stage === 'pick' ? .22 : stage === 'zoom' ? lerp(.22, 1, Math.min(1, zoomT / 1.3)) : 1;
+    const L = (stage === 'dive' ? 1 : flick(time)) * dim; spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
+    if (stage === 'pick') {
+      tmp.set(pickPos.x + mx * .35, pickPos.y - my * .15, pickPos.z); cam.position.lerp(tmp, .06); cam.lookAt(pickLook);
+    } else if (stage === 'zoom') {
+      zoomT += dt; const k = Math.min(1, zoomT / 1.6), e = easeIO(k);
+      cam.position.lerpVectors(pickFrom, camA0, e); cl.lerpVectors(pickLook, lookA, e); cam.lookAt(cl);
+      CAR.scale.setScalar(Math.max(.001, 1 - e)); CAR.position.y = -e * .6; CAR.visible = e < .99;
+      if (chosenObj) { chosenObj.position.lerpVectors(chosenObj.userData.from, chosenAt, e); chosenObj.scale.setScalar(lerp(1.28, 1.1, e)); chosenObj.rotation.y = chosenObj.userData.ry - .55 * e + e * Math.PI * 2; }
+      if (k >= 1) stage = 'cab';
+    } else if (stage === 'cab') {
       tmp.set(camA0.x + mx * .28 + (TILT.dev ? TILT.tx * .3 : 0), camA0.y - my * .12 + Math.sin(time * .6) * .02, camA0.z);
       cam.position.lerp(tmp, .06); cam.lookAt(lookA);
     } else {
@@ -1760,7 +1819,7 @@ stepTo(45, 'Loading the fonts').then(() => Promise.race([fontsReady, new Promise
   requestAnimationFrame(frame);
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__rv = { JB: typeof JB !== "undefined" ? JB : null, dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
+window.__rv = { carGo: (d) => carGo(d), carChoose: () => carChoose(), JB: typeof JB !== "undefined" ? JB : null, dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
 }, 30));
 </script>
 </body>
