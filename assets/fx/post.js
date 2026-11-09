@@ -32,8 +32,8 @@ function makePost(renderer, opts) {
         c+=(texture2D(t,v+vec2(d.x,0)).rgb+texture2D(t,v-vec2(d.x,0)).rgb+texture2D(t,v+vec2(0,d.y)).rgb+texture2D(t,v-vec2(0,d.y)).rgb)*2.;
         c+=texture2D(t,v+d).rgb+texture2D(t,v-d).rgb+texture2D(t,v+vec2(d.x,-d.y)).rgb+texture2D(t,v+vec2(-d.x,d.y)).rgb;
         gl_FragColor=vec4(c/16.,1.);}` });
-  const comp = new T.ShaderMaterial({ uniforms: { tn: { value: null }, td: { value: null }, ol: { value: 0 }, cn: { value: .5 }, cf: { value: 900 }, px: { value: new T.Vector2() }, t: { value: null }, b: { value: null }, k: { value: opts.strength || .6 }, ex: { value: opts.exposure || 1.2 }, tm: { value: 0 }, asp: { value: 1 }, fl: { value: 0 }, ca: { value: opts.ca == null ? 1 : opts.ca }, vig: { value: opts.vignette || .55 }, wet: { value: 0 } }, vertexShader: V, depthTest: false, depthWrite: false,
-    fragmentShader: `uniform sampler2D t;uniform sampler2D b;uniform sampler2D tn;uniform sampler2D td;uniform float k,ex,tm,asp,fl,ca,vig,wet,ol,cn,cf;uniform vec2 px;varying vec2 v;
+  const comp = new T.ShaderMaterial({ uniforms: { tn: { value: null }, td: { value: null }, ol: { value: 0 }, aoK: { value: 0 }, cn: { value: .5 }, cf: { value: 900 }, px: { value: new T.Vector2() }, t: { value: null }, b: { value: null }, k: { value: opts.strength || .6 }, ex: { value: opts.exposure || 1.2 }, tm: { value: 0 }, asp: { value: 1 }, fl: { value: 0 }, ca: { value: opts.ca == null ? 1 : opts.ca }, vig: { value: opts.vignette || .55 }, wet: { value: 0 } }, vertexShader: V, depthTest: false, depthWrite: false,
+    fragmentShader: `uniform sampler2D t;uniform sampler2D b;uniform sampler2D tn;uniform sampler2D td;uniform float k,ex,tm,asp,fl,ca,vig,wet,ol,cn,cf,aoK;uniform vec2 px;varying vec2 v;
       float lin(vec2 p){float d=texture2D(td,p).x;return (2.*cn*cf)/(cf+cn-(2.*d-1.)*(cf-cn));}
       vec3 nr(vec2 p){return texture2D(tn,p).xyz*2.-1.;}
       vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
@@ -46,11 +46,19 @@ function makePost(renderer, opts) {
         c+=bl*k;
         c*=ex*(1.+fl*1.6); c+=vec3(.55,.6,.9)*fl*.12;
         c=aces(c);
-        if(ol>.5){float dc=lin(v);vec2 o1=vec2(px.x,0.),o2=vec2(0.,px.y);
-          float de=abs(lin(v+o1)+lin(v-o1)+lin(v+o2)+lin(v-o2)-4.*dc)/dc;
+        if(ol>.5){float dc=lin(v);
+          // contact shadows: nearby geometry in front of this pixel darkens it
+          if(aoK>0.){float occ=0.;float rad=clamp(14./max(dc*.05,.5),2.5,26.);
+            for(int i=0;i<10;i++){float a=float(i)*2.39996+fract(sin(dot(v,vec2(12.9898,78.233)))*43758.5)*6.28;float rr=rad*(.35+.65*fract(float(i)*.618));
+              float ds=lin(v+vec2(cos(a),sin(a))*rr*px);float dd=dc-ds;occ+=smoothstep(.06,.5,dd)*(1.-smoothstep(2.5,6.,dd));}
+            c*=1.-clamp(occ/10.,0.,1.)*aoK*(1.-smoothstep(120.,320.,dc));}
+          // outer silhouettes are drawn thick, inner creases thin
+          vec2 o1=vec2(px.x,0.),o2=vec2(0.,px.y),w1=o1*1.8,w2=o2*1.8;
+          float de=abs(lin(v+w1)+lin(v-w1)+lin(v+w2)+lin(v-w2)-4.*dc)/dc;
           vec3 n0=nr(v);float ne=max(max(1.-dot(n0,nr(v+o1)),1.-dot(n0,nr(v-o1))),max(1.-dot(n0,nr(v+o2)),1.-dot(n0,nr(v-o2))));
-          float e=max(smoothstep(.05,.16,de),smoothstep(.18,.45,ne))*(1.-smoothstep(90.,300.,dc));
-          c=mix(c,vec3(.07,.05,.13),e*.88);}
+          float fade=1.-smoothstep(90.,300.,dc);
+          c=mix(c,vec3(.07,.05,.13),smoothstep(.05,.14,de)*fade*.92);
+          c=mix(c,vec3(.10,.07,.18),smoothstep(.2,.5,ne)*fade*.6);}
         float l=dot(c,vec3(.299,.587,.114));
         c=mix(c,c*vec3(.82,.9,1.18),(1.-smoothstep(0.,.5,l))*.7);
         c=mix(c,c*vec3(1.1,1.,.86),smoothstep(.5,1.,l)*.6);
@@ -63,7 +71,7 @@ function makePost(renderer, opts) {
   function pass(mat, target, clear) { quad.material = mat; renderer.setRenderTarget(target); if (clear !== false) renderer.clear(); renderer.render(qs, qc); }
   const P = {
     on: true, comp,
-    outline: !!opts.outline,
+    outline: !!opts.outline, ao: !!opts.ao,
     setSize(W, H) { const pr = renderer.getPixelRatio(); w = Math.max(2, W * pr | 0); h = Math.max(2, H * pr | 0); base.setSize(w, h); nrmRT.setSize(w, h); comp.uniforms.px.value.set(Math.max(1, pr * .9) / w, Math.max(1, pr * .9) / h); let mw = w, mh = h; for (let i = 0; i < N; i++) { mw = Math.max(1, mw >> 1); mh = Math.max(1, mh >> 1); mips[i].setSize(mw, mh); } },
     render(scene, camera, o) {
       o = o || {};
@@ -74,7 +82,7 @@ function makePost(renderer, opts) {
         for (let i = 0; i < N; i++) { down.uniforms.t.value = src; down.uniforms.px.value.set(1 / sw, 1 / sh); down.uniforms.first.value = i === 0 ? 1 : 0; down.uniforms.th.value = o.threshold != null ? o.threshold : (opts.threshold || 1); pass(down, mips[i]); src = mips[i].texture; sw = mips[i].width; sh = mips[i].height; }
         for (let i = N - 1; i > 0; i--) { up.uniforms.t.value = mips[i].texture; up.uniforms.px.value.set(1 / mips[i].width, 1 / mips[i].height); up.uniforms.r.value = 1; pass(up, mips[i - 1], false); }
       }
-      const doOl = this.outline && !o.noInk; comp.uniforms.ol.value = doOl ? 1 : 0;
+      const doOl = this.outline && !o.noInk; comp.uniforms.ol.value = doOl ? 1 : 0; comp.uniforms.aoK.value = doOl && this.ao ? .55 : 0;
       if (doOl) { if (++hideAge > 90) collectHidden(scene); const hl = hideList.concat(dynList.filter(x => x.userData.noInk)); const was = hl.map(x => x.visible); hl.forEach(x => x.visible = false);
         const ov = scene.overrideMaterial, bg = scene.background, fg = scene.fog; scene.overrideMaterial = nrmMat; scene.background = null; scene.fog = null;
         renderer.setRenderTarget(nrmRT); renderer.setClearColor(0x8080ff, 1); renderer.clear(); renderer.render(scene, camera);
