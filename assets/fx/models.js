@@ -1,10 +1,10 @@
 /* toon helpers */
 const gm=new T.DataTexture(new Uint8Array([110,110,110,255,185,185,185,255,255,255,255,255]),3,1,T.RGBAFormat);gm.minFilter=gm.magFilter=T.NearestFilter;gm.needsUpdate=true;
-const toon=(c,o={})=>new T.MeshToonMaterial(Object.assign({color:c,gradientMap:gm},o));
+const toon=(c,o={})=>window.RV_INK?new T.MeshToonMaterial(Object.assign({color:c,gradientMap:window.RV_GM||gm},o)):window.RV_PBR?new T.MeshStandardMaterial(Object.assign({color:c,roughness:.5,metalness:.03,envMapIntensity:.8},o)):new T.MeshToonMaterial(Object.assign({color:c,gradientMap:gm},o));
 const OUT=new T.MeshBasicMaterial({color:0x1d1038,side:T.BackSide});
-const SPH=new T.SphereGeometry(1,22,16),CYL=new T.CylinderGeometry(1,1,1,16),CONE=new T.ConeGeometry(1,1,16),BOX=new T.BoxGeometry(1,1,1),TOR=new T.TorusGeometry(1,.3,8,20),GEM=new T.OctahedronGeometry(1);
+const SPH=new T.SphereGeometry(1,window.RV_PBR?48:22,window.RV_PBR?32:16),CYL=new T.CylinderGeometry(1,1,1,window.RV_PBR?40:16),CONE=new T.ConeGeometry(1,1,window.RV_PBR?40:16),BOX=new T.BoxGeometry(1,1,1),TOR=new T.TorusGeometry(1,.3,window.RV_PBR?20:8,window.RV_PBR?48:20),GEM=new T.OctahedronGeometry(1);
 function part(geo,mat,x,y,z,sx=1,sy=1,sz=1,outline=true){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);
-  if(outline){const o=new T.Mesh(geo,OUT);o.scale.setScalar(1.08);m.add(o)}return m}
+  if(outline&&!window.RV_PBR){const o=new T.Mesh(geo,OUT);o.scale.setScalar(1.08);m.add(o)}return m}
 
 /* ---------- cape ---------- */
 function makeCape(c1,L,Wd){const geo=new T.PlaneGeometry(1,1,8,8);const uv=geo.attributes.uv,pos=geo.attributes.position,n=pos.count;
