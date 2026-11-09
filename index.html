@@ -238,6 +238,7 @@ function toonify(root) { root.traverse(o => { if (!o.material || o.isSprite || o
 <script src="assets/fx/models.js"></script>
 <script src="assets/fx/glow.js"></script>
 <script src="assets/fx/post.js"></script>
+<script src="assets/fx/robinvault.js"></script>
 <script>
 requestAnimationFrame(() => setTimeout(function () {
 'use strict';
@@ -1530,6 +1531,42 @@ function flightLife(dt, time) {
     if (f.t >= 0) { f.t += dt; if (f.t > 9 && flyer.position.distanceTo(f.home) > 30) f.t = -1; } });
   if (moving && !honked && FL.tw.t > .4 && FL.tw.t < .6) { honked = true; if (Math.random() < .6) SND.honk(); } if (!moving) honked = false;
 }
+// ---------- the jackpot jumbotron: live numbers from the prize pool contract ----------
+const JB = { jack: 0, pool: 0, burn: 0, plays: 0, shown: 0, ok: false, won: 0 };
+const jbT = tex(1024, 576, () => {});
+function drawJB(time) {
+  const x = jbT.x, W2 = 1024, H2 = 576; x.clearRect(0, 0, W2, H2);
+  x.fillStyle = '#120a26'; x.fillRect(0, 0, W2, H2);
+  for (let k = 0; k < 40; k++) { x.fillStyle = ((k + Math.floor(time * 6)) % 3) ? '#ffd35a' : '#ff5a9a'; x.beginPath(); x.arc(14 + k * 25.6, 14, 6, 0, 7); x.fill(); x.beginPath(); x.arc(14 + k * 25.6, H2 - 14, 6, 0, 7); x.fill(); }
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = '#7fe3ff'; x.font = "28px 'Press Start 2P'"; x.fillText('INSTANT JACKPOT', W2 / 2, 78);
+  const v = JB.ok ? JB.shown : 0; const num = JB.ok ? v.toLocaleString('en', { maximumFractionDigits: v < 1000 ? 2 : 0 }) : '- - -';
+  let fs = 150; x.font = '700 ' + fs + 'px Fredoka, sans-serif'; while (x.measureText(num).width > 900 && fs > 60) { fs -= 6; x.font = '700 ' + fs + 'px Fredoka, sans-serif'; }
+  x.lineJoin = 'round'; x.lineWidth = 16; x.strokeStyle = '#2a1050'; x.strokeText(num, W2 / 2, 205); x.shadowColor = '#ffc93c'; x.shadowBlur = 30; x.fillStyle = '#ffd35a'; x.fillText(num, W2 / 2, 205); x.shadowBlur = 0;
+  x.fillStyle = '#fff'; x.font = "700 40px Fredoka, sans-serif"; x.fillText('$ROBIN  ·  1 in 2,000 on every game for the pot', W2 / 2, 300);
+  const cell = (cx, lbl, val, col) => { x.fillStyle = 'rgba(255,255,255,.07)'; x.fillRect(cx - 150, 350, 300, 160); x.fillStyle = col; x.font = "18px 'Press Start 2P'"; x.fillText(lbl, cx, 385); x.fillStyle = '#fff'; x.font = "700 56px Fredoka, sans-serif"; x.fillText(val, cx, 455); };
+  const f = n => !JB.ok ? '-' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1) + 'K' : n.toLocaleString('en', { maximumFractionDigits: 1 });
+  cell(195, 'WEEKLY POOL', f(JB.pool), '#9dff9a'); cell(512, 'BURNED', f(JB.burn), '#ff8a5a'); cell(829, 'GAMES PLAYED', !JB.ok ? '-' : JB.plays.toLocaleString('en'), '#b98cff');
+  x.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < H2; y += 4) x.fillRect(0, y, W2, 2);
+  jbT.t.needsUpdate = true;
+}
+const num18 = v => { try { return Number(BigInt(v || 0) / 10n ** 16n) / 100; } catch (e) { return 0; } };
+async function loadJB() { try { const c = await RV.vaultView('config'); const w = await RV.vaultView('get_week', { week: c.week }); const prev = JB.jack; JB.jack = num18(c.jackpot); JB.pool = num18(w.pool); JB.burn = num18(c.burned); JB.plays = Number(c.plays_paid) + Number(c.plays_free); if (JB.ok && c.jackpots_won > JB.won) JB.party = performance.now(); JB.won = c.jackpots_won; if (!JB.ok) JB.shown = JB.jack * .6; JB.ok = true; } catch (e) {} }
+if (window.RobinVault) { loadJB(); setInterval(loadJB, 20000); }
+{ const u = .2, p = road.getPointAt(u); const g = new T.Group(); g.position.set(p.x, 3.6, p.z); B.add(g);
+  const back = road.getPointAt(0); g.lookAt(back.x, 0, back.z); g.scale.setScalar(.85);
+  const steel = new T.MeshStandardMaterial({ color: 0x2c2838, roughness: .4, metalness: .7 });
+  for (const sx of [-7.4, 7.4]) { const leg = new T.Mesh(new T.CylinderGeometry(.4, .5, 26.5, 20), steel); leg.position.set(sx, 9, -.6); g.add(leg); const ft = new T.Mesh(roundedBox(1.6, .6, 1.6, .15, 2), steel); ft.position.set(sx, -3.9, -.6); g.add(ft); }
+  for (const sx of [-6.2, 6.2]) { const br = new T.Mesh(new T.BoxGeometry(2.6, .3, .3), steel); br.position.set(sx, 13.6, -.6); g.add(br); }
+  const frame = new T.Mesh(roundedBox(17.4, 10.2, 1, .3, 4), new T.MeshStandardMaterial({ color: 0x1a1428, roughness: .5 })); frame.position.set(0, 18.5, -.6); g.add(frame);
+  const rim = new T.Mesh(new T.BoxGeometry(17.8, 10.6, .4), new T.MeshBasicMaterial({ color: new T.Color(0xffc93c).multiplyScalar(2.2) })); rim.position.set(0, 18.5, -.9); g.add(rim);
+  const scr = new T.Mesh(new T.PlaneGeometry(16, 9), new T.MeshBasicMaterial({ map: jbT.t, color: new T.Color(1.25, 1.25, 1.25) })); scr.position.set(0, 18.5, -.08); g.add(scr);
+  const cap = new T.Mesh(roundedBox(18.4, .7, 2, .2, 3), steel); cap.position.set(0, 24, -.4); g.add(cap);
+  for (const sx of [-6, 0, 6]) { const l = new T.Mesh(new T.SphereGeometry(.35, 16, 10), new T.MeshBasicMaterial({ color: new T.Color(0xfff0c8).multiplyScalar(4) })); l.position.set(sx, 24.4, .6); g.add(l); }
+  JB.group = g; addStreak(g.localToWorld(new T.Vector3(0, 14, 0)), 0xffc93c); }
+let jbLast = 0;
+anim.push(t => { if (JB.ok) JB.shown += (JB.jack - JB.shown) * .04; if (t - jbLast > .12) { jbLast = t; drawJB(t); }
+  if (JB.party && performance.now() - JB.party < 6000 && Math.random() < .3 && JB.group) { const p2 = JB.group.localToWorld(new T.Vector3((Math.random() - .5) * 16, 26 + Math.random() * 6, 0)); burst(B, p2.x, p2.y, p2.z, [0xffd35a, 0xff5a9a, 0x7fe3ff][Math.floor(Math.random() * 3)], 3); } });
 // comic look for the whole city
 toonify(B); toonify(A);
 for (const k in MAT) if (TOONC.has(MAT[k])) MAT[k] = TOONC.get(MAT[k]);
@@ -1695,7 +1732,7 @@ stepTo(45, 'Loading the fonts').then(() => Promise.race([fontsReady, new Promise
   requestAnimationFrame(frame);
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__rv = { dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
+window.__rv = { JB: typeof JB !== "undefined" ? JB : null, dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
 }, 30));
 </script>
 </body>
