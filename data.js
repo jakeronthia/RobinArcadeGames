@@ -12,7 +12,7 @@ window.SITE = {
     chain: 'near',
     buyUrl: 'https://dexscreener.com/near/refv2-robin-3.nearlytrade.near:wrap.near:10000',
     swapUrl: 'https://app.ref.finance/',
-    about: '[One or two lines about $ROBIN: what it is and why the arcade exists.]'
+    about: '$ROBIN is the meme coin of the NEAR squad and the coin of this arcade. Every game for the pot is paid in $ROBIN and fills the instant jackpot and the weekly prize pool.'
   },
   social: {
     x: 'https://x.com/RobinOnNear',

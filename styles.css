@@ -411,3 +411,21 @@ h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;line-height:1.05}
 .onchain.slim p{color:inherit;font-weight:700}
 .onchain.slim a{margin-left:auto;white-space:nowrap}
 @media (max-width:640px){.onchain.slim{flex-wrap:wrap}.onchain.slim a{margin-left:0}}
+
+/* embed mode: pages opened inside the 3D arcade room */
+html.embed .site-head,html.embed .site-foot,html.embed .ticker{display:none!important}
+html.embed body{background:transparent}
+html.embed[data-only] main>*{display:none!important}
+html.embed[data-only="hall"] #hall,html.embed[data-only="games"] #games,html.embed[data-only="token"] #token{display:block!important}
+html.embed main>.section:first-child,html.embed[data-only] main>.section{padding-top:8px}
+html.embed .wrap{padding-left:20px;padding-right:20px}
+html.embed .games-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+html.embed .token-card{grid-template-columns:1fr}
+/* squad cards on the meme kit page */
+.squadgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:16px}
+.sqcard{display:flex;gap:12px;align-items:center;padding:10px;border-radius:16px;background:var(--panel);border:2px solid var(--line)}
+.sqcard .sqimg{flex:0 0 64px;height:64px;border-radius:14px;background:var(--hc);display:flex;align-items:center;justify-content:center}
+.sqcard img{width:56px;height:56px;object-fit:contain}
+.sqcard b{display:block;font-family:var(--display);font-size:18px}
+.sqcard small{color:var(--gold);font-weight:800}
+.sqcard p{margin:2px 0 0;color:var(--dim);font-size:13px;line-height:1.35}

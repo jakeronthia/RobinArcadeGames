@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>if(/[?&]embed\b/.test(location.search)){var d=document.documentElement;d.classList.add('embed');var m=location.search.match(/only=(\w+)/);if(m)d.setAttribute('data-only',m[1]);document.write('<base target="_top">');}</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meme kit · ROBIN Arcade</title>
 <meta name="description" content="Free stickers of the ROBIN Arcade squad.">
@@ -43,6 +45,10 @@
     <p>Stickers of the whole squad, ready for X, Telegram and your memes. Transparent PNGs, free to use for anything $ROBIN.</p>
     <div><a class="btn" href="assets/stickers/robin-arcade-stickers.zip" download>Download all (zip)</a></div>
   </div>
+  <section class="wrap section squadinfo" style="padding-top:20px" aria-labelledby="sqT">
+    <h2 class="sec-title" id="sqT">Meet the squad</h2>
+    <div class="squadgrid" id="squadGrid"></div>
+  </section>
   <div class="wrap section" style="padding-top:20px">
     <div class="kit" id="kit"></div>
   </div>
@@ -60,6 +66,10 @@
 <script>
 (function () {
   var list = [{ name: '$ROBIN', file: 'robin' }].concat(HEROES.map(function (h) { return { name: h.name, file: h.img.split('/').pop().replace('.png', '') }; }));
+  var sq = document.getElementById('squadGrid');
+  HEROES.forEach(function (h) { var c = document.createElement('div'); c.className = 'sqcard'; c.style.setProperty('--hc', h.col || '#2a2250');
+    c.innerHTML = '<span class="sqimg"><img loading="lazy" alt=""></span><div><b></b><small></small><p></p></div>';
+    c.querySelector('img').src = h.img; c.querySelector('b').textContent = h.name; c.querySelector('small').textContent = h.power; c.querySelector('p').textContent = h.desc; sq.appendChild(c); });
   var box = document.getElementById('kit');
   list.forEach(function (s) {
     var d = document.createElement('div'); d.className = 'sticker';

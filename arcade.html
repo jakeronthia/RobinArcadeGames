@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>if(/[?&]embed\b/.test(location.search)){var d=document.documentElement;d.classList.add('embed');var m=location.search.match(/only=(\w+)/);if(m)d.setAttribute('data-only',m[1]);document.write('<base target="_top">');}</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ROBIN Arcade · Play the memes</title>
 <meta name="description" content="Free arcade games starring the NEAR meme squad. Powered by $ROBIN.">
@@ -141,10 +143,10 @@
   </div>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>var T = THREE;</script>
-<script src="assets/fx/models.js"></script>
-<script src="assets/fx/glow.js"></script>
+<script>if(!document.documentElement.classList.contains('embed'))document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>');</script>
+<script>var T = window.THREE;</script>
+<script>if(window.THREE)document.write('<script src="assets/fx/models.js"><\/script>');</script>
+<script>if(window.THREE)document.write('<script src="assets/fx/glow.js"><\/script>');</script>
 <script src="data.js"></script>
 <script src="assets/fx/music.js"></script>
 <script src="site.js"></script>
@@ -315,6 +317,6 @@
   loadPrice(); setInterval(function () { if (!document.hidden) loadPrice(); }, 30000);
 })();
 </script>
-<script src="assets/fx/city.js"></script>
+<script>if(window.THREE)document.write('<script src="assets/fx/city.js"><\/script>');</script>
 </body>
 </html>

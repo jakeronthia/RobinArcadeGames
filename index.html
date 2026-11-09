@@ -19,7 +19,7 @@
 :root{--bg:#0d0b1f;--panel:rgba(16,13,38,.92);--line:#3a2d7a;--y:#ffc93c;--c:#7fe3ff;--p:#b98cff;--r:#ff5a78;--ink:#f4efff;--mut:#cfc5f5;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow-x:hidden}
-#c{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0;touch-action:pan-y}
+#c{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0;touch-action:none}
 #scroll{position:relative;z-index:1;height:100vh;pointer-events:none}
 html,body{overflow:hidden;overscroll-behavior:none}
 body.city #c{touch-action:none}
@@ -201,6 +201,35 @@ body.city #wx{opacity:1;pointer-events:auto}
   #wx{bottom:calc(14px + env(safe-area-inset-bottom));right:12px}
 }
 @media (prefers-reduced-motion: reduce){#cabUi .hint{animation:none}#card,#top,#welcome{transition:none}}
+/* the room is the site: one object at a time, its content in a side panel */
+#panel{position:fixed;z-index:6;top:0;right:0;bottom:0;width:min(620px,48vw);display:flex;flex-direction:column;background:#0c0916;border-left:1px solid rgba(255,255,255,.12);box-shadow:-30px 0 80px rgba(0,0,0,.55);transform:translateX(102%);visibility:hidden;transition:transform .55s cubic-bezier(.2,.8,.2,1),visibility 0s linear .55s}
+body.panel #panel{transform:none;visibility:visible;transition:transform .55s cubic-bezier(.2,.8,.2,1),visibility 0s}
+#panel .phead{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+#panel h2{flex:1;margin:0;font:700 22px Fredoka,sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pback{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px 0 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:800 14px Nunito,sans-serif;cursor:pointer}
+.pback:focus-visible,#pExt:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+#pExt{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:rgba(255,255,255,.6)}
+#pExt:hover{color:#fff;background:rgba(255,255,255,.06)}
+#panel .pbody{position:relative;flex:1;min-height:0}
+#panel iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity .35s}
+#panel iframe.on{opacity:1}
+#panel .pload{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font:400 11px 'Press Start 2P',monospace;letter-spacing:2px;color:var(--y)}
+#panel .pbody.loading .pload{display:flex}
+@media (orientation:landscape){body.panel #menuBtn{opacity:0;pointer-events:none}}
+body.panel #welcome{opacity:0!important}
+body.panel #pressStart,body.panel #skip,body.panel #roomHint,body.panel #pickUi{opacity:0!important;pointer-events:none!important}
+#roomHint{position:absolute;left:24px;bottom:calc(20px + env(safe-area-inset-bottom));font:700 13px Nunito,sans-serif;color:rgba(255,255,255,.45);transition:opacity .4s}
+body:not(.title) #roomHint{opacity:0}
+#station,#stOpen{display:none}
+@media (orientation:portrait){
+  #roomHint{display:none}
+  #panel{top:auto;left:0;width:auto;height:64vh;height:64dvh;border-left:0;border-top:1px solid rgba(255,255,255,.14);border-radius:22px 22px 0 0;transform:translateY(102%);box-shadow:0 -24px 60px rgba(0,0,0,.55)}
+  body.title #station{position:absolute;left:0;right:0;bottom:calc(112px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:14px;pointer-events:auto;transition:opacity .4s}
+  #station b{min-width:180px;text-align:center;font:700 26px Fredoka,sans-serif;color:#fff;text-shadow:0 2px 14px #000}
+  body.title:not(.atcab) #pressStart{opacity:0;pointer-events:none;animation:none}
+  body.title:not(.atcab) #stOpen{display:inline-flex;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(52px + env(safe-area-inset-bottom));min-width:160px;pointer-events:auto}
+  body.panel #station,body.panel #stOpen{opacity:0;pointer-events:none}
+}
 </style>
 </head>
 <body class="title">
@@ -209,6 +238,10 @@ body.city #wx{opacity:1;pointer-events:auto}
 <div id="load"><div>LOADING RAVENPORT&hellip;</div><div class="bar"><i id="loadBar" style="width:12%"></i></div><small id="loadStep">Building the city</small></div>
 <div id="flash"></div>
 <div id="roomTip" aria-hidden="true"></div>
+<aside id="panel" aria-hidden="true" aria-labelledby="pTitle">
+  <div class="phead"><button class="pback" id="pBack" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button><h2 id="pTitle"></h2><a id="pExt" href="#" target="_blank" rel="noopener" aria-label="Open as a full page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div>
+  <div class="pbody loading" id="pBody"><div class="pload">LOADING&hellip;</div></div>
+</aside>
 
 <div id="cabUi">
   <div class="pick" id="pickUi"><div class="ph">CHOOSE YOUR HERO</div>
@@ -216,7 +249,10 @@ body.city #wx{opacity:1;pointer-events:auto}
       <div class="pname" id="pName" aria-live="polite">Hoot</div>
       <button class="ico parr" id="pNext" type="button" aria-label="Next hero"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
     <button class="btn y pgo" id="pGo" type="button">Choose</button></div>
+  <div id="station"><button class="ico" id="stPrev" type="button" aria-label="Previous"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><b id="stName" aria-live="polite">Games</b><button class="ico" id="stNext" type="button" aria-label="Next"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
+  <button class="btn y" id="stOpen" type="button">Open</button>
   <button class="hint" id="pressStart" type="button">PRESS START</button>
+  <div id="roomHint">Click the objects to explore the arcade</div>
   <button class="btn" id="skip" type="button">Skip</button>
 </div>
 
@@ -226,13 +262,12 @@ body.city #wx{opacity:1;pointer-events:auto}
   <button class="menuBtn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu">Menu<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 </header>
 <nav id="menu" aria-label="Main" hidden>
-  <a id="allG2" href="#">All games</a>
-  <a href="treasury.html"><span class="dot"></span>Prize Pool</a>
-  <a href="arcade.html#hall">Leaderboard</a>
-  <a href="arcade.html#top">Heroes</a>
-  <a href="arcade.html#token">$ROBIN token</a>
-  <a href="kit.html">Meme kit</a>
-  <a href="faq.html">FAQ</a>
+  <a id="allG2" href="arcade.html#games" data-panel="games">All games</a>
+  <a href="treasury.html" data-panel="prize"><span class="dot"></span>Prize Pool</a>
+  <a href="arcade.html#hall" data-panel="hall">Leaderboard</a>
+  <a href="kit.html" data-panel="heroes">Heroes &amp; meme kit</a>
+  <a href="arcade.html#token" data-panel="token">$ROBIN token</a>
+  <a href="faq.html" data-panel="faq">FAQ</a>
   <button class="mi" id="snd" type="button" aria-label="Sound on"><svg class="on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><svg class="off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg><span>Sound</span></button>
 </nav>
 
@@ -248,7 +283,7 @@ body.city #wx{opacity:1;pointer-events:auto}
   </div>
 </aside>
 <nav id="rail" aria-label="Districts"><div class="fill" id="railFill"></div></nav>
-<button class="btn" id="replay" type="button" aria-label="Back to the cabinet">&#8634; <span class="lbl">Back to the cabinet</span></button>
+<button class="btn" id="replay" type="button" aria-label="Back to the arcade">&#8634; <span class="lbl">Back to the arcade</span></button>
 <div id="coins" class="hud" aria-live="polite"><i class="coin"></i><b id="coinN">0</b><span>/ 40</span></div>
 <div id="toast" role="status"></div>
 <div id="push" aria-hidden="true"><span>Scroll for the next game</span></div>
@@ -1641,7 +1676,7 @@ function roomObj(label, href, x, z, build, signCol, signY, signW) {
 const TM = (c, o) => toon(c, o), GL = (c, k) => new T.MeshBasicMaterial({ color: new T.Color(c).multiplyScalar(k || 2.2) });
 const M2 = (geo, mat, x, y, z, g) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
 // LEFT: trophy shelf -> leaderboard
-roomObj('LEADERBOARD', 'arcade.html#hall', -1.38, .1, g => {
+roomObj('LEADERBOARD', 'arcade.html#hall', -1.2, .1, g => {
   const wood = TM(0x8a5a3a), dark = TM(0x3a2418); M2(roundedBox(1.05, 1.42, .04, .02, 2), dark, 0, .71, -.17, g); for (const sx of [-.505, .505]) M2(roundedBox(.04, 1.42, .34, .02, 2), wood, sx, .71, -.02, g); M2(roundedBox(1.05, .05, .34, .02, 2), wood, 0, 1.42, -.02, g);
   for (const y of [.08, .55, 1.0]) M2(roundedBox(.98, .05, .32, .02, 2), wood, 0, y, .01, g);
   const gold = TM(0xffc93c, { emissive: 0x6a4a00, emissiveIntensity: .4 }), silver = TM(0xd8dce8), bronze = TM(0xd08a4a);
@@ -1651,16 +1686,22 @@ roomObj('LEADERBOARD', 'arcade.html#hall', -1.38, .1, g => {
   cup(0, 1.03, gold, 1.5); cup(-.3, 1.03, silver, 1.1); cup(.3, 1.03, bronze, 1.1); cup(-.25, .58, gold, .9); cup(.05, .58, silver, .9); cup(.32, .58, gold, .8);
   M2(roundedBox(.22, .16, .12, .03, 2), TM(0xd8344f), -.3, .18, 0, g); M2(new T.SphereGeometry(.08, 20, 14), gold, .25, .18, 0, g);
 }, '#ffc93c', 1.66, .95);
-// LEFT FAR: exit door -> all games
-roomObj('ALL GAMES', 'arcade.html#games', -1.05, -2.9, g => {
-  M2(roundedBox(1.1, 2.15, .12, .03, 2), TM(0x3a3246), 0, 1.07, -.05, g);
-  M2(new T.PlaneGeometry(.86, 1.95), GL(0xffe2a8, 1.8), 0, .98, .02, g);
-  const door = new T.Group(); door.position.set(-.43, 0, .04); g.add(door); const dm = M2(roundedBox(.86, 1.95, .05, .02, 2), TM(0x5a3a6a), .43, .98, 0, door); door.rotation.y = -.55;
-  M2(new T.SphereGeometry(.035, 12, 8), TM(0xffc93c), .78, .98, .04, door);
-  M2(roundedBox(.5, .16, .05, .03, 2), GL(0x30ff8a, 2.4), 0, 2.32, .02, g);
-}, '#30ff8a', 2.62, 1.1);
+// RIGHT BACK: coin changer -> $ROBIN token
+roomObj('$ROBIN', 'arcade.html#token', -2.3, .3, g => {
+  M2(roundedBox(.56, 1.4, .44, .06, 3), TM(0x2a5aa8), 0, .7, 0, g);
+  M2(roundedBox(.44, .3, .03, .03, 2), GL(0x9dff9a, 1.6), 0, 1.12, .22, g);
+  M2(roundedBox(.12, .04, .03, .01, 2), TM(0x14121a), -.1, .86, .225, g); M2(new T.CylinderGeometry(.05, .05, .03, 20).rotateX(Math.PI / 2), TM(0xd8344f), .12, .86, .225, g);
+  M2(roundedBox(.3, .1, .14, .03, 2), TM(0x14121a), 0, .38, .25, g);
+  for (let k = 0; k < 4; k++) M2(new T.CylinderGeometry(.04, .04, .012, 16), TM(0xffc93c, { emissive: 0x6a4a00, emissiveIntensity: .5 }), -.06 + k * .04, .44 + k * .005, .27, g);
+}, '#9dff9a', 1.98, .7);
+// LEFT BACK WALL: squad poster -> heroes and meme kit
+roomObj('HEROES', 'kit.html', -1.6, -3.12, g => {
+  const pt = tex(640, 800, (x, w, h) => { const gr = x.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ff6ad5'); gr.addColorStop(1, '#7a4dff'); x.fillStyle = gr; x.fillRect(0, 0, w, h); x.fillStyle = '#ffd35a'; x.fillRect(18, 18, w - 36, h - 36); x.fillStyle = '#241a52'; x.textAlign = 'center'; x.font = "700 84px Fredoka, sans-serif"; x.fillText('THE SQUAD', w / 2, 112); x.font = "700 34px Fredoka, sans-serif"; x.fillText('ROBIN ARCADE', w / 2, h - 46); });
+  M2(roundedBox(1.42, 1.76, .05, .02, 2), TM(0x1a1428), 0, 1.78, -.03, g); M2(new T.PlaneGeometry(1.32, 1.65), new T.MeshBasicMaterial({ map: pt.t, color: new T.Color(1.15, 1.15, 1.15) }), 0, 1.78, 0, g);
+  ['hoot', 'leonidas', 'trey', 'frazzle'].forEach((n, k) => { const im = new Image(); im.onload = () => { pt.x.drawImage(im, 48 + (k % 2) * 280, 150 + Math.floor(k / 2) * 290, 264, 264); pt.t.needsUpdate = true; }; im.src = 'assets/heroes/' + n + '.png'; });
+}, '#ff6ad5', 2.8, 1).rotation.set(0, 0, 0);
 // RIGHT: cork board -> FAQ
-roomObj('FAQ', 'faq.html', 1.62, -.45, g => {
+roomObj('FAQ', 'faq.html', 2.4, -2.85, g => {
   for (const [sx, rz] of [[-.36, .12], [.36, -.12]]) { const l = M2(new T.CylinderGeometry(.025, .03, 1.55, 10), TM(0x6a4630), sx, .76, -.08, g); l.rotation.z = rz; }
   M2(roundedBox(.98, .72, .06, .03, 2), TM(0x6a4630), 0, 1.1, 0, g);
   M2(new T.PlaneGeometry(.88, .62), TM(0xc8945a), 0, 1.1, .035, g);
@@ -1670,7 +1711,7 @@ roomObj('FAQ', 'faq.html', 1.62, -.45, g => {
   M2(new T.PlaneGeometry(.18, .18), new T.MeshBasicMaterial({ map: q.t, transparent: true }), .02, 1.26, .045, g);
 }, '#7fe3ff', 1.68, .7);
 // RIGHT: golden safe -> prize pool
-roomObj('PRIZE POOL', 'treasury.html', 1.22, .55, g => {
+roomObj('PRIZE POOL', 'treasury.html', 1.25, .5, g => {
   M2(roundedBox(.78, .82, .6, .08, 4), TM(0x3a3060), 0, .41, 0, g);
   const door = M2(new T.CylinderGeometry(.27, .27, .06, 40).rotateX(Math.PI / 2), TM(0xffc93c, { emissive: 0x6a4a00, emissiveIntensity: .5 }), 0, .45, .31, g);
   const wheel = new T.Group(); wheel.position.set(0, .45, .35); g.add(wheel); for (let k = 0; k < 3; k++) { const sp = new T.Mesh(new T.CylinderGeometry(.012, .012, .36, 8), TM(0x8a6a1a)); sp.rotation.z = k * Math.PI / 3; wheel.add(sp); }
@@ -1678,17 +1719,56 @@ roomObj('PRIZE POOL', 'treasury.html', 1.22, .55, g => {
   for (let k = 0; k < 3; k++) M2(roundedBox(.22, .1, .12, .03, 2), TM(0xffc93c, { emissive: 0x8a5a00, emissiveIntensity: .6 }), -.18 + k * .18, .88 + (k % 2) * .06, 0, g);
 }, '#ffc93c', 1.3, 1);
 // side lights so the objects read in the dark room
-const ROOML = [new T.PointLight(0xffb070, 1.1, 4.5, 2), new T.PointLight(0x9ab8ff, 1.1, 4.5, 2)]; ROOML[0].position.set(-2.1, 2.3, .9); ROOML[1].position.set(2.1, 2.3, .9); A.add(ROOML[0], ROOML[1]);
+const ROOML = [new T.PointLight(0xffb070, 1.1, 5, 2), new T.PointLight(0x9ab8ff, 1.1, 6, 2)]; ROOML[0].position.set(-2.1, 2.3, .9); ROOML[1].position.set(2.2, 2.4, -.6); A.add(ROOML[0], ROOML[1]);
 
 toonify(B); toonify(A);
 for (const k in MAT) if (TOONC.has(MAT[k])) MAT[k] = TOONC.get(MAT[k]);
 WET[3] = MAT.roof;
-// ---------- room objects: hover label and navigation ----------
+// ---------- room objects: each one is a part of the site ----------
+const RMETA = {
+  'LEADERBOARD': { key: 'hall', title: 'Leaderboard', src: 'arcade.html?embed&only=hall', h: .76, d: 3.1 },
+  'PRIZE POOL': { key: 'prize', title: 'Prize Pool', src: 'treasury.html?embed', h: .5, d: 2.7 },
+  'FAQ': { key: 'faq', title: 'FAQ', src: 'faq.html?embed', h: 1.08, d: 2.6 },
+  '$ROBIN': { key: 'token', title: '$ROBIN token', src: 'arcade.html?embed&only=token', h: .8, d: 2.6 },
+  'HEROES': { key: 'heroes', title: 'Heroes & meme kit', src: 'kit.html?embed', h: 1.78, d: 3.0 }
+};
+ROOM.forEach(o => Object.assign(o, RMETA[o.label]));
+const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o });
+const byKey = k => ROOM.find(o => o.key === k);
+const STN = ['heroes', 'hall', 'cab', 'prize', 'faq', 'token'];
+let FT = null, stI = 2, panelKey = null, swipedAt = 0;
+const focusL = new T.SpotLight(0xfff0d8, 0, 7, .55, .7, 1.4); A.add(focusL, focusL.target);
+function objCenter(o) { return o.g.localToWorld(new T.Vector3(0, o.h, 0)); }
+const _pp = new T.Vector3(), _pl = new T.Vector3();
+function poseFor(o, withPanel) {
+  const port = W < H, isCab = o === 'cab';
+  const c = isCab ? new T.Vector3(0, 1.0, 0) : objCenter(o);
+  const dir = isCab ? new T.Vector3(0, 0, 1) : new T.Vector3(0, 0, 1).applyQuaternion(o.g.quaternion).setY(0).normalize().lerp(new T.Vector3(0, 0, 1), .35).normalize();
+  const d = (isCab ? 3.1 : o.d) * (port ? 1.35 : 1);
+  _pp.copy(c).addScaledVector(dir, d); _pp.y = c.y + .12 * d; _pl.copy(c);
+  const th = Math.tan(cam.fov * Math.PI / 360), dist = _pp.distanceTo(c);
+  if (withPanel && !port) { const fw = c.clone().sub(_pp).normalize(), r = new T.Vector3().crossVectors(fw, cam.up).normalize(); _pl.addScaledVector(r, .42 * dist * th * cam.aspect); }
+  else if (withPanel) _pl.y -= .55 * dist * th;
+  else if (port) _pl.y -= .12 * dist * th;
+  return [_pp, _pl, c, dir];
+}
+function stUi() { const k = STN[stI], cabSt = k === 'cab'; document.body.classList.toggle('atcab', cabSt); $('stName').textContent = cabSt ? 'Games' : PANELS[k].title; }
+function stGo(dlt) { if (stage !== 'title' || panelKey) return; stI = (stI + dlt + STN.length) % STN.length; const k = STN[stI]; FT = k === 'cab' ? 'cab' : byKey(k); stUi(); SND.start(); SND.tick && SND.tick(); }
+function frameFor(key) { let f = $('pBody').querySelector('iframe[data-k="' + key + '"]'); if (!f) { f = document.createElement('iframe'); f.dataset.k = key; f.title = PANELS[key].title; f.addEventListener('load', () => { f.classList.add('on'); $('pBody').classList.remove('loading'); }); f.src = PANELS[key].src; $('pBody').appendChild(f); $('pBody').classList.add('loading'); } return f; }
+function openPanel(key) { const P2 = PANELS[key]; if (!P2) return; SND.start(); SND.tick && SND.tick();
+  panelKey = key; $('pTitle').textContent = P2.title; $('pExt').href = P2.src.replace(/[?&]embed(&only=(\w+))?/, (m, a, o) => '') + (P2.src.includes('only=') ? '#' + P2.src.split('only=')[1] : '');
+  $('pBody').querySelectorAll('iframe').forEach(f => f.hidden = f.dataset.k !== key); const f = frameFor(key); f.hidden = false; if (f.classList.contains('on')) $('pBody').classList.remove('loading');
+  if (stage === 'title') { FT = P2.obj || 'cab'; const si = STN.indexOf(P2.obj ? key : 'cab'); if (si >= 0) { stI = si; stUi(); } }
+  document.body.classList.add('panel'); $('panel').setAttribute('aria-hidden', 'false'); $('roomTip').classList.remove('on');
+  try { history.replaceState(null, '', '#' + key); } catch (e) {} setTimeout(() => $('pBack').focus({ preventScroll: true }), 50); }
+function closePanel() { if (!panelKey) return; panelKey = null; document.body.classList.remove('panel'); $('panel').setAttribute('aria-hidden', 'true'); if (W >= H && stage === 'title') FT = null;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+// ---------- room objects: hover label and click ----------
 let roomHover = -1;
-function roomHit(e) { if (stage !== 'title' || W < H) return -1; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObjects(ROOM.map(o => o.g), true)[0]; return h ? h.object.userData.room : -1; }
-function roomGo(i) { const o = ROOM[i]; if (!o) return; SND.start(); SND.tick && SND.tick(); if (o.href === '#music') { SND.toggle(); sndUi(); return; } location.href = o.href; }
-canvas.addEventListener('pointermove', e => { if (stage !== 'title') { roomHover = -1; $('roomTip').classList.remove('on'); return; } roomHover = roomHit(e); const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].label === 'MUSIC' ? (SND.on ? 'Music: on' : 'Music: off') : ROOM[roomHover].label; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
-canvas.addEventListener('click', e => { if (stage !== 'title') return; const i = roomHit(e); if (i >= 0) { e.stopImmediatePropagation(); roomGo(i); } }, true);
+function roomHit(e) { if (stage !== 'title') return -1; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObjects(ROOM.map(o => o.g), true)[0]; return h ? h.object.userData.room : -1; }
+function roomGo(i) { const o = ROOM[i]; if (!o || performance.now() - swipedAt < 400) return; openPanel(o.key); }
+canvas.addEventListener('pointermove', e => { if (stage !== 'title' || panelKey || e.pointerType === 'touch') { roomHover = -1; $('roomTip').classList.remove('on'); return; } roomHover = roomHit(e); const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].title; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
+canvas.addEventListener('click', e => { if (stage !== 'title') return; if (panelKey) { e.stopImmediatePropagation(); closePanel(); return; } const i = roomHit(e); if (i >= 0) { e.stopImmediatePropagation(); roomGo(i); } }, true);
 // ---------- 3D hero carousel in front of the cabinet ----------
 const CAR = new T.Group(); CAR.position.set(0, 0, 1.95); A.add(CAR);
 const CN = HERO_LIST.length, CSTEP = Math.PI * 2 / CN, CRAD = 1.3, MK = { makeCorgi, makeBeagle, makeOwl, makeTrey, makeBaller, makeFrazzle, makeIlia, makeSpud, makePlop };
@@ -1723,20 +1803,24 @@ function tickCarousel(dt, time) {
 }
 /* ================= flow ================= */
 let stage = 'title', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, prog = 0, sprog = 0;
-const camA0 = new T.Vector3(), lookA = new T.Vector3(0, 1.12, 0);
-function camIdle() { const port = W < H; camA0.set(0, port ? 1.2 : 1.28, port ? 3.9 : 3.8); lookA.set(0, port ? .95 : 1.12, 0); cam.fov = port ? 58 : 44; cam.updateProjectionMatrix(); }
-camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA);
-function goPick() { if (stage !== 'title') return; SND.start(); SND.coin && SND.coin(); carReset(); document.body.classList.remove('title'); roomHover = -1; $('roomTip').classList.remove('on'); canvas.style.cursor = ''; }
-function goTitle() { carReset(); stage = 'title'; document.body.classList.remove('picking', 'city', 'diving'); document.body.classList.add('title'); }
+const camA0 = new T.Vector3(), lookA = new T.Vector3(0, 1.12, 0), curLook = new T.Vector3(0, 1.12, 0);
+function camIdle() { const port = W < H; camA0.set(0, port ? 1.2 : 1.3, port ? 3.9 : 4.3); lookA.set(0, port ? .95 : 1.12, 0); cam.fov = port ? 58 : 46; cam.updateProjectionMatrix(); }
+camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA); curLook.copy(lookA);
+function goPick() { if (stage !== 'title') return; closePanel(); FT = W < H ? 'cab' : null; stI = 2; stUi(); SND.start(); SND.coin && SND.coin(); carReset(); document.body.classList.remove('title'); roomHover = -1; $('roomTip').classList.remove('on'); canvas.style.cursor = ''; }
+function goTitle() { curLook.copy(lookA); closePanel(); FT = W < H ? 'cab' : null; stI = 2; carReset(); stage = 'title'; document.body.classList.remove('picking', 'city', 'diving'); document.body.classList.add('title'); }
 let mx = 0, my = 0; addEventListener('pointermove', e => { mx = e.clientX / W * 2 - 1; my = e.clientY / H * 2 - 1; });
 const ray = new T.Raycaster(), ndc = new T.Vector2();
-canvas.addEventListener('click', e => { if (stage !== 'title') return; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); if (ray.intersectObject(cab, true).length) goPick(); });
+canvas.addEventListener('click', e => { if (stage !== 'title') return; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); if (performance.now() - swipedAt > 400 && ray.intersectObject(cab, true).length) goPick(); });
 canvas.addEventListener('pointermove', e => { if (stage !== 'title') { canvas.style.cursor = ''; return; } ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); canvas.style.cursor = (roomHover >= 0 || ray.intersectObject(cab, true).length) ? 'pointer' : ''; });
-addEventListener('keydown', e => { if (stage === 'title' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); goPick(); } });
-$('allG2').href = GAMES_URL;
+addEventListener('keydown', e => { if (e.key === 'Escape' && panelKey) { closePanel(); return; } if (stage !== 'title' || panelKey) return; const ae = document.activeElement; if (ae && ae !== document.body && ae !== canvas) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (W < H && STN[stI] !== 'cab') openPanel(STN[stI]); else goPick(); } if (W < H && e.key === 'ArrowLeft') stGo(-1); if (W < H && e.key === 'ArrowRight') stGo(1); });
+canvas.addEventListener('pointerup', e => { if (stage !== 'title' || panelKey || W >= H || swX == null) return; const dx = e.clientX - swX; if (Math.abs(dx) > 40) { swipedAt = performance.now(); stGo(dx < 0 ? 1 : -1); } });
+$('stPrev').addEventListener('click', () => stGo(-1)); $('stNext').addEventListener('click', () => stGo(1)); $('stOpen').addEventListener('click', () => openPanel(STN[stI]));
+$('pBack').addEventListener('click', closePanel);
+document.querySelectorAll('#menu [data-panel]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); $('menu').hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); if (stage === 'pick' || stage === 'zoom' || stage === 'dive') return; openPanel(a.dataset.panel); }));
 { const mb = $('menuBtn'), mn = $('menu'); const set = o => { mn.hidden = !o; mb.setAttribute('aria-expanded', o ? 'true' : 'false'); };
   mb.addEventListener('click', e => { e.stopPropagation(); set(mn.hidden); }); addEventListener('click', e => { if (!mn.hidden && !mn.contains(e.target)) set(false); }, true); addEventListener('keydown', e => { if (e.key === 'Escape' && !mn.hidden) { set(false); mb.focus(); } }); }
-$('skip').addEventListener('click', () => { SND.start(); askTilt(); toCity(true); });
+$('skip').addEventListener('click', () => { closePanel(); SND.start(); askTilt(); toCity(true); });
 // (hero choice happens on the 3D carousel)
 $('wxTime').addEventListener('click', () => { const order = ['dusk', 'night', 'day', 'auto']; WORLD.mode = order[(order.indexOf(WORLD.mode) + 1) % order.length]; applyWorld(); });
 $('navPrev').addEventListener('click', () => step(-1)); $('navNext').addEventListener('click', () => step(1));
@@ -1779,15 +1863,15 @@ function flyTo(j) {
 }
 function step(dir) { if (FL.tw || FL.dock < 0) return; flyTo(FL.dock + dir); }
 function input(delta) {
-  if (stage !== 'city' || FL.tw || performance.now() < FL.cool) return;
+  if (stage !== 'city' || panelKey || FL.tw || performance.now() < FL.cool) return;
   if (Math.sign(delta) !== Math.sign(FL.acc)) FL.acc = 0; FL.acc += delta;
   if (Math.abs(FL.acc) > 40) step(Math.sign(FL.acc));
 }
-addEventListener('wheel', e => { if (stage !== 'city') return; e.preventDefault(); input(e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 600 : 1)); }, { passive: false });
+addEventListener('wheel', e => { if (stage !== 'city' || panelKey) return; e.preventDefault(); input(e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 600 : 1)); }, { passive: false });
 let tY = null; addEventListener('touchstart', e => { if (stage === 'city' && e.touches[0]) tY = e.touches[0].clientY; }, { passive: true });
 addEventListener('touchmove', e => { if (stage !== 'city' || tY == null || !e.touches[0]) return; e.preventDefault(); const y = e.touches[0].clientY; input((tY - y) * 1.5); tY = y; }, { passive: false });
 addEventListener('touchend', () => { tY = null; });
-addEventListener('keydown', e => { if (stage !== 'city') return; const k = e.key; if (k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'ArrowRight') { e.preventDefault(); step(1); } if (k === 'ArrowUp' || k === 'PageUp' || k === 'ArrowLeft') { e.preventDefault(); step(-1); } });
+addEventListener('keydown', e => { if (stage !== 'city' || panelKey) return; const k = e.key; if (k === 'ArrowDown' || k === 'PageDown' || k === ' ' || k === 'ArrowRight') { e.preventDefault(); step(1); } if (k === 'ArrowUp' || k === 'PageUp' || k === 'ArrowLeft') { e.preventDefault(); step(-1); } });
 function tickFlight(dt) {
   FL.acc *= Math.exp(-dt * 4);
   if (!FL.tw) return;
@@ -1801,11 +1885,11 @@ let last = performance.now(), lastScr = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
   if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
-    CAR.visible = stage === 'pick' || stage === 'zoom'; const roomOn = stage === 'title' && W >= H; ROOM.forEach(o => o.g.visible = roomOn); ROOML.forEach(l => l.intensity = roomOn ? 1.1 : 0);
+    CAR.visible = stage === 'pick' || stage === 'zoom'; const roomOn = stage === 'title', objOn = roomOn && FT && FT !== 'cab'; ROOM.forEach(o => o.g.visible = roomOn); ROOML.forEach(l => l.intensity = roomOn ? (objOn ? .45 : 1.1) : 0);
     tickCarousel(dt, time); ROOM_ANIM.forEach(f => f(time)); ROOM.forEach((o, i) => { o.hover += ((i === roomHover ? 1 : 0) - o.hover) * Math.min(1, dt * 8); const k = 1 + o.hover * .05; o.g.scale.setScalar(k); o.sign.material.color.setScalar(1.6 + o.hover * 1.6 + (stage === 'dive' ? 0 : 0)); });
     if (now - lastScr > 66) { lastScr = now; if (stage === 'dive') scrT = Math.min(1, diveT / 1.1); screenT.redraw(time); }
     const dim = stage === 'pick' ? .06 : stage === 'zoom' ? lerp(.06, 1, Math.min(1, zoomT / 1.3)) : 1;
-    const L = (stage === 'dive' ? 1 : flick(time)) * dim; spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
+    const L = (stage === 'dive' ? 1 : flick(time)) * dim * (stage === 'title' && FT && FT !== 'cab' ? .35 : 1); spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
     if (stage === 'pick') {
       tmp.set(pickPos.x + mx * .35, pickPos.y - my * .15, pickPos.z); cam.position.lerp(tmp, .06); cam.lookAt(pickLook);
     } else if (stage === 'zoom') {
@@ -1815,12 +1899,17 @@ function frame(now) {
       if (chosenObj) { chosenObj.position.lerpVectors(chosenObj.userData.from, chosenAt, e); chosenObj.scale.setScalar(lerp(1.28, 1.1, e)); chosenObj.rotation.y = chosenObj.userData.ry - .55 * e + e * Math.PI * 2; }
       if (k >= 1) { stage = 'cab'; dive(); }
     } else if (stage === 'cab' || stage === 'title') {
-      tmp.set(camA0.x + mx * .28 + (TILT.dev ? TILT.tx * .3 : 0), camA0.y - my * .12 + Math.sin(time * .6) * .02, camA0.z);
-      cam.position.lerp(tmp, .06); cam.lookAt(lookA);
+      const port = W < H; if (port && FT == null) FT = 'cab'; if (!port && !panelKey && FT != null) FT = null;
+      const objF = FT && FT !== 'cab';
+      if (stage === 'title' && (objF || (FT === 'cab' && panelKey))) { const [pp, pl, c, dir] = poseFor(FT, !!panelKey); tmp.copy(pp); tmp.x += mx * .05; cl.copy(pl);
+        if (objF) { focusL.position.copy(c).addScaledVector(dir, 1.3).y += 2.4; focusL.target.position.copy(c); } }
+      else { tmp.set(camA0.x + mx * .28 + (TILT.dev ? TILT.tx * .3 : 0), camA0.y - my * .12 + Math.sin(time * .6) * .02, camA0.z); cl.copy(lookA); }
+      focusL.intensity += ((stage === 'title' && objF ? 2.6 : 0) - focusL.intensity) * Math.min(1, dt * 4);
+      const kp = 1 - Math.pow(.94, dt * 60), kl = 1 - Math.pow(.92, dt * 60); cam.position.lerp(tmp, kp); curLook.lerp(cl, kl); cam.lookAt(curLook);
     } else {
       diveT += dt; const k = Math.min(1, diveT / 1.5), e = easeIn(k);
       cam.position.lerpVectors(camFrom, diveTo, e); cl.lerpVectors(lookA, diveLook, Math.min(1, e * 1.4)); cam.lookAt(cl);
-      cam.fov = lerp(W < H ? 58 : 44, 30, e); cam.updateProjectionMatrix();
+      cam.fov = lerp(W < H ? 58 : 46, 30, e); cam.updateProjectionMatrix();
       $('flash').style.opacity = Math.max(0, (k - .72) / .28);
       if (k >= 1) toCity(false);
     }
@@ -1892,12 +1981,12 @@ const stepTo = (pc, txt) => new Promise(res => { $('loadBar').style.width = pc +
 stepTo(45, 'Loading the fonts').then(() => Promise.race([fontsReady, new Promise(r => setTimeout(r, 2500))])).then(() => stepTo(65, 'Preparing the lights')).then(() => { try { R.compile(A, cam); R.compile(B, cam); } catch (e) {} return stepTo(90, 'Opening the arcade'); }).then(() => {
   marquee.redraw(); signs.forEach(s => s.userData.t.redraw()); signTex.forEach(t => t.redraw()); screenT.redraw(0); if (cab.userData) {}
   $('loadBar').style.width = '100%'; setTimeout(() => $('load').classList.add('done'), 250);
-  let seen = false; try { seen = localStorage.getItem('rv-intro-seen') === '1'; } catch (e) {}
-  if (/[?&]city\b/.test(location.search) || (seen && !/[?&]intro\b/.test(location.search))) toCity(true);
+  if (/[?&]city\b/.test(location.search)) toCity(true);
+  stUi(); { const hk = location.hash.slice(1); if (PANELS[hk]) setTimeout(() => openPanel(hk), 600); }
   requestAnimationFrame(frame);
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-window.__rv = { carGo: (d) => carGo(d), carChoose: () => carChoose(), JB: typeof JB !== "undefined" ? JB : null, dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
+window.__rv = { openPanel: k => openPanel(k), closePanel: () => closePanel(), stGo: d => stGo(d), carGo: (d) => carGo(d), carChoose: () => carChoose(), JB: typeof JB !== "undefined" ? JB : null, dive, toCity, D, B, R, MAT, moon, glow, PL, WORLD, applyWorld, FL, STOPS, get stage() { return stage; } };
 }, 30));
 </script>
 </body>
