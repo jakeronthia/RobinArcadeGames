@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wanted!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="../assets/fx/music.js"></script>
+<script src="../assets/fx/snd.js"></script>
+<script src="../assets/fx/mini.js"></script>
+<script>
+/* Wanted!: thieves pop up at the windows of a Ravenport building. Tap them before they get away,
+   but never tap one of the squad. Three mistakes and the night is over. */
+(function () {
+  var M = Mini, wins = [], cols, rows, G, bg = null, time, spawnT, lives, combo, caught, hurt;
+  var KEYS3 = ['123', 'qwe', 'asd', 'zxc'], KEYS5 = ['qwert', 'asdfg', 'zxcvb'];
+  function layout() { var u = M.u, W = M.W, H = M.H; cols = W > H * 1.15 ? 5 : 3; rows = cols === 5 ? 3 : 4; var top = 70 * u, pad = 12 * u, cw = (W - pad * 2) / cols, ch = (H - top - pad) / rows; G = { top: top, pad: pad, cw: cw, ch: ch };
+    var old = wins; wins = []; for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) { var ww = Math.min(cw * .74, ch * .78), wh = Math.min(ch * .72, ww * 1.25), x = pad + c * cw + (cw - ww) / 2, y = top + r * ch + (ch - wh) / 2 - 4 * u; wins.push({ x: x, y: y, w: ww, h: wh, kind: null, t: 0, dur: 0, up: 0, hit: -1, hero: 'hoot', key: (cols === 5 ? KEYS5 : KEYS3)[r][c], lit: Math.random() < .3, gone: 0 }); }
+    paintBg(); }
+  function paintBg() { var u = M.u, d = M.dpr || 1; bg = document.createElement('canvas'); bg.width = M.W * d; bg.height = M.H * d; var x = bg.getContext('2d'); x.scale(d, d);
+    var g = x.createLinearGradient(0, 0, 0, M.H); g.addColorStop(0, '#6d3646'); g.addColorStop(1, '#4a2438'); x.fillStyle = g; x.fillRect(0, 0, M.W, M.H);
+    x.fillStyle = 'rgba(0,0,0,.2)'; var bh = 15 * u, row = 0; for (var yy = 0; yy < M.H; yy += bh, row++) { x.fillRect(0, yy, M.W, 1.6 * u); for (var xx = (row % 2 ? 0 : 18) * u; xx < M.W; xx += 36 * u) x.fillRect(xx, yy, 1.6 * u, bh); }
+    var r = M.rng(5); x.fillStyle = 'rgba(255,255,255,.035)'; for (var i = 0; i < 160; i++) x.fillRect((r() * M.W / (36 * u) | 0) * 36 * u + 2 * u, (r() * M.H / bh | 0) * bh + 2 * u, 32 * u, bh - 3 * u);
+    var sh = x.createLinearGradient(0, 0, 0, 90 * u); sh.addColorStop(0, 'rgba(8,5,18,.75)'); sh.addColorStop(1, 'rgba(8,5,18,0)'); x.fillStyle = sh; x.fillRect(0, 0, M.W, 90 * u);
+    wins.forEach(function (w) { x.fillStyle = '#b9a6d8'; x.strokeStyle = M.INK; x.lineWidth = 3 * u; x.lineJoin = 'round'; M.rr(x, w.x - 8 * u, w.y - 8 * u, w.w + 16 * u, w.h + 16 * u, 6 * u); x.fill(); x.stroke(); M.rr(x, w.x - 13 * u, w.y + w.h + 6 * u, w.w + 26 * u, 11 * u, 4 * u); x.fillStyle = '#d6c8ee'; x.fill(); x.stroke(); }); }
+  function reset() { time = 0; spawnT = .7; lives = 3; combo = 0; caught = 0; hurt = 0; wins.forEach(function (w) { w.kind = null; w.up = 0; w.hit = -1; }); hud(); }
+  function hud() { M.extra('LIVES', lives > 0 ? '♥'.repeat(lives) : '-'); }
+  function spawn() { var free = wins.filter(function (w) { return !w.kind && w.up < .02; }), busy = wins.length - free.length; if (!free.length || busy >= Math.min(4, 2 + Math.floor(time / 18))) return; var w = free[Math.random() * free.length | 0], k = Math.random();
+    w.kind = k < .22 ? 'hero' : k < .34 ? 'fast' : 'thief'; w.dur = Math.max(.72, 1.75 - time * .011) * (w.kind === 'fast' ? .62 : w.kind === 'hero' ? 1.15 : 1); w.t = 0; w.hit = -1; w.hero = M.heroes[Math.random() * M.heroes.length | 0]; w.flip = Math.random() < .5; M.snd('pop', w.kind === 'hero' ? 1.5 : 1); }
+  function loseLife(w, why) { lives--; combo = 0; hurt = 1; hud(); M.shake(.7); M.snd('wrong'); M.pop(w.x + w.w / 2, w.y - 6 * M.u, why, '#ff5a78', 22); if (lives <= 0) { M.snd('hit'); M.over('You caught ' + caught + ' thie' + (caught === 1 ? 'f' : 'ves') + ' tonight.'); } }
+  function whack(w) { var cx = w.x + w.w / 2, cy = w.y + w.h / 2, u = M.u; if (!w.kind || w.hit >= 0) { combo = 0; M.snd('tick'); return; }
+    if (w.kind === 'hero') { w.hit = 0; loseLife(w, 'NOT THE SQUAD!'); return; }
+    w.hit = 0; caught++; combo++; var mult = Math.min(5, 1 + Math.floor(combo / 5)), pts = (w.kind === 'fast' ? 3 : 1) * mult; M.add(pts); M.snd('whack'); if (combo % 5 === 0) M.snd('perfect', 1 + mult * .08);
+    M.shake(.25); M.burst(cx, cy, ['#fff', '#ffc93c', '#ff3d8a'], 12, 240, { r: 4, life: .5 }); if (w.kind === 'fast') M.burst(cx, cy, ['#ffc93c', '#ffe08a'], 10, 200, { r: 4, life: .7, up: 120 }); M.pop(cx, w.y - 4 * u, '+' + pts + (mult > 1 ? '  x' + mult : ''), w.kind === 'fast' ? '#ffc93c' : '#fff', 22); w.pow = 1; }
+  function at(x, y) { for (var i = 0; i < wins.length; i++) { var w = wins[i], m = 12 * M.u; if (x > w.x - m && x < w.x + w.w + m && y > w.y - m && y < w.y + w.h + m * 1.6) return w; } return null; }
+  function step(dt) { time += dt; spawnT -= dt; if (spawnT <= 0) { spawn(); spawnT = Math.max(.34, 1.05 - time * .011) * (.7 + Math.random() * .6); }
+    for (var i = 0; i < wins.length; i++) { var w = wins[i]; if (!w.kind) continue; w.t += dt; if (w.hit >= 0) { w.hit += dt; if (w.hit > .45) w.kind = null; continue; }
+      if (w.t > w.dur) { var k = w.kind; w.kind = null; if (k === 'thief') { loseLife(w, 'GOT AWAY!'); if (M.state !== 'play') return; } else if (k === 'fast') combo = 0; } } }
+  function draw(ctx, W, H, dt) { var u = M.u; if (!bg) return; ctx.drawImage(bg, 0, 0, W, H); hurt *= Math.pow(.02, dt);
+    for (var i = 0; i < wins.length; i++) { var w = wins[i], active = !!w.kind, tgt = active && w.hit < 0 ? 1 : 0; w.up += (tgt - w.up) * Math.min(1, dt * (tgt ? 14 : 9)); w.pow = (w.pow || 0) * Math.pow(.004, dt);
+      // room behind the glass
+      var lit = w.up > .05 || w.lit; ctx.fillStyle = lit ? (w.kind === 'hero' && w.hit < 0 ? '#3b5a8a' : '#e9b86a') : '#1a1230'; if (w.up > .05 && w.kind !== 'hero') ctx.fillStyle = '#f1c06e'; ctx.fillRect(w.x, w.y, w.w, w.h);
+      if (lit) { var gl = ctx.createLinearGradient(0, w.y, 0, w.y + w.h); gl.addColorStop(0, 'rgba(0,0,0,.28)'); gl.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gl; ctx.fillRect(w.x, w.y, w.w, w.h); }
+      if (w.up > .02) { ctx.save(); ctx.beginPath(); ctx.rect(w.x, w.y, w.w, w.h); ctx.clip(); var s = w.h * .98, cx = w.x + w.w / 2, hitK = w.hit >= 0 ? Math.min(1, w.hit / .3) : 0, by = w.y + w.h + (1 - w.up) * w.h * 1.05 + hitK * w.h * .2, bob = Math.sin(M.t * 7 + i) * 2 * u;
+        if (w.kind === 'hero' || (!w.kind && w.wasHero)) { M.drawHero(ctx, w.hero, cx, by - s * .46 + bob, s * 1.02, w.hit >= 0 ? Math.sin(M.t * 40) * .12 : 0, w.flip); w.wasHero = true; }
+        else { w.wasHero = false; var fast = w.kind === 'fast' || (!w.kind && w.wasFast); w.wasFast = fast; M.thief(ctx, cx + (fast ? 0 : 6 * u), by - s * .36 + bob, s * .86, { flip: w.flip, scared: w.hit >= 0, rot: w.hit >= 0 ? hitK * .5 * (w.flip ? -1 : 1) : 0, sack: !fast, look: Math.sin(M.t * 3 + i) });
+          if (fast) { M.coin(ctx, cx - s * .3, by - s * .2 + bob, s * .13, 0); M.coin(ctx, cx + s * .32, by - s * .16 + bob, s * .13, 0); } }
+        ctx.restore(); }
+      // glass shine and frame cross
+      ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.beginPath(); ctx.moveTo(w.x, w.y); ctx.lineTo(w.x + w.w * .5, w.y); ctx.lineTo(w.x + w.w * .15, w.y + w.h); ctx.lineTo(w.x, w.y + w.h); ctx.fill();
+      ctx.lineWidth = 3 * u; ctx.strokeStyle = M.INK; ctx.strokeRect(w.x, w.y, w.w, w.h);
+      if (w.pow > .05) { ctx.save(); ctx.translate(w.x + w.w / 2, w.y + w.h * .4); ctx.rotate(-.2); ctx.scale(.6 + (1 - w.pow) * .7, .6 + (1 - w.pow) * .7); ctx.globalAlpha = Math.min(1, w.pow * 3); ctx.beginPath(); for (var k = 0; k < 16; k++) { var a = k / 16 * 6.283, rr = (k % 2 ? 22 : 38) * u; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); M.ink(ctx, '#ffc93c', 3); ctx.fillStyle = M.INK; ctx.font = '700 ' + (20 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('POW', 0, u); ctx.restore(); }
+      if (active && w.hit < 0 && w.kind !== 'hero') { var left = 1 - w.t / w.dur; ctx.fillStyle = M.INK; ctx.fillRect(w.x, w.y + w.h + 8 * u, w.w, 5 * u); ctx.fillStyle = left < .3 ? '#ff5a78' : '#ffc93c'; ctx.fillRect(w.x, w.y + w.h + 8 * u, w.w * left, 5 * u); } }
+    if (hurt > .02) { ctx.fillStyle = 'rgba(255,50,80,' + hurt * .3 + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
+    if (M.state === 'play' && time < 5 && M.scoreV === 0) { ctx.globalAlpha = .9; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (15 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 4 * u; ctx.strokeStyle = M.INK; ctx.strokeText('TAP THE THIEVES, NOT THE SQUAD', W / 2, H - 9 * u); ctx.fillText('TAP THE THIEVES, NOT THE SQUAD', W / 2, H - 9 * u); ctx.globalAlpha = 1; } }
+  M.init({ id: 'wanted', title: 'Wanted!', accent: '#ff3d8a', music: 'patrol', hero: 'hoot',
+    help: 'Thieves pop up at the windows. Tap them before they get away, but never tap one of the squad. Three mistakes and the night is over.',
+    start: reset, resize: layout, down: function (x, y) { var w = at(x, y); if (w) whack(w); },
+    key: function (k) { k = k.toLowerCase(); for (var i = 0; i < wins.length; i++) if (wins[i].key === k) { whack(wins[i]); return; } },
+    update: step, draw: draw });
+  reset();
+  window.__g = function () { return wins; };
+})();
+</script>
+</body>
+</html>

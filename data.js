@@ -202,6 +202,24 @@ window.GAMES.push({
     best: function () { return +localStorage.getItem('mini-loottower-best') || 0; }
 });
 
+window.GAMES.push({
+    id: 'wanted',
+    accent: '#ff3d8a',
+    badge: 'NEW',
+    title: 'Wanted!',
+    file: 'games/wanted.html',
+    orient: 'portrait',
+    blurb: 'Thieves at the windows! Tap them before they get away, but never tap the squad.',
+    about: 'A whole building of Ravenport is crawling with thieves. They pop up at the windows with the loot: tap them before they slip away. The squad is in there too, so look before you tap. Keep a streak going to multiply your points, and watch for the quick ones carrying gold. Three mistakes and the night is over.',
+    shot: 'assets/shots/wanted.jpg',
+    clip: 'assets/clips/wanted.mp4',
+    pos: 'center',
+    controls: [
+      ['Catch a thief', 'Click the window', 'tap the window']
+    ],
+    best: function () { return +localStorage.getItem('mini-wanted-best') || 0; }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },
