@@ -39,7 +39,10 @@
         import('https://esm.sh/@near-wallet-selector/my-near-wallet@' + V), import('https://esm.sh/@near-wallet-selector/meteor-wallet@' + V),
         import('https://esm.sh/@near-wallet-selector/here-wallet@' + V)]);
       if (!document.getElementById('nws-css')) { const l = document.createElement('link'); l.id = 'nws-css'; l.rel = 'stylesheet'; l.href = 'https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui@' + V + '/styles.css'; document.head.appendChild(l); }
-      const selector = await setupWalletSelector({ network: c.network, modules: [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()] });
+      // Meteor Wallet mobile app: works when the site is opened inside the app's own browser. Optional: if it cannot load, the other wallets still work.
+      const mods = [setupMyNearWallet(), setupMeteorWallet(), setupHereWallet()];
+      try { const m = await import('https://esm.sh/@near-wallet-selector/meteor-wallet-app@' + V); if (m.setupMeteorWalletApp) mods.splice(2, 0, m.setupMeteorWalletApp({ contractId: c.vault })); } catch (e) {}
+      const selector = await setupWalletSelector({ network: c.network, modules: mods });
       const modal = setupModal(selector, { contractId: c.vault, theme: 'dark', description: 'Connect to play for the ROBIN Vault.' });
       RV._sel = { selector, modal }; return RV._sel;
     },
