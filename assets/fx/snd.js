@@ -141,6 +141,7 @@ window.SND = (function () {
       var n = performance.now(); if (on && lastL - L > .3 && n - lastLampTick > 110) { lastLampTick = n; nz({ dur: .01, g: .1, type: 'bandpass', f: 4200, q: 3, dest: roomG }); tone({ f: 100, dur: .05, g: .05, type: 'sawtooth', dest: roomG }); } lastL = L;
       var l = ctx.listener, c = o.cam, f = o.fwd; if (c && f) { if (l.positionX) { var t = ctx.currentTime; l.positionX.setTargetAtTime(c.x, t, .05); l.positionY.setTargetAtTime(c.y, t, .05); l.positionZ.setTargetAtTime(c.z, t, .05); l.forwardX.setTargetAtTime(f.x, t, .05); l.forwardY.setTargetAtTime(f.y, t, .05); l.forwardZ.setTargetAtTime(f.z, t, .05); } else { l.setPosition(c.x, c.y, c.z); l.setOrientation(f.x, f.y, f.z, 0, 1, 0); } } },
     object: function (key) { play('open'); var n = OBJ[key]; if (n) setTimeout(function () { play(n); }, 140); },
+    hush: function (v) { if (master) ramp(master, v ? 0 : (on ? 1 : 0), .25); TRACKS.forEach(function (n) { var t = TR[n]; if (t && v && !t.el.paused) { t.el.pause(); t.hushed = 1; } else if (t && !v && t.hushed) { t.hushed = 0; t.el.play().catch(function () {}); } }); },
     duck: function (v) { ducked = v; ramp(mus, v ? .3 : 1, .35); ramp(amb, v ? .55 : 1, .35); },
     city: function (v) { if (!ctx) return; if (ctx.state === 'suspended') ctx.resume(); inCity = v; ramp(rainG, inCity && raining ? .5 : 0, 1.2); if (!v) { setDistrict(null); TRACKS.forEach(function (n) { ramp(TR[n] && TR[n].g, 0, .4); if (TR[n]) TR[n].v = 0; }); } },
     rain: function (v) { raining = v; ramp(rainG, inCity && raining ? .5 : 0, 1.2); },

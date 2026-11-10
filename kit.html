@@ -2,7 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script>if(/[?&]embed\b/.test(location.search)){var d=document.documentElement;d.classList.add('embed');var m=location.search.match(/only=(\w+)/);if(m)d.setAttribute('data-only',m[1]);document.write('<base target="_top">');}</script>
+<script>if(/[?&]embed\b/.test(location.search)){var d=document.documentElement;d.classList.add('embed');var m=location.search.match(/only=(\w+)/);if(m)d.setAttribute('data-only',m[1]);
+/* inside the arcade room: links never leave it, they ask the room to open the right thing */
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';if(h.charAt(0)==='#'||/^(data:|javascript:|mailto:)/.test(h)||a.hasAttribute('download'))return;
+var u;try{u=new URL(a.href)}catch(x){return}
+if(u.origin!==location.origin){a.target='_blank';a.rel='noopener';return}
+e.preventDefault();e.stopImmediatePropagation();
+var f=u.pathname.split('/').pop()||'index.html',q=u.searchParams.get('g'),msg;
+if(f==='game.html'&&q)msg={rvPlay:q,pot:u.searchParams.get('pot')==='1'};
+else{var k={'treasury.html':'prize','faq.html':'faq','kit.html':'heroes','profile.html':'profile'}[f]||({'#hall':'hall','#token':'token','#games':'games','#heroes':'heroes'}[u.hash]||'home');msg={rvPanel:k}}
+parent.postMessage(msg,location.origin)},true);}</script>
 
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Meme kit · ROBIN Arcade</title>

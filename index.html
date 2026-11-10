@@ -230,6 +230,26 @@ body:not(.title) #roomHint{opacity:0}
   body.title:not(.atcab) #stOpen{display:inline-flex;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(52px + env(safe-area-inset-bottom));min-width:160px;pointer-events:auto}
   body.panel #station,body.panel #stOpen{opacity:0;pointer-events:none}
 }
+/* play a game without leaving the arcade */
+#play{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;background:#0a0712}
+#play[hidden]{display:none}
+.plbar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;border-bottom:1px solid rgba(255,255,255,.1);background:#0c0916}
+.plbar h2{flex:1;margin:0;font:700 20px Fredoka,sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plme{font:800 12px Nunito,sans-serif;color:var(--mut);max-width:42vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plme b{color:var(--y)}
+.plbody{position:relative;flex:1;min-height:0;display:grid;place-items:center;padding:18px;background:radial-gradient(90% 70% at 50% 40%,#1c1548,#0a0712)}
+.plbody iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0a0712}
+.plbody.game{padding:0}.plbody.game .plcard{display:none}
+.plcard{width:min(440px,100%);box-sizing:border-box;background:linear-gradient(180deg,#221a45,#150f2c);border:2px solid #2e2650;border-radius:26px;padding:26px 22px 22px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.plcard.win{border-color:var(--y);box-shadow:0 0 70px rgba(255,201,60,.45)}
+.pltag{font:900 11px Nunito,sans-serif;letter-spacing:.2em;color:var(--y)}
+.plcard h3{margin:8px 0 10px;font:700 30px/1.1 Fredoka,sans-serif;color:#fff;text-wrap:balance}
+.plcard p{margin:0 0 16px;color:#c9bfff;font:700 15px/1.45 Nunito,sans-serif;text-wrap:pretty}
+.plrow{display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.plrow .btn{min-height:50px;justify-content:center;font-size:17px;width:100%}
+.plrow .btn[disabled]{opacity:.6;cursor:wait}
+.plnote{margin:14px 0 0!important;font-size:12.5px!important;color:#8b83b8!important}
+.plnote:empty{display:none}
 </style>
 </head>
 <body class="title">
@@ -238,6 +258,18 @@ body:not(.title) #roomHint{opacity:0}
 <div id="load"><div>LOADING RAVENPORT&hellip;</div><div class="bar"><i id="loadBar" style="width:12%"></i></div><small id="loadStep">Building the city</small></div>
 <div id="flash"></div>
 <div id="roomTip" aria-hidden="true"></div>
+<section id="play" hidden aria-labelledby="plTitle">
+  <div class="plbar"><button class="pback" id="plBack" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button><h2 id="plTitle"></h2><span class="plme" id="plMe"></span></div>
+  <div class="plbody" id="plBody">
+    <div class="plcard" id="plCard">
+      <div class="pltag" id="plTag"></div>
+      <h3 id="plHead"></h3>
+      <p id="plText"></p>
+      <div class="plrow" id="plRow"></div>
+      <p class="plnote" id="plNote"></p>
+    </div>
+  </div>
+</section>
 <aside id="panel" aria-hidden="true" aria-labelledby="pTitle">
   <div class="phead"><button class="pback" id="pBack" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button><h2 id="pTitle"></h2><a id="pExt" href="#" target="_blank" rel="noopener" aria-label="Open as a full page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div>
   <div class="pbody loading" id="pBody"><div class="pload">LOADING&hellip;</div></div>
@@ -1841,7 +1873,7 @@ const RMETA = {
   'HEROES': { key: 'heroes', title: 'Heroes & meme kit', src: 'kit.html?embed', h: 1.78, d: 3.0 }
 };
 ROOM.forEach(o => Object.assign(o, RMETA[o.label]));
-const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o });
+const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o }); PANELS.profile = { title: 'Your profile', src: 'profile.html?embed' };
 const byKey = k => ROOM.find(o => o.key === k);
 const STN = ['heroes', 'hall', 'cab', 'prize', 'faq', 'token'];
 const sndF = new T.Vector3(); let FT = null, stI = 2, panelKey = null, swipedAt = 0;
@@ -1957,7 +1989,7 @@ function showCard(k) {
     if (active !== k) return;
     c.className = '';
     $('cNum').innerHTML = d.n + '<small> / ' + String(DS.length).padStart(2, '0') + '</small>'; $('cDist').textContent = d.dist; c.style.setProperty('--acc', d.css); $('cTitle').textContent = d.title; $('cBlurb').textContent = d.blurb;
-    $('cFree').href = SITE + 'game.html?g=' + d.id; $('cPot').href = SITE + 'game.html?g=' + d.id + '&pot=1';
+    $('cFree').href = SITE + 'game.html?g=' + d.id; $('cPot').href = SITE + 'game.html?g=' + d.id + '&pot=1'; $('cFree').dataset.g = $('cPot').dataset.g = d.id;
     const cv = $('cardVid'); if (cv.getAttribute('src') !== d.clip) { cv.src = d.clip; } cv.play().catch(() => {});
     void c.offsetWidth; c.classList.add('on');
   }, 180);
@@ -1990,7 +2022,54 @@ function tickFlight(dt) {
 
 const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
+// ---------- play a game inside the arcade: free, or for the pot with a wallet ----------
+const RVT = window.RobinVault || null, PLAY = { id: null, title: '', cfg: null, me: null, potOn: false, open: false, game: false, poll: 0 };
+const rvFmt = x => RVT ? RVT.fmt(x) : x;
+function plShow(o) { const c = $('plCard'); c.className = 'plcard' + (o.win ? ' win' : ''); $('plBody').classList.remove('game'); $('plTag').textContent = o.tag || ''; $('plHead').textContent = o.head || ''; $('plText').textContent = o.text || ''; $('plNote').textContent = o.note || '';
+  const row = $('plRow'); row.innerHTML = ''; (o.btns || []).forEach((b, i) => { const el = document.createElement('button'); el.type = 'button'; el.className = 'btn ' + (b.cls || (i ? 'c' : 'y')); el.textContent = b.label; el.addEventListener('click', () => { SND.play('click'); b.go(el); }); row.appendChild(el); if (!i) setTimeout(() => el.focus({ preventScroll: true }), 30); }); }
+function plAcct() { $('plMe').innerHTML = ''; if (PLAY.me) { $('plMe').append('Playing as '); const b = document.createElement('b'); b.textContent = PLAY.me; $('plMe').appendChild(b); } }
+async function plLoadPot() { if (!RVT) { PLAY.potOn = false; return; } try { await RVT.ready(); PLAY.cfg = await RVT.vaultView('config'); PLAY.potOn = true; } catch (e) { PLAY.potOn = false; } PLAY.me = RVT.guestId() || null; if (!PLAY.me) { try { PLAY.me = await RVT.account(); } catch (e) {} } plAcct(); }
+function plWon(out, me) { let won = '0'; try { (out.receipts_outcome || []).forEach(o => (o.outcome.logs || []).forEach(l => { const m = l.match(/^JACKPOT (\S+) won (\d+)/); if (m && m[1] === me) won = m[2]; })); } catch (e) {} return won; }
+function plLaunch(paid) { clearInterval(PLAY.poll); const f = document.createElement('iframe'); f.title = PLAY.title; f.allow = 'autoplay; fullscreen; gamepad'; f.src = 'games/' + PLAY.id + '.html' + (paid ? '?pot=1' : ''); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); $('plBody').appendChild(f); $('plBody').classList.add('game'); PLAY.game = true; f.addEventListener('load', () => { try { f.focus(); f.contentWindow.focus(); } catch (e) {} }); }
+function plResult(won, paid, extra) { const w = BigInt(won || 0) > 0n; if (w) SND.play('win'); plShow({ win: w, tag: w ? 'JACKPOT!' : paid ? 'YOU ARE IN' : 'FREE ROLL', head: w ? 'You won ' + rvFmt(won) + ' tROBIN' : paid ? 'No jackpot this time' : 'Good luck!', text: w ? 'It is already in your account.' : (extra || ''), btns: [{ label: 'Start the game', go: () => plLaunch(paid) }] }); }
+function plChoose() { const c = PLAY.cfg; plShow({ tag: PLAY.potOn ? 'JACKPOT ' + rvFmt(c.jackpot) + ' tROBIN' : 'ROBIN ARCADE', head: 'How do you want to play?', text: PLAY.potOn ? 'For the pot costs ' + rvFmt(c.price) + ' tROBIN: 1 in ' + Number(c.odds_paid).toLocaleString('en') + ' to win the jackpot right now, and the play counts for the weekly prize pool.' : 'The prize pool is offline right now, but every game is free to play.',
+  btns: (PLAY.potOn ? [{ label: 'Play for the pot', go: plPot }] : []).concat([{ label: 'Play free', cls: PLAY.potOn ? 'c' : 'y', go: plFree }]), note: 'Every play for the pot is on-chain. No one can change the rules, the draws or the payouts.' }); }
+async function plFree(btn) { if (!PLAY.me || !PLAY.potOn) { plLaunch(false); return; } if (btn) { btn.disabled = true; btn.textContent = 'Rolling your free jackpot roll…'; }
+  try { const out = await RVT.send(RVT.cfg.vault, 'free_roll', { game: PLAY.id }, '0', 30); plResult(plWon(out, PLAY.me), false, 'Your free roll did not hit the jackpot. Have fun!'); } catch (e) { plLaunch(false); } }
+function plConnect() { plShow({ tag: 'FOR THE POT', head: 'Connect your wallet', text: 'You need a NEAR account to play for the pot. Connect your wallet and the game starts right after.',
+  btns: [{ label: 'Connect wallet', go: async el => { try { sessionStorage.setItem('rv-play-resume', JSON.stringify({ id: PLAY.id, t: Date.now() })); } catch (e) {} try { await RVT.signIn(); } catch (e) { $('plNote').textContent = 'Could not open the wallet list. Try again.'; return; }
+      clearInterval(PLAY.poll); let n = 0; PLAY.poll = setInterval(async () => { n++; let m = null; try { m = await RVT.account(); } catch (e) {} if (m || n > 80 || !PLAY.open) { clearInterval(PLAY.poll); if (m && PLAY.open) { PLAY.me = m; plAcct(); try { sessionStorage.removeItem('rv-play-resume'); } catch (e) {} plPay(); } } }, 1500); } },
+    { label: 'Play instantly with a free account', go: async el => { el.disabled = true; try { await RVT.createGuest(t => { el.textContent = t; }); PLAY.me = RVT.guestId(); plAcct(); plPay(); } catch (e) { el.textContent = 'Could not create it, try again'; el.disabled = false; } } },
+    { label: 'Play free instead', go: () => plLaunch(false) }], note: 'If your wallet opens its own page, you come back here when you are done.' }); }
+async function plPot() { if (!PLAY.cfg && !PLAY.potOn) { plShow({ tag: 'FOR THE POT', head: 'Checking the prize pool…' }); await plLoadPot(); }
+  if (!PLAY.potOn) { plShow({ tag: 'FOR THE POT', head: 'The prize pool is offline', text: 'It will be back soon. You can still play for free.', btns: [{ label: 'Play free', go: () => plLaunch(false) }] }); return; }
+  if (!PLAY.me) { plConnect(); return; } plPay(); }
+async function plPay() { const c = PLAY.cfg; plShow({ tag: 'FOR THE POT', head: 'Paying ' + rvFmt(c.price) + ' tROBIN…', text: 'Approve it in your wallet if it asks. The game starts right after.' });
+  try { const bal = await RVT.tokenView('ft_balance_of', { account_id: PLAY.me });
+    if (BigInt(bal) < BigInt(c.price)) { if (RVT.guestId()) await RVT.send(RVT.cfg.token, 'faucet', {}, '0', 30); else { plShow({ tag: 'FOR THE POT', head: 'Not enough tROBIN', text: 'You need ' + rvFmt(c.price) + ' tROBIN to play for the pot. You can get free ones in the Prize Pool.', btns: [{ label: 'Open the Prize Pool', go: () => { closePlay(); openPanel('prize'); } }, { label: 'Play free instead', go: () => plLaunch(false) }] }); return; } }
+    try { sessionStorage.setItem('rv-play-paid', JSON.stringify({ id: PLAY.id, t: Date.now() })); } catch (e) {}
+    const out = await RVT.send(RVT.cfg.token, 'ft_transfer_call', { receiver_id: RVT.cfg.vault, amount: c.price, msg: JSON.stringify({ a: 'play', g: PLAY.id }) }, '1', 200);
+    try { sessionStorage.removeItem('rv-play-paid'); } catch (e) {} plResult(plWon(out, PLAY.me), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.');
+  } catch (e) { plShow({ tag: 'FOR THE POT', head: 'Payment did not go through', text: String(e && e.message || e).slice(0, 120), btns: [{ label: 'Try again', go: plPay }, { label: 'Play free instead', go: () => plLaunch(false) }] }); } }
+// mode: 'free' | 'pot' | 'choose' | 'paid' (back from the wallet after paying)
+async function openPlay(id, mode) { const d = DI(id); if (!d) return; SND.start(); SND.play('start'); SND.hush(true); $('menu').hidden = true;
+  Object.assign(PLAY, { id, title: d.title, open: true, game: false }); $('plTitle').textContent = d.title; $('play').hidden = false; document.body.classList.add('inplay'); $('plBody').querySelectorAll('iframe').forEach(x => x.remove());
+  plShow({ tag: 'ROBIN ARCADE', head: d.title, text: 'Getting the game ready…' }); $('plBack').focus({ preventScroll: true });
+  if (mode === 'free' && !(RVT && (RVT.guestId()))) { plLoadPot(); plLaunch(false); return; }
+  await plLoadPot(); if (!PLAY.open || PLAY.id !== id) return;
+  if (mode === 'paid') { try { const p = await RVT.vaultView('get_player', { account_id: PLAY.me }); plResult(p.last && p.last.paid ? p.last.won : '0', true, 'Your play counts for this week\u2019s prize pool.'); } catch (e) { plResult('0', true, ''); } return; }
+  if (mode === 'pot') plPot(); else if (mode === 'free') plFree(); else plChoose(); }
+function closePlay() { if (!PLAY.open) return; clearInterval(PLAY.poll); PLAY.open = false; PLAY.game = false; $('play').hidden = true; document.body.classList.remove('inplay'); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); SND.hush(false); SND.play('close'); last = performance.now(); }
+$('plBack').addEventListener('click', closePlay);
+$('cFree').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'free'); });
+$('cPot').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'pot'); });
+addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; if (e.data.rvPlay) openPlay(e.data.rvPlay, e.data.pot ? 'pot' : 'choose'); else if (e.data.rvPanel) { if (PANELS[e.data.rvPanel]) openPanel(e.data.rvPanel); else closePanel(); } });
+function plResume() { try { const q = new URLSearchParams(location.search), paid = JSON.parse(sessionStorage.getItem('rv-play-paid') || 'null'), res = JSON.parse(sessionStorage.getItem('rv-play-resume') || 'null'), fresh = x => x && Date.now() - x.t < 15 * 60000;
+    sessionStorage.removeItem('rv-play-paid'); sessionStorage.removeItem('rv-play-resume');
+    if (q.get('transactionHashes') && fresh(paid)) { history.replaceState(null, '', location.pathname); openPlay(paid.id, 'paid'); } else if (fresh(res)) { history.replaceState(null, '', location.pathname); openPlay(res.id, 'pot'); } } catch (e) {} }
+
 function frame(now) {
+  if (PLAY.game) { requestAnimationFrame(frame); last = now; return; } // the city rests while you play
   const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
   if (stage === 'land' || stage === 'city') SND.update({ room: false });
   if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
@@ -2091,7 +2170,7 @@ stepTo(45, 'Loading the fonts').then(() => Promise.race([fontsReady, new Promise
   marquee.redraw(); signs.forEach(s => s.userData.t.redraw()); signTex.forEach(t => t.redraw()); screenT.redraw(0); if (cab.userData) {}
   $('loadBar').style.width = '100%'; setTimeout(() => $('load').classList.add('done'), 250);
   if (/[?&]city\b/.test(location.search)) toCity(true);
-  stUi(); { const hk = location.hash.slice(1); if (PANELS[hk]) setTimeout(() => openPanel(hk), 600); }
+  stUi(); { const hk = location.hash.slice(1); if (PANELS[hk]) setTimeout(() => openPanel(hk), 600); } plResume();
   requestAnimationFrame(frame);
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
