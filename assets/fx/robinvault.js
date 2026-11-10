@@ -3,12 +3,19 @@
 (function () {
   'use strict';
   const here = document.currentScript && document.currentScript.src ? document.currentScript.src : location.href;
-  const DEPLOY_URL = new URL('../vault-deploy.json', here).href;
+  // ?net=mainnet (or testnet) looks at the other network for this browser tab only, before the site is switched for everyone
+  let NET = null; try { const q = new URLSearchParams(location.search).get('net'); if (q === 'mainnet' || q === 'testnet') sessionStorage.setItem('rv-net', q); else if (q === 'default') sessionStorage.removeItem('rv-net'); NET = sessionStorage.getItem('rv-net'); } catch (e) {}
+  const DEPLOY_DEFAULT = new URL('../vault-deploy.json', here).href, DEPLOY_URL = NET ? new URL('../vault-deploy.' + NET + '.json', here).href : DEPLOY_DEFAULT;
   const RPCS = { testnet: ['https://test.rpc.fastnear.com', 'https://rpc.testnet.near.org', 'https://neart.lava.build'], mainnet: ['https://free.rpc.fastnear.com', 'https://rpc.mainnet.near.org'] };
   let cfgP = null, rpcI = 0;
   const RV = {
-    ready() { if (!cfgP) cfgP = fetch(DEPLOY_URL, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(c => { if (!c || !c.vault) throw new Error('The Vault is not deployed yet'); RV.cfg = c; return c; }); return cfgP; },
+    ready() { if (!cfgP) cfgP = fetch(DEPLOY_URL, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null).then(c => c || DEPLOY_URL === DEPLOY_DEFAULT ? c : fetch(DEPLOY_DEFAULT, { cache: 'no-store' }).then(r => r.ok ? r.json() : null)).then(c => { if (!c || !c.vault) throw new Error('The Vault is not deployed yet'); RV.cfg = c; return c; }); return cfgP; },
     today() { return Math.floor(Date.now() / 86400000); },
+    isTest() { return !RV.cfg || RV.cfg.network !== 'mainnet'; },
+    // the name of the coin you play with: test coins on testnet, real $ROBIN on mainnet
+    sym() { return RV.cfg && RV.cfg.symbol ? RV.cfg.symbol : RV.isTest() ? 'tROBIN' : 'ROBIN'; },
+    // on mainnet an account must be registered on the token to receive it (it is, once it has ever held $ROBIN)
+    async registered(id) { if (RV.isTest()) return true; try { return !!(await RV.tokenView('storage_balance_of', { account_id: id })); } catch (e) { return false; } },
     async rpc(body) {
       const list = RPCS[(RV.cfg && RV.cfg.network) || 'testnet']; let err;
       for (let k = 0; k < list.length; k++) { const url = list[(rpcI + k) % list.length];
@@ -55,6 +62,7 @@
       return RV._gnear.account(id);
     },
     async createGuest(onStep) {
+      await RV.ready(); if (!RV.isTest()) throw new Error('instant accounts exist only on testnet');
       const c = await RV.ready(); if (c.network !== 'testnet') throw new Error('guest accounts are for testnet only');
       const step = t => { try { onStep && onStep(t); } catch (e) {} };
       step('Creating your account…'); const nj = await RV.nearJs(); const kp = nj.KeyPair.fromRandom('ed25519');

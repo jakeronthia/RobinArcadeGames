@@ -508,7 +508,7 @@ function dailyHud(){const el=$('dailyTag');if(!el)return;el.hidden=MODE!=='daily
 async function loadDaily(){const wk=Math.floor(Math.floor(Date.now()/86400000)/7);DAILY=VS.daily(wk);BONUS=-1;$('dName').textContent=DAILY.name;$('dText').textContent=DAILY.text.replace(/ Keep \d+ vault or more\./,'')+' Score = waves × 100 + vault left.';$('dailyBtn').disabled=false;
   let extra=PAID?'Paid play: this defense can enter the Vault Cup. ':'Play it for the pot from the game page to enter the Cup. ';
   try{if(window.RobinVault){const c=await RobinVault.vaultView('config');if(c.week!==DAILY.day){DAILY=VS.daily(c.week)}const w=await RobinVault.vaultView('get_week',{week:DAILY.day});
-      extra+='Cup pool: '+RobinVault.fmt(BigInt(w.pool)*6n/10n)+' tROBIN · jackpot '+RobinVault.fmt(c.jackpot)+' tROBIN'}}
+      extra+='Cup pool: '+RobinVault.fmt(BigInt(w.pool)*6n/10n)+' '+RobinVault.sym()+' · jackpot '+RobinVault.fmt(c.jackpot)+' '+RobinVault.sym()}}
   catch(e){extra+='The prize pool is offline right now, you can still practise.'}
   $('dPot').textContent=extra}
 const PAID=new URLSearchParams(location.search).get('pot')==='1';

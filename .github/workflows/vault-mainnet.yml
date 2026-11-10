@@ -1,0 +1,98 @@
+name: vault-mainnet
+# The ROBIN Vault on NEAR mainnet, with real $ROBIN. Never runs on its own: only by hand, from the Actions tab.
+# Order: check -> deploy -> (look at the site with ?net=mainnet) -> play -> switch -> lock (optional, forever).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to do'
+        type: choice
+        required: true
+        default: check
+        options: [check, deploy, play, switch, back-to-testnet, lock]
+      price:
+        description: 'Price of a game for the pot, in $ROBIN (for check and deploy)'
+        required: false
+      jackpot_seed:
+        description: 'How many $ROBIN you put in the first jackpot (for check and deploy)'
+        required: false
+        default: '0'
+      vault_name:
+        description: 'Name of the vault account, before your account name'
+        required: false
+        default: arcade
+      odds_paid:
+        description: 'Jackpot odds for a paid game: 1 in ...'
+        required: false
+        default: '2000'
+      odds_free:
+        description: 'Jackpot odds for a free roll: 1 in ...'
+        required: false
+        default: '200000'
+      free_per_day:
+        description: 'Free rolls per account per day'
+        required: false
+        default: '10'
+      confirm:
+        description: 'deploy: DEPLOY TO MAINNET · play: PLAY ON MAINNET · switch: SWITCH THE SITE · lock: LOCK FOREVER'
+        required: false
+permissions:
+  contents: write
+concurrency: vault-mainnet
+jobs:
+  mainnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MODE: ${{ inputs.mode }}
+      CONFIRM: ${{ inputs.confirm }}
+      PRICE: ${{ inputs.price }}
+      JACKPOT_SEED: ${{ inputs.jackpot_seed }}
+      VAULT_NAME: ${{ inputs.vault_name }}
+      ODDS_PAID: ${{ inputs.odds_paid }}
+      ODDS_FREE: ${{ inputs.odds_free }}
+      FREE_PER_DAY: ${{ inputs.free_per_day }}
+      MAINNET_ACCOUNT_ID: ${{ secrets.MAINNET_ACCOUNT_ID }}
+      MAINNET_PRIVATE_KEY: ${{ secrets.MAINNET_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rules engine cross-check (JS vs Rust)
+        if: inputs.mode == 'check' || inputs.mode == 'deploy'
+        working-directory: vault-contract/sim
+        run: |
+          cargo build -q --release --example replay
+          node ../tools/simcheck.js ../target/release/examples/replay
+      - name: Build the vault contract
+        if: inputs.mode == 'check' || inputs.mode == 'deploy'
+        working-directory: vault-contract
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+          rustup target add wasm32-unknown-unknown
+          (cd vault && cargo near build non-reproducible-wasm --no-abi)
+      - name: Check, deploy, play or lock on mainnet
+        if: inputs.mode == 'check' || inputs.mode == 'deploy' || inputs.mode == 'play' || inputs.mode == 'lock'
+        working-directory: mainnet
+        run: |
+          npm install --silent --no-save near-api-js@4.0.4
+          node deploy.mjs
+      - name: Switch the site to mainnet
+        if: inputs.mode == 'switch'
+        run: |
+          test "$CONFIRM" = "SWITCH THE SITE" || { echo "type exactly SWITCH THE SITE in the confirm box"; exit 1; }
+          test -f assets/vault-deploy.mainnet.json || { echo "deploy to mainnet first"; exit 1; }
+          grep -q '"network": "testnet"' assets/vault-deploy.json && cp assets/vault-deploy.json assets/vault-deploy.testnet.json
+          cp assets/vault-deploy.mainnet.json assets/vault-deploy.json
+          mkdir -p ci; echo "[$(date -u +%FT%TZ)] site switched to mainnet" >> ci/mainnet.txt
+      - name: Put the site back on testnet
+        if: inputs.mode == 'back-to-testnet'
+        run: |
+          test -f assets/vault-deploy.testnet.json || { echo "there is no testnet copy to go back to"; exit 1; }
+          cp assets/vault-deploy.testnet.json assets/vault-deploy.json
+          mkdir -p ci; echo "[$(date -u +%FT%TZ)] site back on testnet" >> ci/mainnet.txt
+      - name: Report back
+        if: always()
+        run: |
+          git config user.name "ci-bot"; git config user.email "ci-bot@users.noreply.github.com"
+          git add -f assets/vault-deploy.json assets/vault-deploy.mainnet.json assets/vault-deploy.testnet.json ci/mainnet.txt 2>/dev/null || true
+          git commit -m "ci: mainnet ${{ inputs.mode }} report" || true
+          git pull --rebase -q origin main && git push || true

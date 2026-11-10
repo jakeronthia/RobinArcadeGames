@@ -78,7 +78,7 @@
         <span id="startHint"></span>
       </div>
       <div class="choose" id="choose" hidden>
-        <div class="ch-head"><b>How do you want to play?</b><span class="jp">Jackpot <em id="jpAmt">–</em> tROBIN</span></div>
+        <div class="ch-head"><b>How do you want to play?</b><span class="jp">Jackpot <em id="jpAmt">–</em> <span class="rv-sym">tROBIN</span></span></div>
         <div class="ch-cards">
           <button type="button" class="ch-card" id="freeCard"><small>FREE</small><b>Just play</b><span>No wallet needed.</span><i id="freeNote">Sign in for free jackpot rolls (1 in 200,000).</i></button>
           <button type="button" class="ch-card pot" id="potCard"><small>FOR THE POT</small><b id="potPrice">1 tROBIN</b><span>1 in 2,000 chance to win the jackpot right now, and every play counts for the weekly prize pool.</span><i id="potNote">≈ $0.10 per game</i></button>
@@ -256,7 +256,7 @@
   function showChoose() { $('start').hidden = true; $('choose').hidden = false; loadPot(); }
   async function loadPot() {
     if (!RV) return;
-    try { await RV.ready(); CFG = await RV.vaultView('config'); potOn = true; $('jpAmt').textContent = fmt(CFG.jackpot); $('potPrice').textContent = fmt(CFG.price) + ' tROBIN';
+    try { await RV.ready(); CFG = await RV.vaultView('config'); potOn = true; $('jpAmt').textContent = fmt(CFG.jackpot); $('potPrice').textContent = fmt(CFG.price) + ' ' + RV.sym(); document.querySelectorAll('.rv-sym').forEach(function (e) { e.textContent = RV.sym(); }); if (!RV.isTest()) $('potNote').textContent = '';
       $('potCard').querySelector('span').textContent = '1 in ' + Number(CFG.odds_paid).toLocaleString('en') + ' chance to win the jackpot right now, and every play counts for the weekly prize pool.';
     } catch (e) { potOn = false; $('jpAmt').textContent = 'offline'; $('potCard').disabled = true; $('potNote').textContent = 'The prize pool is offline right now.'; }
     ME = RV.guestId() || null;
@@ -271,30 +271,30 @@
     a.addEventListener('click', async function () { a.disabled = true; try { await RV.createGuest(function (t) { a.textContent = t; }); ME = RV.guestId(); paintAcct(); } catch (e) { a.textContent = 'Could not create it, try again'; a.disabled = false; } });
     var w = document.createElement('button'); w.className = 'btn ghost'; w.type = 'button'; w.textContent = 'Connect wallet'; w.addEventListener('click', function () { RV.signIn(); var n = 0, iv = setInterval(async function () { n++; var m = null; try { m = await RV.account(); } catch (e) {} if (m || n > 60) { clearInterval(iv); if (m) { ME = m; paintAcct(); } } }, 1500); });
     var t = document.createElement('span'); t.textContent = 'An account is needed to play for the pot.';
-    el.appendChild(a); el.appendChild(w); el.appendChild(t);
+    if (RV.isTest()) el.appendChild(a); el.appendChild(w); el.appendChild(t);
   }
   function result(won, paid, extra) {
     var r = $('chRes'); r.hidden = false; r.className = 'ch-res' + (BigInt(won || 0) > 0n ? ' win' : '');
-    r.innerHTML = BigInt(won || 0) > 0n ? '<b>JACKPOT! You won ' + fmt(won) + ' tROBIN</b><span>It is already in your account.</span>' : '<b>' + (paid ? 'No jackpot this time' : 'Good luck!') + '</b><span>' + (extra || '') + '</span>';
+    r.innerHTML = BigInt(won || 0) > 0n ? '<b>JACKPOT! You won ' + fmt(won) + ' ' + RV.sym() + '</b><span>It is already in your account.</span>' : '<b>' + (paid ? 'No jackpot this time' : 'Good luck!') + '</b><span>' + (extra || '') + '</span>';
     var go = document.createElement('button'); go.className = 'btn'; go.type = 'button'; go.textContent = 'Start the game'; go.addEventListener('click', function () { launch(paid); }); r.appendChild(go); go.focus();
     try { if (BigInt(won || 0) > 0n && window.RobinSfx) RobinSfx.play('win'); } catch (e) {}
   }
   function wonFrom(out, me) { var won = '0'; try { (out.receipts_outcome || []).forEach(function (o) { (o.outcome.logs || []).forEach(function (l) { var m = l.match(/^JACKPOT (\S+) won (\d+)/); if (m && m[1] === me) won = m[2]; }); }); } catch (e) {} return won; }
   $('freeCard').addEventListener('click', async function () {
-    if (!ME || !potOn) { launch(false); return; }
+    if (!ME || !potOn || !(await RV.registered(ME))) { launch(false); return; }
     var b = this; b.disabled = true;
     try { var out = await RV.send(CFG && RV.cfg.vault, 'free_roll', { game: g.id }, '0', 30); result(wonFrom(out, ME), false, 'Your free roll did not hit the jackpot. Have fun!'); }
     catch (e) { launch(false); } finally { b.disabled = false; }
   });
   $('potCard').addEventListener('click', async function () {
     if (!potOn) return; if (!ME) { $('chAcct').querySelector('.btn') && $('chAcct').querySelector('.btn').focus(); $('chAcct').animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], 300); return; }
-    var b = this; b.disabled = true; $('potNote').textContent = 'Paying ' + fmt(CFG.price) + ' tROBIN…';
+    var b = this; b.disabled = true; $('potNote').textContent = 'Paying ' + fmt(CFG.price) + ' ' + RV.sym() + '…';
     try {
       var bal = await RV.tokenView('ft_balance_of', { account_id: ME });
-      if (BigInt(bal) < BigInt(CFG.price)) { if (RV.guestId()) await RV.send(RV.cfg.token, 'faucet', {}, '0', 30); else { $('potNote').textContent = 'Not enough tROBIN: get free ones on the Prize Pool page.'; b.disabled = false; return; } }
+      if (BigInt(bal) < BigInt(CFG.price)) { if (RV.guestId()) await RV.send(RV.cfg.token, 'faucet', {}, '0', 30); else { $('potNote').textContent = RV.isTest() ? 'Not enough tROBIN: get free ones on the Prize Pool page.' : 'Not enough $ROBIN in this wallet.'; b.disabled = false; return; } }
       sessionStorage.setItem('rv-paid-' + g.id, String(Date.now()));
       var out = await RV.send(RV.cfg.token, 'ft_transfer_call', { receiver_id: RV.cfg.vault, amount: CFG.price, msg: JSON.stringify({ a: 'play', g: g.id }) }, '1', 200);
-      $('potNote').textContent = '\u2248 $0.10 per game'; result(wonFrom(out, ME), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.'); loadPot();
+      $('potNote').textContent = RV.isTest() ? '\u2248 $0.10 per game' : ''; result(wonFrom(out, ME), true, 'Your play counts for this week\u2019s prize pool. The jackpot keeps growing.'); loadPot();
     } catch (e) { $('potNote').textContent = 'Payment failed: ' + String(e.message || e).slice(0, 90); }
     finally { b.disabled = false; }
   });

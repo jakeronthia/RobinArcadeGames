@@ -4,7 +4,7 @@
   const W = [25, 18, 13, 10, 8, 7, 6, 5, 4, 4];
   let C = null, ME = null, cfg = null;
   const toast = t => { const el = document.createElement('div'); el.className = 'toast2'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 4200); };
-  const T = x => RV.fmt(x) + ' tROBIN';
+  const T = x => RV.fmt(x) + ' ' + RV.sym();
   const short = a => a.length > 22 ? a.slice(0, 10) + '…' + a.slice(-8) : a;
   const ago = s => { const d = Math.max(0, Math.floor(Date.now() / 1000) - s); return d < 60 ? d + 's ago' : d < 3600 ? Math.floor(d / 60) + 'm ago' : d < 86400 ? Math.floor(d / 3600) + 'h ago' : Math.floor(d / 86400) + 'd ago'; };
   const gameName = id => { const g = (window.GAMES || []).find(x => x.id === id); return g ? g.title : id; };
@@ -65,8 +65,8 @@
   }
   function games() { const box = $('games'); box.innerHTML = ''; (window.GAMES || []).forEach(g => { const a = document.createElement('a'); a.href = 'game.html?g=' + g.id; a.innerHTML = '<img alt="" loading="lazy"><span></span>'; a.children[0].src = g.shot; a.children[1].textContent = g.title; box.appendChild(a); }); }
 
-  const WHO0 = 'Play instantly with a free testnet account, or connect your NEAR wallet.';
-  function paintWho() { const g = RV.guestId(); $('who').innerHTML = ME ? (g ? 'Guest account <b>' + ME + '</b> · kept on this device' : 'Playing as <b>' + ME + '</b>') : WHO0; $('connectBtn').textContent = ME ? 'Sign out' : 'Connect wallet'; $('guestBtn').hidden = !!ME || (C && C.network !== 'testnet'); }
+  const WHO0 = 'Play instantly with a free testnet account, or connect your NEAR wallet.', WHO1 = 'Connect your NEAR wallet to play for the pot.';
+  function paintWho() { const g = RV.guestId(); $('who').innerHTML = ME ? (g ? 'Guest account <b>' + ME + '</b> · kept on this device' : 'Playing as <b>' + ME + '</b>') : (C && C.network === 'mainnet' ? WHO1 : WHO0); $('connectBtn').textContent = ME ? 'Sign out' : 'Connect wallet'; $('guestBtn').hidden = !!ME || (C && C.network !== 'testnet'); }
   $('connectBtn').addEventListener('click', async () => { if (ME) { if (RV.guestId() && !confirm('Sign out of the guest account? Its key stays saved on this device, so you can come back with "Play instantly".')) return; await RV.signOut(); ME = null; paintWho(); $('bal').textContent = ''; $('faucetBtn').hidden = true; refresh(); return; } RV.signIn(); });
   $('guestBtn').addEventListener('click', async () => { const b = $('guestBtn'); b.disabled = true;
     try { let old = null; try { old = JSON.parse(localStorage.getItem('rv-guest-old') || 'null'); } catch (e) {}
