@@ -111,7 +111,7 @@ window.SND = (function () {
 
   // ---------- district life while you are stopped at a game ----------
   var district = null, nextEv = 0;
-  var BED = { rush: ['lowpass', 150, .28], brawl: ['bandpass', 950, .05], nightshift: ['bandpass', 420, .06], patrol: ['bandpass', 500, .03], tycoon: ['lowpass', 300, .05], vault: ['lowpass', 200, .1] };
+  var BED = { rush: ['lowpass', 150, .28], brawl: ['bandpass', 950, .05], nightshift: ['bandpass', 420, .06], patrol: ['bandpass', 500, .03], tycoon: ['lowpass', 300, .05], vault: ['lowpass', 200, .1], skyhoot: ['bandpass', 380, .07], safecracker: ['lowpass', 220, .05], loottower: ['lowpass', 180, .12], wanted: ['bandpass', 700, .03], lootmatch: ['bandpass', 1400, .015] };
   var EV = {
     rush: function () { if (R() < .45) { [659, 523, 784].forEach(function (f, i) { tone({ t: i * .42, f: f, dur: 1.4, g: .035 }); tone({ t: i * .42, f: f * 2, dur: .7, g: .012 }); }); } else for (var i = 0; i < 6; i++) { tone({ t: i * .34, f: 95, f2: 55, dur: .1, g: .16 }); tone({ t: i * .34 + .09, f: 85, f2: 50, dur: .1, g: .12 }); nz({ t: i * .34, dur: .05, g: .03, type: 'bandpass', f: 2200, q: 2 }); } },
     brawl: function () { nz({ dur: 1.6, g: .09, type: 'bandpass', f: 1100, q: .5, a: .5 }); nz({ dur: 1.4, g: .05, type: 'bandpass', f: 2300, q: .7, a: .6 }); var t = .1 + R() * .4; tone({ t: t, f: 150, f2: 55, dur: .14, g: .2 }); nz({ t: t, dur: .05, g: .1, type: 'bandpass', f: 1300 }); if (R() < .4) metal({ t: .9, f: 1050, dur: 1.2, g: .03, p: [1, 2.4, 3.9] }); },
@@ -120,6 +120,11 @@ window.SND = (function () {
     tycoon: function () { if (R() < .35) { tone({ f: 110, f2: 80, dur: .08, g: .12 }); metal({ t: .08, f: 2200, dur: .9, g: .035, p: [1, 1.5, 2.6] }); } else { var n = 4 + (R() * 8 | 0); for (var i = 0; i < n; i++) nz({ t: i * (.07 + R() * .05), dur: .012, g: .03 + R() * .02, type: 'bandpass', f: 1800 + R() * 1400, q: 2 }); } },
     vault: function () { [0, .38, .76, 1.14].forEach(function (t, i) { tone({ t: t, f: 82, f2: 48, dur: .3, g: i % 2 ? .12 : .2 }); }); if (R() < .4) for (var i = 0; i < 8; i++) metal({ t: 1.5 + i * .12, f: 1500, dur: .14, g: .012, p: [1, 2.7] }); }
   };
+  EV.skyhoot = function () { if (R() < .5) for (var i = 0; i < 4; i++) nz({ t: i * .19, dur: .13, g: .1, type: 'lowpass', f: 1300, f2: 300, a: .02 }); else { tone({ type: 'triangle', f: 988, dur: .12, g: .05 }); tone({ type: 'triangle', t: .07, f: 1319, dur: .25, g: .05 }); } };
+  EV.safecracker = function () { for (var i = 0; i < 5; i++) { var t = i * .16 + R() * .03; nz({ t: t, dur: .012, g: .12, type: 'bandpass', f: 3000, q: 4 }); } if (R() < .4) { tone({ t: .95, f: 95, f2: 45, dur: .45, g: .25 }); notes([523, 784, 1047], 'triangle', .08, .4, .04, 1.15); } };
+  EV.loottower = function () { tone({ type: 'sawtooth', f: 62, f2: 70, dur: 1.5, g: .03, a: .3 }); tone({ t: 1.3, f: 140, f2: 60, dur: .18, g: .3 }); nz({ t: 1.3, dur: .06, g: .12, type: 'bandpass', f: 900 }); };
+  EV.wanted = function () { var t = R() * .3; tone({ t: t, f: 260, f2: 80, dur: .12, g: .22 }); nz({ t: t, dur: .06, g: .16, type: 'bandpass', f: 1500, q: .8 }); if (R() < .35) metal({ t: t + .5, f: 2900, dur: .5, g: .03, p: [1, 1.7, 2.9] }); };
+  EV.lootmatch = function () { var p = 1 + (R() * 4 | 0) * .12; tone({ f: 660 * p, dur: .3, g: .06 }); tone({ t: .05, f: 990 * p, dur: .35, g: .05 }); metal({ t: .02, f: 2400 * p, dur: .3, g: .02 }); };
   function setDistrict(d) { if (d === district) return; district = d; var b = d && BED[d]; if (b) { bedF.type = b[0]; bedF.frequency.setTargetAtTime(b[1], ctx.currentTime, .3); } ramp(bedG, b ? b[2] : 0, .9); nextEv = performance.now() + 2500; }
   function tickDistrict() { if (!ctx || !on || !inCity || !district || document.hidden || ducked) return; var n = performance.now(); if (n < nextEv) return; nextEv = n + 5000 + R() * 6000; try { K = EVG[district] || 1; EV[district] && EV[district](); } catch (e) {} K = 1; }
 
@@ -140,7 +145,7 @@ window.SND = (function () {
     city: function (v) { if (!ctx) return; if (ctx.state === 'suspended') ctx.resume(); inCity = v; ramp(rainG, inCity && raining ? .5 : 0, 1.2); if (!v) { setDistrict(null); TRACKS.forEach(function (n) { ramp(TR[n] && TR[n].g, 0, .4); if (TR[n]) TR[n].v = 0; }); } },
     rain: function (v) { raining = v; ramp(rainG, inCity && raining ? .5 : 0, 1.2); },
     // mix: { trackName: weight }, crossfaded from the district weights
-    mix: function (w) { if (!ctx || !inCity) return; var top = null; TRACKS.forEach(function (n) { var t = TR[n]; if (!t) return; var v = (w[n] || 0) * .3; if (n !== 'home' && (w[n] || 0) > .6) top = n; if (Math.abs(v - t.v) > .01) { t.v = v; ramp(t.g, v, .8); } if (v > .005 && t.el.paused) t.el.play().catch(function () {}); if (v <= .005 && !t.el.paused && t.g.gain.value < .01) t.el.pause(); }); setDistrict(top); },
+    mix: function (w, life) { if (!ctx || !inCity) return; var top = null; TRACKS.forEach(function (n) { var t = TR[n]; if (!t) return; var v = (w[n] || 0) * .3; if (n !== 'home' && (w[n] || 0) > .6) top = n; if (Math.abs(v - t.v) > .01) { t.v = v; ramp(t.g, v, .8); } if (v > .005 && t.el.paused) t.el.play().catch(function () {}); if (v <= .005 && !t.el.paused && t.g.gain.value < .01) t.el.pause(); }); setDistrict(life === undefined ? top : life); },
     coin: function (quiet) { if (!ctx || !on) return; var n = performance.now(); if (quiet && n - lastCoin < 110) return; lastCoin = n; var g = sfx.gain.value; if (quiet) { metal({ f: 2300 + R() * 500, dur: .3, g: .04, p: [1, 1.5, 2.4] }); } else FX.coin(); },
     tick: function () { play('click'); },
     buzz: function () { play('neon'); },
