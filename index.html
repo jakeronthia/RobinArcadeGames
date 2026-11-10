@@ -782,7 +782,13 @@ function shops(m, r, w, d) {
   for (const s of [1, -1]) {
     const c = SHOP[Math.floor(r() * SHOP.length)];
     box(m, CB.glow, null, 0, .4, s * (d / 2 + .08), w * .78, 2.1, .02, c); addStreak(new T.Vector3(0, 1.4, s * (d / 2 + .4)).applyMatrix4(m), c);
-    box(m, CB.det, CB.det, 0, 2.7, s * (d / 2 + .55), w * .84, .18, 1.1, [0xc8344f, 0x2c6fb8, 0x2f8a56, 0xd8902a, 0x6b3fa8][Math.floor(r() * 5)]);
+    const ac = [0xc8344f, 0x2c6fb8, 0x2f8a56, 0xd8902a, 0x6b3fa8][Math.floor(r() * 5)], aw = w * .84, zf = s * (d / 2 + .1);
+    box(m, CB.det, CB.det, 0, 2.7, s * (d / 2 + .55), aw, .18, 1.1, ac);
+    // scalloped valance in two colours, slim poles, a door with a frame and a step, mullions across the shop window
+    { const n = Math.max(4, Math.round(aw / .55)), sw = aw / n; for (let k = 0; k < n; k++) box(m, CB.det, null, -aw / 2 + (k + .5) * sw, 2.42, s * (d / 2 + 1.08), sw * .92, .28, .05, k % 2 ? 0xf4efe6 : ac);
+      for (const px of [-aw / 2 + .12, aw / 2 - .12]) cyl(m, CB.det, px, 0, s * (d / 2 + 1.02), .035, 2.7, 6, 0x2a2633, false);
+      const dx = (r() - .5) * w * .3; box(m, CB.det, null, dx, 0, zf, 1.3, 2.35, .1, 0xe4ddd0); box(m, CB.det, null, dx, 0, zf + s * .04, 1.06, 2.2, .1, 0x241c30); box(m, CB.glow, null, dx, 1.2, zf + s * .1, .5, .8, .02, 0xffe7b0); box(m, CB.det, CB.det, dx, 0, s * (d / 2 + .3), 1.5, .12, .5, 0x8a84a0); box(m, CB.det, null, dx + .38, 1.0, zf + s * .12, .05, .22, .05, 0xffc93c);
+      const mn = Math.max(2, Math.round(w * .78 / 1.5)); for (let k = 1; k < mn; k++) { const mxp = -w * .39 + k * (w * .78 / mn); if (Math.abs(mxp - dx) > .8) box(m, CB.det, null, mxp, .4, zf, .07, 2.1, .06, 0x241c30); } box(m, CB.det, null, 0, .28, zf, w * .8, .14, .1, 0x4a4458); }
     if (r() < .6) box(m, CB.glow, null, (r() - .5) * w * .5, 3.4, s * (d / 2 + .12), 2.4, .7, .06, SHOP[Math.floor(r() * SHOP.length)]);
   }
   for (const s of [1, -1]) { const c = SHOP[Math.floor(r() * SHOP.length)]; box(m, CB.glow, null, s * (w / 2 + .08), .4, 0, .02, 2.1, d * .7, c); }
@@ -843,7 +849,11 @@ function building(m, o) {
   box(m, CB.det, null, 0, h - .5, 0, w + .7, .55, d + .7, 0xe4ddd0);
   for (const [cx, cz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) box(m, CB.det, null, cx * (w / 2 - .25), 0, cz * (d / 2 - .25), .7, h - .5, .7, new T.Color(tint).multiplyScalar(.82).getHex());
   if (h > 9) box(m, CB.det, null, 0, BAY - .15, 0, w + .3, .3, d + .3, 0xcfc8bb);
-  if (o.relief) relief(m, w, d, h, fu);
+  if (o.relief) { relief(m, w, d, h, fu);
+    for (const s of [1, -1]) { const n = Math.floor((w + .4) / .5); for (let k = 0; k < n; k++) box(m, CB.det, null, -(n - 1) * .25 + k * .5, h - .78, s * (d / 2 + .22), .24, .26, .22, 0xcfc8bb);
+      const bays = Math.floor(w / BAY); for (let f = 1; (f + 1) * BAY < h - .6 && f < 5; f++) for (let c = 0; c < bays; c++) { const q2 = r(); if (q2 > .34) continue; const bx = -w / 2 + (c + .5) * BAY, by = f * BAY + .5, bz = s * (d / 2 + .2);
+        if (q2 < .22) { box(m, CB.det, CB.det, bx, by - .2, bz, 1.7, .2, .3, 0x5a3a2a); box(m, CB.det, CB.det, bx, by, bz, 1.6, .16, .26, [0x2f8a56, 0x3fa868, 0x2a7a4a][Math.floor(r() * 3)]); for (let k = 0; k < 4; k++) box(m, CB.det, null, bx - .6 + k * .4 + (r() - .5) * .1, by + .14, bz, .13, .1, .13, [0xff6a9a, 0xffd27a, 0xf4efe6, 0xff8a3d][Math.floor(r() * 4)]); }
+        else { box(m, CB.det, CB.det, bx + .5, by - .62, s * (d / 2 + .3), .8, .5, .5, 0xb9b6c2); box(m, CB.det, null, bx + .5, by - .5, s * (d / 2 + .56), .6, .3, .02, 0x4a4458); box(m, CB.det, null, bx + .5, by - .7, s * (d / 2 + .2), .7, .06, .3, 0x4a4458); } } } }
   if (h > 7 && r() < .7) { const px = (w / 2 - .55) * (r() < .5 ? 1 : -1), pz = d / 2 + .16; cyl(m, CB.det, px, 0, pz, .11, h - .4, 10, 0x6a6478, false); for (let y2 = 2; y2 < h - 1; y2 += 3.2) box(m, CB.det, null, px, y2, pz - .08, .32, .1, .2, 0x4a4458); box(m, CB.det, null, px, h - .55, pz - .1, .5, .3, .5, 0x6a6478); }
   if (o.escape !== false && r() < .55) fireEscape(m, r, w, d, h);
   if (h > 10 && r() < .45) { const cols = Math.max(1, Math.floor(w / 3.6)); for (let f = 2; f * BAY < h - 2; f++) for (let c = 0; c < cols; c++) { if (r() < .25) continue; const bx = (c - (cols - 1) / 2) * (w / cols), by = f * BAY - .05;

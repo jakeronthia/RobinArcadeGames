@@ -130,6 +130,7 @@ function makeOwl(){const g=new T.Group(),body=new T.Group();g.add(body);
   for(const[y,zs] of[[0.78,[-0.12,0,0.12]],[0.62,[-0.18,-0.06,0.06,0.18]],[0.46,[-0.14,0,0.14]],[0.32,[-0.07,0.07]]])
     for(const z of zs){const f=part(SPH,Bl2,0.44-Math.abs(z)*0.5,y,z,0.035,0.07,0.07,false);f.rotation.x=0;body.add(f);body.add(part(SPH,Bd,0.455-Math.abs(z)*0.5,y-0.05,z,0.018,0.018,0.045,false))}
   const tl=part(CONE,Bd,-0.46,0.3,0,0.13,0.32,0.15);tl.rotation.z=1.1;body.add(tl);
+  for(let k=-2;k<=2;k++){const f=part(SPH,k%2?B:Bd,-0.5,0.2,k*0.06,0.17,0.035,0.05,false);f.rotation.z=0.75;f.rotation.y=k*0.22;body.add(f)}
   // feet with three talons
   const legs=[];for(const z of[0.15,-0.15]){const L=new T.Group();L.position.set(0.12,0.12,z);
     L.add(part(SPH,Ft,0.04,-0.05,0,0.11,0.05,0.08,false));
@@ -139,6 +140,11 @@ function makeOwl(){const g=new T.Group(),body=new T.Group();g.add(body);
   const wings=[];for(const s of[-1,1]){const w=new T.Group();w.position.set(-0.02,0.95,s*0.42);
     w.add(part(SPH,Bd,-0.06,-0.27,0,0.22,0.42,0.08));
     for(const[dy,dx] of[[-0.55,-0.1],[-0.6,0.02],[-0.52,-0.2]]){const f=part(SPH,B,dx,dy,s*0.02,0.07,0.16,0.05,false);w.add(f)}
+    // real feathers: a row of secondaries along the trailing edge, long primaries fanned at the tip, paler coverts on top
+    for(let k=0;k<7;k++){const f=part(SPH,k%2?B:Bd,-0.2-k*0.012,-0.1-k*0.07,s*0.015,0.13,0.045,0.022,false);f.rotation.z=0.25+k*0.05;w.add(f);
+      const tip=part(SPH,Bl2,-0.31-k*0.012,-0.13-k*0.072,s*0.017,0.03,0.02,0.02,false);w.add(tip)}
+    for(let k=0;k<5;k++){const f=part(SPH,k%2?Bd:B,-0.14+k*0.055,-0.66-Math.sin(k/4*Math.PI)*0.06,s*0.012,0.04,0.17,0.02,false);f.rotation.z=(k-2)*0.2;w.add(f)}
+    for(let k=0;k<5;k++){const f=part(SPH,Bl2,0.02-k*0.01,-0.12-k*0.085,s*0.05,0.07,0.05,0.02,false);w.add(f)}
     body.add(w);wings.push(w)}
   // head: big facial discs, framed eyes, brow tufts
   const head=new T.Group();head.position.set(0.05,1.2,0);body.add(head);
