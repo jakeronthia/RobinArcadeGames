@@ -340,8 +340,11 @@ function toonify(root) { root.traverse(o => { if (!o.material || o.isSprite || o
 <script src="assets/fx/robinvault.js"></script>
 <script src="assets/fx/snd.js"></script>
 <script>
-requestAnimationFrame(() => setTimeout(function () {
+requestAnimationFrame(() => setTimeout(async function () {
 'use strict';
+// the arcade is built in steps, with a breath between them, so the loading bar moves and the page never freezes
+const beat = (pc, txt) => new Promise(res => { const b = document.getElementById('loadBar'), st = document.getElementById('loadStep'); if (b) b.style.width = pc + '%'; if (st && txt) st.textContent = txt; let done = false; const go = () => { if (!done) { done = true; res(); } }; requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 90); });
+await beat(6, 'Switching on the cabinet');
 const SITE = '';
 const GAMES_URL = 'arcade.html#games';
 const D = [
@@ -371,6 +374,11 @@ const glow = makePost(R, { threshold: 1.45, strength: .32, exposure: .82, vignet
 const aq = makeAutoQuality(R, glow, (lv) => { glowA.on = glow.on; if (lv >= 1) { glow.ao = false; glowA.ao = false; } if (lv >= 1 && typeof moon !== 'undefined') { moon.castShadow = false; spot.castShadow = false; } if (lv >= 2) { glow.outline = false; glowA.outline = false; } fit(); });
 const cam = new T.PerspectiveCamera(48, 1, .05, 900);
 let W = 1, H = 1;
+const PR_MAX = Math.min(devicePixelRatio || 1, LOW ? 1.5 : 2), Q_AUTO = !/[?&]q=max\b/.test(location.search); let prNow = PR_MAX, fpsT = 0, fpsN = 0, prUpAfter = 0;
+// if the phone cannot keep up, draw fewer pixels; if it has room to spare, give them back slowly
+function autoQuality(dt, steady) { if (!Q_AUTO || !steady || dt > .45) { fpsT = fpsN = 0; return; } fpsT += dt; fpsN++; if (fpsT < 1.6) return; const fps = fpsN / fpsT; fpsT = fpsN = 0; const now = performance.now(); let next = prNow;
+  if (fps < 40 && prNow > .8) next = Math.max(.8, prNow - .25); else if (fps > 57 && prNow < PR_MAX && now > prUpAfter) next = Math.min(PR_MAX, prNow + .125);
+  if (next === prNow) return; if (next < prNow) prUpAfter = now + 25000; else prUpAfter = now + 6000; prNow = next; R.setPixelRatio(prNow); fit(); }
 function fit() { W = innerWidth; H = innerHeight; R.setSize(W, H, false); glow.setSize(W, H); glowA.setSize(W, H); cam.aspect = W / H; cam.updateProjectionMatrix(); }
 addEventListener('resize', () => { fit(); if (typeof pickPose === 'function') { camIdle(); pickPose(); } }); fit();
 
@@ -511,6 +519,7 @@ cone.position.set(0, 3.2, .3); A.add(cone);
 const poolTex = tex(128, 128, (x) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.5, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); });
 const glowPool = new T.Mesh(new T.CircleGeometry(1.9, 40), basic(0xffd27a, { map: poolTex.t, transparent: true, opacity: .09, depthWrite: false, blending: T.AdditiveBlending })); glowPool.rotation.x = -Math.PI / 2; glowPool.position.set(0, .005, .4); A.add(glowPool);
 
+await beat(12, 'Laying the avenue');
 /* ================= SCENE B: Ravenport, at night, in the rain ================= */
 const B = new T.Scene();
 const FOGC = new T.Color(0x1c1536);
@@ -639,6 +648,7 @@ D.forEach((d, i) => { if (d.after) { const b = DI(d.after); d.u = b.u + .075; d.
 const DS = D.slice().sort((a, b) => a.u - b.u); DS.forEach((d, k) => { d.n = String(k + 1).padStart(2, '0'); }); // the order you meet them along the avenue
 function nearestRoad(x, z) { let m = 1e9, b = rp[0]; for (let i = 0; i <= RS; i += 2) { const dx = rp[i].x - x, dz = rp[i].z - z, dd = dx * dx + dz * dz; if (dd < m) { m = dd; b = rp[i]; } } return b; }
 function distToRoad(x, z) { let m = 1e9; for (let i = 0; i <= RS; i += 3) { const dx = rp[i].x - x, dz = rp[i].z - z; const dd = dx * dx + dz * dz; if (dd < m) m = dd; } return Math.sqrt(m); }
+await beat(18, 'Raising the buildings');
 // ---------- procedural buildings, merged by material ----------
 function mulberry(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function Buf() { this.p = []; this.n = []; this.u = []; this.c = []; }
@@ -800,24 +810,23 @@ function building(m, o) {
 // facade textures: 8x8 bays per tile; albedo, height (for the normal map), roughness and lit windows
 function heightToNormal(hc, strength) {
   const w = hc.width, h = hc.height, src = hc.getContext('2d').getImageData(0, 0, w, h).data;
-  const out = document.createElement('canvas'); out.width = w; out.height = h; const ox = out.getContext('2d'); const id = ox.createImageData(w, h);
-  const H = (x, y) => src[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const dx = (H(x + 1, y) - H(x - 1, y)) * strength, dy = (H(x, y + 1) - H(x, y - 1)) * strength;
-    let nx = -dx, ny = dy, nz = 1; const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
-    const k = (y * w + x) * 4; id.data[k] = (nx * .5 + .5) * 255; id.data[k + 1] = (ny * .5 + .5) * 255; id.data[k + 2] = (nz * .5 + .5) * 255; id.data[k + 3] = 255;
-  }
+  const out = document.createElement('canvas'); out.width = w; out.height = h; const ox = out.getContext('2d'); const id = ox.createImageData(w, h), o = id.data, st = strength / 255;
+  for (let y = 0; y < h; y++) { const y0 = ((y + h - 1) % h) * w, y1 = ((y + 1) % h) * w, yc = y * w;
+    for (let x = 0; x < w; x++) { const xl = (x + w - 1) % w, xr = (x + 1) % w;
+      const dx = (src[(yc + xr) * 4] - src[(yc + xl) * 4]) * st, dy = (src[(y1 + x) * 4] - src[(y0 + x) * 4]) * st, l = 1 / Math.sqrt(dx * dx + dy * dy + 1), k = (yc + x) * 4;
+      o[k] = (-dx * l * .5 + .5) * 255; o[k + 1] = (dy * l * .5 + .5) * 255; o[k + 2] = (l * .5 + .5) * 255; o[k + 3] = 255; } }
   ox.putImageData(id, 0, 0); const t = new T.CanvasTexture(out); return t;
 }
 function canvasT(c) { const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8; return t; }
 const FS = 1024, BP = 128;
 function facadeSet() {
-  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = FS; return [c, c.getContext('2d')]; };
-  const [ca, a] = mk(), [ch, hgt] = mk(), [cr, ro] = mk(), [cl, li] = mk();
+  const mk = (read) => { const c = document.createElement('canvas'); c.width = c.height = FS; return [c, c.getContext('2d', read ? { willReadFrequently: true } : undefined)]; };
+  const [ca, a] = mk(), [ch, hgt] = mk(true), [cr, ro] = mk(), [cl, li] = mk();
   a.fillStyle = '#d4d0ca'; a.fillRect(0, 0, FS, FS); hgt.fillStyle = '#808080'; hgt.fillRect(0, 0, FS, FS); ro.fillStyle = '#e0e0e0'; ro.fillRect(0, 0, FS, FS); li.fillStyle = '#000'; li.fillRect(0, 0, FS, FS);
   const r = mulberry(21);
   // concrete grain
-  for (let k = 0; k < 26000; k++) { const v = r(); a.fillStyle = `rgba(${v < .5 ? '0,0,0' : '255,255,255'},${.03 + r() * .04})`; a.fillRect(r() * FS, r() * FS, 2, 2); }
+  { const bk = {}; for (let k = 0; k < 26000; k++) { const v = r(), al = Math.round((.03 + r() * .04) * 200) / 200, key = (v < .5 ? '0,0,0,' : '255,255,255,') + al; (bk[key] || (bk[key] = [])).push(r() * FS, r() * FS); }
+    for (const key in bk) { a.fillStyle = 'rgba(' + key + ')'; const q = bk[key]; for (let i = 0; i < q.length; i += 2) a.fillRect(q[i], q[i + 1], 2, 2); } }
   for (let by = 0; by < 8; by++) for (let bx = 0; bx < 8; bx++) {
     const X = bx * BP, Y = by * BP, style = (by * 3 + bx) % 5;
     // panel seams and floor slab
@@ -858,8 +867,8 @@ function facadeSet() {
   return { map: canvasT(ca), nrm: (() => { const t = heightToNormal(ch, 3.2); t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = 8; return t; })(), rough: canvasT(cr), lit: canvasT(cl) };
 }
 function glassSet() {
-  const mk = () => { const c = document.createElement('canvas'); c.width = c.height = FS; return [c, c.getContext('2d')]; };
-  const [ca, a] = mk(), [ch, hgt] = mk(), [cr, ro] = mk(), [cl, li] = mk(); const r = mulberry(31);
+  const mk = (read) => { const c = document.createElement('canvas'); c.width = c.height = FS; return [c, c.getContext('2d', read ? { willReadFrequently: true } : undefined)]; };
+  const [ca, a] = mk(), [ch, hgt] = mk(true), [cr, ro] = mk(), [cl, li] = mk(); const r = mulberry(31);
   const g = a.createLinearGradient(0, 0, FS, FS); g.addColorStop(0, '#5a6aa8'); g.addColorStop(.5, '#26305c'); g.addColorStop(1, '#46568e'); a.fillStyle = g; a.fillRect(0, 0, FS, FS);
   hgt.fillStyle = '#404040'; hgt.fillRect(0, 0, FS, FS); ro.fillStyle = '#383838'; ro.fillRect(0, 0, FS, FS); li.fillStyle = '#000'; li.fillRect(0, 0, FS, FS);
   for (let k = 0; k < 16; k++) for (let f = 0; f < 8; f++) { const v = r() * .12; a.fillStyle = `rgba(${r() < .5 ? '255,255,255' : '0,0,20'},${v})`; a.fillRect(k * 64 + 3, f * 128 + 8, 58, 116); }
@@ -868,7 +877,7 @@ function glassSet() {
   for (let f = 0; f <= 8; f++) { a.fillStyle = '#6a7290'; a.fillRect(0, f * 128 - 6, FS, 12); hgt.fillStyle = '#e0e0e0'; hgt.fillRect(0, f * 128 - 6, FS, 12); ro.fillStyle = '#808080'; ro.fillRect(0, f * 128 - 6, FS, 12); li.fillStyle = '#000'; li.fillRect(0, f * 128 - 6, FS, 12); }
   return { map: canvasT(ca), nrm: (() => { const t = heightToNormal(ch, 2.2); t.wrapS = t.wrapT = T.RepeatWrapping; return t; })(), rough: canvasT(cr), lit: canvasT(cl) };
 }
-const FAC = facadeSet(), GLS = glassSet();
+const FAC = facadeSet(); await beat(21, 'Painting the walls'); const GLS = glassSet(); await beat(23, 'Painting the walls');
 const roofT = tex(256, 256, (x) => { x.fillStyle = '#7c7788'; x.fillRect(0, 0, 256, 256); const r = mulberry(3); for (let k = 0; k < 2600; k++) { const v = 90 + r() * 70 | 0; x.fillStyle = `rgb(${v},${v - 4},${v + 10})`; x.fillRect(r() * 256, r() * 256, 2, 2); } x.fillStyle = 'rgba(0,0,0,.12)'; for (let k = 0; k < 256; k += 64) { x.fillRect(k, 0, 2, 256); x.fillRect(0, k, 256, 2); } });
 roofT.t.wrapS = roofT.t.wrapT = T.RepeatWrapping;
 // vertical neon signs on the street fronts
@@ -897,6 +906,7 @@ function hangSign(m, x, y, z, nx, nz, hgtS, word) {
   const wp = new T.Vector3(px, y + hgtS * .5, pz).applyMatrix4(m); addStreak(wp, new T.Color(SIGNC[i]).getHex());
 }
 
+await beat(24, 'Hanging the lights');
 // ---------- street furniture: crosswalks with traffic lights, festoon lights across the avenue, low mist ----------
 const XW_U = [.06, .2, .35, .5, .65, .8, .95];
 const stripeI = new T.InstancedMesh(new T.BoxGeometry(.55, .02, 2.6), new T.MeshStandardMaterial({ color: 0xd8d4e4, roughness: .5, envMapIntensity: .6 }), XW_U.length * 2 * 8);
@@ -955,7 +965,8 @@ function rooftopAd(m, h, nx, nz, w, d, idx) {
 }
 
 const lots = [];
-for (let x = -140; x <= 140; x += 14) for (let z = 58; z >= -320; z -= 14) {
+for (let x = -140; x <= 140; x += 14) { if (x % 42 === 0) await beat(18 + Math.round((x + 140) / 280 * 6), 'Raising the buildings');
+ for (let z = 58; z >= -320; z -= 14) {
   const r0 = mulberry((x + 500) * 7919 + (z + 500) * 104729); r0();
   const jx = x + (r0() - .5) * 2, jz = z + (r0() - .5) * 2;
   const dr = distToRoad(jx, jz); if (dr < 12.5) continue;
@@ -972,7 +983,7 @@ for (let x = -140; x <= 140; x += 14) for (let z = 58; z >= -320; z -= 14) {
     if (Math.abs(dx) > Math.abs(dz)) { nx = Math.sign(dx); sx = nx * w / 2; sz = (r0() - .5) * dd * .5; } else { nz = Math.sign(dz); sz = nz * dd / 2; sx = (r0() - .5) * w * .5; }
     hangSign(bm, sx, 3.6 + r0() * 2, sz, nx, nz, 4.5 + r0() * Math.min(5, h - 8), Math.floor(r0() * 8));
     if (type === 'mid' && h > 10 && r0() < .35) rooftopAd(bm, h, nx, nz, w, dd, Math.floor(r0() * 8)); }
-}
+} }
 // trees on the sidewalks
 // street trees: trunk, a planter and a two-layer canopy, wet and glossy
 const trunkI = new T.InstancedMesh(new T.CylinderGeometry(.11, .19, 2.4, 16), new T.MeshStandardMaterial({ color: 0x3a2a24, roughness: .8 }), 90);
@@ -1313,7 +1324,7 @@ function district(i) {
     // (actors are driven by the gameplay scripts)
   }
 }
-D.forEach((_, i) => district(i));
+for (let i = 0; i < D.length; i++) { district(i); await beat(26 + Math.round(i / D.length * 12), 'Opening ' + D[i].title); }
 const VIEWS = { patrol: [[2, 15, 25], [0, 8, 0]], rush: [[0, 11, 21], [0, 2, 3]], brawl: [[0, 15, 18], [0, 0, -1]], nightshift: [[0, 16, 23], [0, 7, 0]], tycoon: [[-2, 17, 15], [-2, 0, 2]], vault: [[0, 14, 20], [0, 2, 1]],
   skyhoot: [[0, 12, 25], [0, 10.5, 0]], safecracker: [[0, 9, 21], [0, 6.4, -5]], loottower: [[2, 12, 22], [0, 10, 0]], wanted: [[0, 10, 23], [0, 7.2, -4]], lootmatch: [[0, 9, 22], [0, 6.8, -5]] };
 D.forEach(d => { const v = VIEWS[d.id]; d.view = [new T.Vector3(...v[0]), new T.Vector3(...v[1])]; });
@@ -1323,7 +1334,8 @@ flushCity();
 if (FRAMES.length) { const fi = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshToonMaterial({ color: 0xece4d8, gradientMap: window.RV_GM }), FRAMES.length); FRAMES.forEach((mm, i) => fi.setMatrixAt(i, mm)); fi.castShadow = !LOW; fi.receiveShadow = true; B.add(fi); }
 if (RELIEF.length) { const ri = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), new T.MeshToonMaterial({ color: 0xf6f1ea, gradientMap: window.RV_GM }), RELIEF.length); RELIEF.forEach((mm, i) => ri.setMatrixAt(i, mm)); ri.castShadow = ri.receiveShadow = true; B.add(ri); }
 // game previews built into the city: one themed screen per district, plus a neon sign with the game name
-const vids = D.map(d => { const v = document.createElement('video'); v.src = d.clip; v.muted = true; v.loop = true; v.playsInline = true; v.crossOrigin = 'anonymous'; v.preload = 'auto'; return v; });
+const vids = D.map(d => { const v = document.createElement('video'); v.src = d.clip; v.muted = true; v.loop = true; v.playsInline = true; v.crossOrigin = 'anonymous'; v.preload = 'none'; return v; });
+let vidsAsked = false; function loadVids() { if (vidsAsked) return; vidsAsked = true; const order = DS.map(d => vids[D.indexOf(d)]); (function next(i) { const v = order[i]; if (!v) return; let done = false; const go = () => { if (!done) { done = true; next(i + 1); } }; v.addEventListener('loadeddata', go, { once: true }); v.addEventListener('error', go, { once: true }); setTimeout(go, 4000); v.preload = 'auto'; try { v.load(); } catch (e) { go(); } })(0); }
 function screenAt(i, x, y, z, w, h, o) {
   o = o || {}; const d = D[i], g = d.g;
   const vt = new T.VideoTexture(vids[i]); vt.minFilter = T.LinearFilter;
@@ -1400,6 +1412,7 @@ function flick(t) {
 // ---------- sound: rain, thunder, a theme per district, the coin and the dive ----------
 // sound engine: assets/fx/snd.js (window.SND)
 
+await beat(40, 'Filling the streets');
 // ---------- life on the street: cars, rain, splashes, steam, real lights near the camera ----------
 // shadows for everything solid in the districts
 B.traverse(o => { if (o.isMesh && !Array.isArray(o.material) && !o.material.transparent && !(o.material.isMeshBasicMaterial) && !o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -1598,6 +1611,7 @@ function hpBar(parent, y) {
   return { s, set(v, col) { const x = c.getContext('2d'); x.clearRect(0, 0, 64, 10); x.fillStyle = 'rgba(20,10,40,.85)'; x.fillRect(0, 0, 64, 10); x.fillStyle = col; x.fillRect(2, 2, 60 * Math.max(0, v), 6); t.needsUpdate = true; } };
 }
 
+await beat(43, 'Starting the games');
 // ---------- RUSH: Leonidas runs the tracks, jumps the oncoming train, grabs coins ----------
 {
   const d = D[1], g = d.g, Z = 7.2;
@@ -1970,7 +1984,7 @@ $('replay').addEventListener('click', () => { cam.near = .05; goTitle(); scrollT
 const camFrom = new T.Vector3(), diveTo = SC_C.clone().addScaledVector(SC_N, .03), diveLook = SC_C.clone().addScaledVector(SC_N, -1);
 function dive() { if (stage !== 'cab') return; SND.start(); askTilt(); setTimeout(() => SND.whoosh(), 150); stage = 'dive'; diveT = 0; camFrom.copy(cam.position); scrMode = 'dive'; scrT = 0; document.body.classList.add('diving'); if (reduce) toCity(true); }
 function toCity(skip) {
-  cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking', 'title'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
+  loadVids(); cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking', 'title'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
   $('welcome').classList.add('on'); SND.city(true); try { localStorage.setItem('rv-intro-seen', '1'); } catch (e) {}
 }
 // dots
@@ -2068,7 +2082,8 @@ function plResume() { try { const q = new URLSearchParams(location.search), paid
 
 function frame(now) {
   if (PLAY.game) { requestAnimationFrame(frame); last = now; return; } // the city rests while you play
-  const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
+  const rawDt = (now - last) / 1000, dt = Math.min(.1, rawDt); last = now; const time = Math.max(0, (now - t0) / 1000);
+  autoQuality(rawDt, !document.hidden && (stage === 'title' || stage === 'pick' || stage === 'city'));
   if (stage === 'land' || stage === 'city') SND.update({ room: false });
   if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
     CAR.visible = stage === 'pick' || stage === 'zoom'; const roomOn = stage === 'title', objOn = roomOn && FT && FT !== 'cab'; ROOM.forEach(o => o.g.visible = roomOn); ROOML.forEach(l => l.intensity = roomOn ? (objOn ? .45 : 1.1) : 0);
