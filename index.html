@@ -306,6 +306,7 @@ function toonify(root) { root.traverse(o => { if (!o.material || o.isSprite || o
 <script src="assets/fx/glow.js"></script>
 <script src="assets/fx/post.js"></script>
 <script src="assets/fx/robinvault.js"></script>
+<script src="assets/fx/snd.js"></script>
 <script>
 requestAnimationFrame(() => setTimeout(function () {
 'use strict';
@@ -1228,39 +1229,7 @@ function flick(t) {
   const k = Math.floor(t * 18); return Math.abs(Math.sin(k * 91.7) * 43758.5) % 1 > .25 ? 1 : .05;
 }
 // ---------- sound: rain, thunder, a theme per district, the coin and the dive ----------
-const SND = (() => {
-  let ctx = null, master = null, rainG = null, on = true, started = false, inCity = false, raining = true, lastCoin = 0;
-  const TR = {}; const TRACKS = ['home', 'patrol', 'rush', 'brawl', 'nightshift', 'tycoon', 'vault'];
-  try { on = localStorage.getItem('rv-sound') !== '0'; } catch (e) {}
-  function noiseBuf(sec) { const b = ctx.createBuffer(2, ctx.sampleRate * sec, ctx.sampleRate); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let last = 0; for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + .02 * w) / 1.02; d[i] = w * .6 + last * 3; } } return b; }
-  function start() {
-    if (started) return; started = true;
-    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-    master = ctx.createGain(); master.gain.value = on ? 1 : 0; master.connect(ctx.destination);
-    const nb = noiseBuf(4); rainG = ctx.createGain(); rainG.gain.value = 0; rainG.connect(master);
-    [['highpass', 2200, .05], ['lowpass', 600, .08]].forEach(([type, f, g]) => { const s = ctx.createBufferSource(); s.buffer = nb; s.loop = true; const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; const gg = ctx.createGain(); gg.gain.value = g; s.connect(fl); fl.connect(gg); gg.connect(rainG); s.start(0, Math.random() * 3); });
-    TRACKS.forEach(n => { const el = new Audio('assets/music/' + n + '.mp3'); el.loop = true; el.preload = n === 'home' ? 'auto' : 'none'; const g = ctx.createGain(); g.gain.value = 0; try { ctx.createMediaElementSource(el).connect(g); g.connect(master); } catch (e) {} TR[n] = { el, g, v: 0 }; });
-  }
-  const ramp = (g, v, t) => { if (!g || !ctx) return; g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setTargetAtTime(v, ctx.currentTime, t || .6); };
-  function rainLevel() { ramp(rainG, inCity && raining ? .55 : 0, 1.2); }
-  return {
-    get on() { return on; },
-    start,
-    toggle() { on = !on; try { localStorage.setItem('rv-sound', on ? '1' : '0'); } catch (e) {} if (master) ramp(master, on ? 1 : 0, .15); return on; },
-    city(v) { if (!ctx) return; if (ctx.state === 'suspended') ctx.resume(); inCity = v; rainLevel(); if (!v) TRACKS.forEach(n => { ramp(TR[n] && TR[n].g, 0, .4); }); },
-    rain(v) { raining = v; rainLevel(); },
-    // mix: { trackName: weight }, crossfaded every frame from the district weights
-    mix(w) { if (!ctx || !inCity) return; TRACKS.forEach(n => { const t = TR[n]; if (!t) return; const v = (w[n] || 0) * .3; if (Math.abs(v - t.v) > .01) { t.v = v; ramp(t.g, v, .8); } if (v > .005 && t.el.paused) t.el.play().catch(() => {}); if (v <= .005 && !t.el.paused && t.g.gain.value < .01) t.el.pause(); }); },
-    coin(quiet) { if (!ctx || !on) return; const n = performance.now(); if (quiet && n - lastCoin < 120) return; lastCoin = n; const a = new Audio('assets/sfx/coin.mp3'); a.volume = quiet ? .25 : .7; a.play().catch(() => {}); },
-    tick() { if (!ctx || !on) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(660, t); o.frequency.exponentialRampToValueAtTime(990, t + .06); o.connect(g); g.connect(master); g.gain.setValueAtTime(.08, t); g.gain.exponentialRampToValueAtTime(.001, t + .12); o.start(t); o.stop(t + .14); },
-    buzz() { if (!ctx || !on) return; const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = 118; f.type = 'bandpass'; f.frequency.value = 900; f.Q.value = .8; o.connect(f); f.connect(g); g.connect(master);
-      g.gain.setValueAtTime(0, t); for (let k = 0; k < 7; k++) { g.gain.setValueAtTime(k % 2 ? 0 : .07, t + k * .07); } g.gain.setValueAtTime(.045, t + .5); g.gain.exponentialRampToValueAtTime(.001, t + 1.4); o.start(t); o.stop(t + 1.5);
-      const p = ctx.createOscillator(), pg = ctx.createGain(); p.type = 'triangle'; p.frequency.value = 880; p.connect(pg); pg.connect(master); pg.gain.setValueAtTime(0, t + .5); pg.gain.linearRampToValueAtTime(.06, t + .52); pg.gain.exponentialRampToValueAtTime(.001, t + 1.1); p.start(t + .5); p.stop(t + 1.2); },
-    honk() { if (!ctx || !on || !inCity) return; const t = ctx.currentTime; [370, 466].forEach(fq => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'square'; o.frequency.value = fq; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; o.connect(lp); lp.connect(g); g.connect(master); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.035, t + .02); g.gain.setValueAtTime(.035, t + .16); g.gain.linearRampToValueAtTime(0, t + .2); g.gain.setValueAtTime(0, t + .26); g.gain.linearRampToValueAtTime(.035, t + .28); g.gain.setValueAtTime(.035, t + .5); g.gain.linearRampToValueAtTime(0, t + .56); o.start(t); o.stop(t + .6); }); },
-    whoosh() { if (!ctx) return; const s = ctx.createBufferSource(); s.buffer = noiseBuf(2); const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(300, ctx.currentTime); f.frequency.exponentialRampToValueAtTime(4200, ctx.currentTime + 1.4); const g = ctx.createGain(); g.gain.setValueAtTime(0, ctx.currentTime); g.gain.linearRampToValueAtTime(.5, ctx.currentTime + 1.1); g.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.7); s.connect(f); f.connect(g); g.connect(master); s.start(); },
-    thunder() { if (!ctx || !inCity || !raining) return; const s = ctx.createBufferSource(); s.buffer = noiseBuf(5); const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220 + Math.random() * 120; const g = ctx.createGain(); const t = ctx.currentTime; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.7, t + .08); g.gain.exponentialRampToValueAtTime(.2, t + 1.2); g.gain.exponentialRampToValueAtTime(.001, t + 4.5); s.connect(f); f.connect(g); g.connect(master); s.start(); }
-  };
-})();
+// sound engine: assets/fx/snd.js (window.SND)
 
 // ---------- life on the street: cars, rain, splashes, steam, real lights near the camera ----------
 // shadows for everything solid in the districts
@@ -1736,7 +1705,7 @@ ROOM.forEach(o => Object.assign(o, RMETA[o.label]));
 const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o });
 const byKey = k => ROOM.find(o => o.key === k);
 const STN = ['heroes', 'hall', 'cab', 'prize', 'faq', 'token'];
-let FT = null, stI = 2, panelKey = null, swipedAt = 0;
+const sndF = new T.Vector3(); let FT = null, stI = 2, panelKey = null, swipedAt = 0;
 const focusL = new T.SpotLight(0xfff0d8, 0, 7, .55, .7, 1.4); A.add(focusL, focusL.target);
 function objCenter(o) { return o.g.localToWorld(new T.Vector3(0, o.h, 0)); }
 const _pp = new T.Vector3(), _pl = new T.Vector3();
@@ -1753,21 +1722,21 @@ function poseFor(o, withPanel) {
   return [_pp, _pl, c, dir];
 }
 function stUi() { const k = STN[stI], cabSt = k === 'cab'; document.body.classList.toggle('atcab', cabSt); $('stName').textContent = cabSt ? 'Games' : PANELS[k].title; }
-function stGo(dlt) { if (stage !== 'title' || panelKey) return; stI = (stI + dlt + STN.length) % STN.length; const k = STN[stI]; FT = k === 'cab' ? 'cab' : byKey(k); stUi(); SND.start(); SND.tick && SND.tick(); }
+function stGo(dlt) { if (stage !== 'title' || panelKey) return; stI = (stI + dlt + STN.length) % STN.length; const k = STN[stI]; FT = k === 'cab' ? 'cab' : byKey(k); stUi(); SND.start(); SND.play('ratchet'); }
 function frameFor(key) { let f = $('pBody').querySelector('iframe[data-k="' + key + '"]'); if (!f) { f = document.createElement('iframe'); f.dataset.k = key; f.title = PANELS[key].title; f.addEventListener('load', () => { f.classList.add('on'); $('pBody').classList.remove('loading'); }); f.src = PANELS[key].src; $('pBody').appendChild(f); $('pBody').classList.add('loading'); } return f; }
-function openPanel(key) { const P2 = PANELS[key]; if (!P2) return; SND.start(); SND.tick && SND.tick();
+function openPanel(key) { const P2 = PANELS[key]; if (!P2) return; SND.start(); SND.object(key); SND.duck(true);
   panelKey = key; $('pTitle').textContent = P2.title; $('pExt').href = P2.src.replace(/[?&]embed(&only=(\w+))?/, (m, a, o) => '') + (P2.src.includes('only=') ? '#' + P2.src.split('only=')[1] : '');
   $('pBody').querySelectorAll('iframe').forEach(f => f.hidden = f.dataset.k !== key); const f = frameFor(key); f.hidden = false; if (f.classList.contains('on')) $('pBody').classList.remove('loading');
   if (stage === 'title') { FT = P2.obj || 'cab'; const si = STN.indexOf(P2.obj ? key : 'cab'); if (si >= 0) { stI = si; stUi(); } }
   document.body.classList.add('panel'); $('panel').setAttribute('aria-hidden', 'false'); $('roomTip').classList.remove('on');
   try { history.replaceState(null, '', '#' + key); } catch (e) {} setTimeout(() => $('pBack').focus({ preventScroll: true }), 50); }
-function closePanel() { if (!panelKey) return; panelKey = null; document.body.classList.remove('panel'); $('panel').setAttribute('aria-hidden', 'true'); if (W >= H && stage === 'title') FT = null;
+function closePanel() { if (!panelKey) return; panelKey = null; SND.play('close'); SND.duck(false); document.body.classList.remove('panel'); $('panel').setAttribute('aria-hidden', 'true'); if (W >= H && stage === 'title') FT = null;
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
 // ---------- room objects: hover label and click ----------
 let roomHover = -1;
 function roomHit(e) { if (stage !== 'title') return -1; ndc.set(e.clientX / W * 2 - 1, -(e.clientY / H) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObjects(ROOM.map(o => o.g), true)[0]; return h ? h.object.userData.room : -1; }
 function roomGo(i) { const o = ROOM[i]; if (!o || performance.now() - swipedAt < 400) return; openPanel(o.key); }
-canvas.addEventListener('pointermove', e => { if (stage !== 'title' || panelKey || e.pointerType === 'touch') { roomHover = -1; $('roomTip').classList.remove('on'); return; } roomHover = roomHit(e); const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].title; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
+canvas.addEventListener('pointermove', e => { if (stage !== 'title' || panelKey || e.pointerType === 'touch') { roomHover = -1; $('roomTip').classList.remove('on'); return; } const ph = roomHover; roomHover = roomHit(e); if (roomHover >= 0 && roomHover !== ph) SND.play('hover'); const tip = $('roomTip'); if (roomHover >= 0) { tip.textContent = ROOM[roomHover].title; tip.style.left = e.clientX + 'px'; tip.style.top = (e.clientY - 18) + 'px'; tip.classList.add('on'); } else tip.classList.remove('on'); });
 canvas.addEventListener('click', e => { if (stage !== 'title') return; if (panelKey) { e.stopImmediatePropagation(); closePanel(); return; } const i = roomHit(e); if (i >= 0) { e.stopImmediatePropagation(); roomGo(i); } }, true);
 // ---------- 3D hero carousel in front of the cabinet ----------
 const CAR = new T.Group(); CAR.position.set(0, 0, 1.95); A.add(CAR);
@@ -1783,9 +1752,9 @@ const carFill = new T.PointLight(0x9a7cff, 0, 5); carFill.position.set(0, 1.4, 4
 let carSel = heroIdx, carRot = -heroIdx * CSTEP, chosenObj = null, zoomT = 0;
 const pickFrom = new T.Vector3(), pickPos = new T.Vector3(), pickLook = new T.Vector3(0, .42, 1.6), chosenAt = new T.Vector3(.86, 0, .72);
 function pickPose() { const port = W < H; pickPos.set(0, port ? 2.1 : 1.75, port ? 8.6 : 6.6); }
-function carGo(d) { if (stage !== 'pick') return; carSel = (carSel + d + CN) % CN; $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; SND.start(); SND.tick && SND.tick(); }
+function carGo(d) { if (stage !== 'pick') return; carSel = (carSel + d + CN) % CN; $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; SND.start(); SND.play('ratchet'); }
 function carChoose() { if (stage !== 'pick') return; setFlyer(carSel); stage = 'zoom'; zoomT = 0; pickFrom.copy(cam.position); document.body.classList.remove('picking');
-  const c = CH[carSel]; chosenObj = c.slot; c.slot.userData.from = c.slot.getWorldPosition(new T.Vector3()); A.attach(c.slot); c.slot.userData.ry = c.slot.rotation.y; SND.start(); SND.coin(true); }
+  const c = CH[carSel]; chosenObj = c.slot; c.slot.userData.from = c.slot.getWorldPosition(new T.Vector3()); A.attach(c.slot); c.slot.userData.ry = c.slot.rotation.y; SND.start(); SND.play('confirm'); }
 function carReset() { if (chosenObj) { CAR.attach(chosenObj); const a = carSel * CSTEP; chosenObj.position.set(Math.sin(a) * CRAD, 0, Math.cos(a) * CRAD); chosenObj.rotation.set(0, 0, 0); chosenObj.scale.setScalar(1); chosenObj = null; }
   CAR.visible = true; CAR.scale.setScalar(1); CAR.position.y = 0; stage = 'pick'; document.body.classList.add('picking'); $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; }
 $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name;
@@ -1806,7 +1775,7 @@ let stage = 'title', t0 = performance.now(), diveT = 0, landT = 0, landAt = 0, p
 const camA0 = new T.Vector3(), lookA = new T.Vector3(0, 1.12, 0), curLook = new T.Vector3(0, 1.12, 0);
 function camIdle() { const port = W < H; camA0.set(0, port ? 1.2 : 1.3, port ? 3.9 : 4.3); lookA.set(0, port ? .95 : 1.12, 0); cam.fov = port ? 58 : 46; cam.updateProjectionMatrix(); }
 camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA); curLook.copy(lookA);
-function goPick() { if (stage !== 'title') return; closePanel(); FT = W < H ? 'cab' : null; stI = 2; stUi(); SND.start(); SND.coin && SND.coin(); carReset(); document.body.classList.remove('title'); roomHover = -1; $('roomTip').classList.remove('on'); canvas.style.cursor = ''; }
+function goPick() { if (stage !== 'title') return; closePanel(); FT = W < H ? 'cab' : null; stI = 2; stUi(); SND.start(); SND.play('start'); carReset(); document.body.classList.remove('title'); roomHover = -1; $('roomTip').classList.remove('on'); canvas.style.cursor = ''; }
 function goTitle() { curLook.copy(lookA); closePanel(); FT = W < H ? 'cab' : null; stI = 2; carReset(); stage = 'title'; document.body.classList.remove('picking', 'city', 'diving'); document.body.classList.add('title'); }
 let mx = 0, my = 0; addEventListener('pointermove', e => { mx = e.clientX / W * 2 - 1; my = e.clientY / H * 2 - 1; });
 const ray = new T.Raycaster(), ndc = new T.Vector2();
@@ -1819,7 +1788,7 @@ $('stPrev').addEventListener('click', () => stGo(-1)); $('stNext').addEventListe
 $('pBack').addEventListener('click', closePanel);
 document.querySelectorAll('#menu [data-panel]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); $('menu').hidden = true; $('menuBtn').setAttribute('aria-expanded', 'false'); if (stage === 'pick' || stage === 'zoom' || stage === 'dive') return; openPanel(a.dataset.panel); }));
 { const mb = $('menuBtn'), mn = $('menu'); const set = o => { mn.hidden = !o; mb.setAttribute('aria-expanded', o ? 'true' : 'false'); };
-  mb.addEventListener('click', e => { e.stopPropagation(); set(mn.hidden); }); addEventListener('click', e => { if (!mn.hidden && !mn.contains(e.target)) set(false); }, true); addEventListener('keydown', e => { if (e.key === 'Escape' && !mn.hidden) { set(false); mb.focus(); } }); }
+  mb.addEventListener('click', e => { e.stopPropagation(); SND.start(); SND.play('click'); set(mn.hidden); }); addEventListener('click', e => { if (!mn.hidden && !mn.contains(e.target)) set(false); }, true); addEventListener('keydown', e => { if (e.key === 'Escape' && !mn.hidden) { set(false); mb.focus(); } }); }
 $('skip').addEventListener('click', () => { closePanel(); SND.start(); askTilt(); toCity(true); });
 // (hero choice happens on the 3D carousel)
 $('wxTime').addEventListener('click', () => { const order = ['dusk', 'night', 'day', 'auto']; WORLD.mode = order[(order.indexOf(WORLD.mode) + 1) % order.length]; applyWorld(); });
@@ -1827,10 +1796,10 @@ $('navPrev').addEventListener('click', () => step(-1)); $('navNext').addEventLis
 $('wxRain').addEventListener('click', () => { WORLD.rain = !WORLD.rain; applyWorld(); });
 $('pressStart').addEventListener('click', () => goPick());
 const sndBtn = $('snd'); const sndUi = () => { sndBtn.classList.toggle('muted', !SND.on); sndBtn.setAttribute('aria-label', SND.on ? 'Sound on' : 'Sound off'); }; sndUi();
-sndBtn.addEventListener('click', () => { SND.start(); SND.toggle(); sndUi(); if (stage !== 'cab') SND.city(true); });
+sndBtn.addEventListener('click', () => { SND.start(); SND.toggle(); sndUi(); if (stage === 'city' || stage === 'land') SND.city(true); });
 $('replay').addEventListener('click', () => { cam.near = .05; goTitle(); scrollTo(0, 0); scrMode = 'attract'; camIdle(); pickPose(); cam.position.copy(camA0); cam.lookAt(lookA); $('card').classList.remove('on'); SND.city(false); vids.forEach(v => v.pause()); });
 const camFrom = new T.Vector3(), diveTo = SC_C.clone().addScaledVector(SC_N, .03), diveLook = SC_C.clone().addScaledVector(SC_N, -1);
-function dive() { if (stage !== 'cab') return; SND.start(); askTilt(); SND.coin(); setTimeout(() => SND.whoosh(), 150); stage = 'dive'; diveT = 0; camFrom.copy(cam.position); scrMode = 'dive'; scrT = 0; document.body.classList.add('diving'); if (reduce) toCity(true); }
+function dive() { if (stage !== 'cab') return; SND.start(); askTilt(); setTimeout(() => SND.whoosh(), 150); stage = 'dive'; diveT = 0; camFrom.copy(cam.position); scrMode = 'dive'; scrT = 0; document.body.classList.add('diving'); if (reduce) toCity(true); }
 function toCity(skip) {
   cam.near = .5; cam.updateProjectionMatrix(); stage = 'land'; landT = skip ? .55 : 0; landAt = performance.now() - landT * 1800; document.body.classList.remove('diving'); document.body.classList.add('city'); document.body.classList.remove('picking', 'title'); Object.assign(FL, { pos: 0, dock: 0, tw: null, acc: 0, cool: 0 }); scrollTo(0, 0); prog = sprog = 0;
   $('welcome').classList.add('on'); SND.city(true); try { localStorage.setItem('rv-intro-seen', '1'); } catch (e) {}
@@ -1884,12 +1853,13 @@ const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
 function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now; const time = Math.max(0, (now - t0) / 1000);
+  if (stage === 'land' || stage === 'city') SND.update({ room: false });
   if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
     CAR.visible = stage === 'pick' || stage === 'zoom'; const roomOn = stage === 'title', objOn = roomOn && FT && FT !== 'cab'; ROOM.forEach(o => o.g.visible = roomOn); ROOML.forEach(l => l.intensity = roomOn ? (objOn ? .45 : 1.1) : 0);
     tickCarousel(dt, time); ROOM_ANIM.forEach(f => f(time)); ROOM.forEach((o, i) => { o.hover += ((i === roomHover ? 1 : 0) - o.hover) * Math.min(1, dt * 8); const k = 1 + o.hover * .05; o.g.scale.setScalar(k); o.sign.material.color.setScalar(1.6 + o.hover * 1.6 + (stage === 'dive' ? 0 : 0)); });
     if (now - lastScr > 66) { lastScr = now; if (stage === 'dive') scrT = Math.min(1, diveT / 1.1); screenT.redraw(time); }
     const dim = stage === 'pick' ? .06 : stage === 'zoom' ? lerp(.06, 1, Math.min(1, zoomT / 1.3)) : 1;
-    const L = (stage === 'dive' ? 1 : flick(time)) * dim * (stage === 'title' && FT && FT !== 'cab' ? .35 : 1); spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
+    const L = (stage === 'dive' ? 1 : flick(time)) * dim * (stage === 'title' && FT && FT !== 'cab' ? .35 : 1); SND.update({ room: stage !== 'dive', lamp: L, cab: dim, cam: cam.position, fwd: cam.getWorldDirection(sndF) }); spot.intensity = 1.3 * L; cone.material.uniforms.opacity.value = .05 * L; glowPool.material.opacity = .08 * L;
     if (stage === 'pick') {
       tmp.set(pickPos.x + mx * .35, pickPos.y - my * .15, pickPos.z); cam.position.lerp(tmp, .06); cam.lookAt(pickLook);
     } else if (stage === 'zoom') {
