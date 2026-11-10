@@ -1,8 +1,8 @@
-worker /api/guest -> 200 {"ok":true,"accountId":"robin-2q14621x4.testnet"}
+worker /api/guest -> 200 {"ok":true,"accountId":"robin-5s3t525h2.testnet"}
 worker static -> asset
 console error: Failed to load resource: the server responded with a status of 404 ()
-jackpot before: 201.8
-account: Playing as robin-3m5q4q5j4.testnet
+jackpot before: 202.1
+account: Playing as robin-2z2e0j5f1.testnet
 result: No jackpot this timeYour play counts for this week’s prize pool. The jackpot keeps growing.Start the game | note: ≈ $0.10 per game
 console error: Failed to load resource: the server responded with a status of 404 ()
-pool page: jackpot 202.1 tROBIN | you: 1 game for the pot this week · 0 Cup entries ready · 10 free rolls left today | feed: robin-3m5q….testnetfor the potRavenport Rush5s agorobin-3l6x….testnetfor the potRavenport Rush18m agorobin-0c0w….testnetfor the potRavenport Rush13h agorobin-1b
+pool page: jackpot 202.4 tROBIN | you: 1 game for the pot this week · 0 Cup entries ready · 10 free rolls left today | feed: robin-2z2e….testnetfor the potRavenport Rush5s agorobin-3m5q….testnetfor the potRavenport Rush10m agorobin-3l6x….testnetfor the potRavenport Rush28m agorobin-0c
