@@ -18,8 +18,9 @@
   var M = Mini, sky = M.sky({ seed: 11 });
   var owl, gates, scroll, speed, dead, spawnX, coins, nextBolt = 6;
   var SIGNS = [['#ff3d8a', 'HOTEL'], ['#7fe3ff', 'NEAR'], ['#ffc93c', '$ROBIN'], ['#3ddc6a', 'OPEN'], ['#b37bff', 'ARCADE'], ['#ff8a3d', 'NOODLES'], ['#7fe3ff', '24H']];
-  function reset() { owl = { x: M.W * .3, y: M.H * .42, vy: 0, rot: 0, wing: 0, flapT: 1 }; gates = []; scroll = 0; speed = 170; dead = false; spawnX = M.W + 80 * M.u; coins = 0; }
-  function addGate() { var u = M.u, s = M.scoreV, gap = Math.max(138, 196 - s * 1.6) * u, margin = 70 * u, gy = margin + gap / 2 + Math.random() * (M.H - margin * 2 - gap - 40 * u);
+  var lvB = 0;
+  function reset() { lvB = (M.heroLv() - 1) * 7; owl = { x: M.W * .3, y: M.H * .42, vy: 0, rot: 0, wing: 0, flapT: 1 }; gates = []; scroll = 0; speed = 170; dead = false; spawnX = M.W + 80 * M.u; coins = 0; }
+  function addGate() { var u = M.u, s = M.scoreV, gap = (Math.max(138, 196 - s * 1.6) + (lvB || 0)) * u, margin = 70 * u, gy = margin + gap / 2 + Math.random() * (M.H - margin * 2 - gap - 40 * u);
     var sg = SIGNS[Math.random() * SIGNS.length | 0]; gates.push({ x: spawnX, w: 72 * u, gy: gy, gap: gap, passed: false, col: sg[0], word: sg[1], coin: Math.random() < .55, seed: Math.random() * 1000 | 0 });
     spawnX += Math.max(205, 255 - s * 1.2) * u; }
   function flap() { if (dead) return; owl.vy = -455 * M.u; owl.flapT = 0; M.snd('flap'); M.burst(owl.x - 14 * M.u, owl.y + 10 * M.u, 'rgba(210,220,255,.5)', 3, 60, { g: 100, r: 3, life: .35 }); }
@@ -55,7 +56,7 @@
     var sq = 1 + (1 - k) * .1; M.drawHero(ctx, 'hoot', 0, 0, s, 0, false, 1 / sq, sq);
     ctx.save(); ctx.translate(-9 * u, -3 * u); ctx.rotate(wing); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-30 * u, -12 * u, -34 * u, 12 * u); ctx.quadraticCurveTo(-18 * u, 16 * u, 0, 9 * u); ctx.closePath(); M.ink(ctx, '#8a5a2b', 2.5); ctx.restore();
     ctx.restore(); }
-  M.init({ id: 'skyhoot', title: 'Sky Hoot', accent: '#7fe3ff', music: 'rush', hero: 'hoot',
+  M.init({ id: 'skyhoot', title: 'Sky Hoot', accent: '#7fe3ff', music: 'rush', hero: 'hoot', xpHero: 'hoot', perks: ['', 'Perk: wider gaps', 'Perk: the widest gaps'],
     help: 'Tap, click or press Space to flap. Fly Hoot between the rooftops and the neon signs, and grab the coins.',
     start: reset, resize: function () { if (owl) owl.x = M.W * .3; },
     down: flap, key: function (k) { if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') flap(); },

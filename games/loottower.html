@@ -25,7 +25,7 @@
   function spawn() { var n = stack.length, top = stack[n - 1], sp = Math.min(430, 150 + n * 7) * M.u, left = Math.random() < .5; var lo = Math.max(-top.w * .35, top.x - 230 * M.u), hi = Math.min(M.W - top.w * .65, top.x + 230 * M.u); mov = { w: top.w, x: left ? lo : hi, lo: lo, hi: hi, dir: left ? 1 : -1, sp: sp, c: col(n), s: n + 1 }; }
   function tap() { if (!mov || drop) return; drop = { x: mov.x, w: mov.w, c: mov.c, s: mov.s, y: topY(stack.length) - 46 * M.u, vy: 300 * M.u }; mov = null; M.snd('swap'); }
   function settle() { var n = stack.length, top = stack[n - 1], d = drop, u = M.u, y = topY(n), dx = d.x - top.x; drop = null;
-    if (Math.abs(dx) < 6 * u) { // perfect
+    if (Math.abs(dx) < (6 + (M.heroLv() - 1) * 1.5) * u) { // perfect
       combo++; var w = top.w; if (combo >= 3 && w < BASE) w = Math.min(BASE, w + 10 * u); var nx = top.x - (w - top.w) / 2; stack.push({ x: nx, w: w, c: d.c, s: d.s }); M.add(2); M.snd('perfect', 1 + Math.min(combo, 8) * .07); M.snd('thud');
       M.pop(nx + w / 2, y + cam - 20 * u, combo > 1 ? 'PERFECT x' + combo : 'PERFECT', '#7fe3ff', 24); M.burst(nx, y + cam + BH, '#fff', 6, 150, { r: 3, life: .4 }); M.burst(nx + w, y + cam + BH, '#fff', 6, 150, { r: 3, life: .4 }); M.flash(.08); }
     else { var l = Math.max(d.x, top.x), r = Math.min(d.x + d.w, top.x + top.w), ov = r - l;
@@ -64,7 +64,7 @@
       ctx.beginPath(); ctx.moveTo(cx - mov.w * .32, my); ctx.lineTo(cx, my - 12 * u); ctx.lineTo(cx + mov.w * .32, my); ctx.lineWidth = 2.5 * u; ctx.strokeStyle = '#c9c3ea'; ctx.stroke();
       crate(ctx, mov.x, my, mov.w, BH, mov.c, mov.s); }
     if (M.state === 'play' && n === 1 && !drop) { ctx.globalAlpha = .6 + Math.sin(M.t * 5) * .3; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (17 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('TAP TO DROP THE CRATE', W / 2, H * .92); ctx.globalAlpha = 1; } }
-  M.init({ id: 'loottower', title: 'Loot Tower', accent: '#ffc93c', music: 'tycoon', pickHero: true, scoreLabel: 'SCORE',
+  M.init({ id: 'loottower', title: 'Loot Tower', accent: '#ffc93c', music: 'tycoon', pickHero: true, scoreLabel: 'SCORE', perks: ['', 'Perk: easier perfect drops', 'Perk: the easiest perfect drops'],
     help: 'Tap to drop the crate on the tower. Anything hanging over the edge falls off. Land it perfectly to keep the tower wide.',
     start: reset, resize: function () { if (stack && M.state !== 'play') reset(); }, down: tap, key: function (k) { if (k === ' ' || k === 'Enter' || k === 'ArrowDown') tap(); },
     update: function (dt) { step(dt, true); }, idle: function (dt) { step(dt, false); }, draw: draw });

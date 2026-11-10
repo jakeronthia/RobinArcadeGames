@@ -251,6 +251,14 @@ body:not(.title) #roomHint{opacity:0}
 .plnote{margin:14px 0 0!important;font-size:12.5px!important;color:#8b83b8!important}
 .plnote:empty{display:none}
 /* the arcade pass: level, missions of the day, coins, trails */
+.pstars{color:var(--y);font-size:.6em;letter-spacing:2px;vertical-align:middle}.pstars i{font-style:normal;color:rgba(255,255,255,.22)}
+#pName small{display:block;font:800 12px Nunito,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:2px}
+.pv-h{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pv-hc{display:grid;grid-template-columns:44px 1fr;gap:4px 10px;align-items:center;padding:10px;border-radius:16px;background:#17112f;border:1.5px solid #2e2650}
+.pv-hc img{width:44px;height:44px;object-fit:contain;grid-row:1/3}
+.pv-hc b{font-size:14.5px;line-height:1.1}.pv-hc .pstars{font-size:13px}
+.pv-hc .pv-bar{grid-column:1/-1;height:6px;margin:4px 0 0}.pv-hc small{grid-column:1/-1;color:#8b83b8;font-size:11.5px}
+.pv-hc.l3{border-color:var(--y)}
 #pExt{display:none}
 #toast{z-index:10}
 #coins{pointer-events:auto;cursor:pointer}
@@ -1599,7 +1607,7 @@ const GOT = new Set(); let coinBest = 0; try { coinBest = parseInt(localStorage.
 function coinToast(txt) { const t = document.getElementById('toast'); t.textContent = txt; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on'); }
 function collect(i) {
   if (GOT.has(i)) return; GOT.add(i); const n = GOT.size; const el = document.getElementById('coinN'); el.textContent = n; const hud = document.getElementById('coins'); hud.classList.remove('pop'); void hud.offsetWidth; hud.classList.add('pop');
-  SND.coin(true); passToast(PASS.event('coin'));
+  SND.coin(true); passToast(PASS.event('coin', { hero: HERO_LIST[heroIdx][2] }));
   if (n === 20) coinToast('Halfway there! 20 coins');
   if (n === COINS.length) { coinToast('Lucky Flight! You caught every coin'); try { localStorage.setItem('rv-lucky', '1'); } catch (e) {} document.getElementById('coins').classList.add('gold'); }
   if (n > coinBest) { coinBest = n; try { localStorage.setItem('rv-coins-best', String(n)); } catch (e) {} }
@@ -1805,7 +1813,7 @@ const FLOCKS = [.1, .24, .4, .55, .7, .86].map((u, k) => { const p = road.getPoi
 let honked = false;
 function flightLife(dt, time) {
   const moving = !!FL.tw;
-  trailAcc += dt; if (moving && trailAcc > .04) { trailAcc = 0; const sp = TRAIL[trailI++ % TRAIL.length]; sp.position.copy(flyer.position).add(new T.Vector3(0, -.3, 0)); sp.userData.life = 1; if (TRC.rgb) sp.material.color.setRGB(TRC.rgb[0], TRC.rgb[1], TRC.rgb[2]); else sp.material.color.setHSL((performance.now() / 900) % 1, 1, .6).multiplyScalar(1.8); }
+  trailAcc += dt; if (moving && trailAcc > .04) { trailAcc = 0; const sp = TRAIL[trailI++ % TRAIL.length]; sp.position.copy(flyer.position).add(new T.Vector3(0, -.3, 0)); sp.userData.life = 1 + (HLV - 1) * .35; if (TRC.rgb) sp.material.color.setRGB(TRC.rgb[0], TRC.rgb[1], TRC.rgb[2]); else sp.material.color.setHSL((performance.now() / 900) % 1, 1, .6).multiplyScalar(1.8); }
   TRAIL.forEach(sp => { const l = sp.userData.life || 0; sp.userData.life = Math.max(0, l - dt * 1.6); sp.material.opacity = sp.userData.life * .55; sp.scale.setScalar(.4 + sp.userData.life * 1.1); });
   FLOCKS.forEach(f => { if (f.t < 0 && moving && flyer.position.distanceTo(f.home) < 16) f.t = 0;
     f.birds.forEach((b, j) => { if (f.t < 0) { b.position.copy(f.home).add(b.userData.off); b.scale.y = 1.3; b.rotation.set(0, j, 0); return; }
@@ -1971,12 +1979,13 @@ const carFill = new T.PointLight(0x9a7cff, 0, 5); carFill.position.set(0, 1.4, 4
 let carSel = heroIdx, carRot = -heroIdx * CSTEP, chosenObj = null, zoomT = 0;
 const pickFrom = new T.Vector3(), pickPos = new T.Vector3(), pickLook = new T.Vector3(0, .42, 1.6), chosenAt = new T.Vector3(.86, 0, .72);
 function pickPose() { const port = W < H; pickPos.set(0, port ? 2.1 : 1.75, port ? 8.6 : 6.6); }
-function carGo(d) { if (stage !== 'pick') return; carSel = (carSel + d + CN) % CN; $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; SND.start(); SND.play('ratchet'); }
+function pNameSet() { const lv = PASS.heroLevel(HERO_LIST[carSel] ? HERO_LIST[carSel][2] : ''), el = $('pName'); el.textContent = CH[carSel].name + ' '; const st = document.createElement('span'); st.className = 'pstars'; st.textContent = '\u2605'.repeat(lv); const off = document.createElement('i'); off.textContent = '\u2605'.repeat(3 - lv); st.appendChild(off); el.appendChild(st); const sm = document.createElement('small'); sm.textContent = 'Level ' + lv; el.appendChild(sm); }
+function carGo(d) { if (stage !== 'pick') return; carSel = (carSel + d + CN) % CN; pNameSet(); $('pGo').textContent = 'Choose ' + CH[carSel].name; SND.start(); SND.play('ratchet'); }
 function carChoose() { if (stage !== 'pick') return; setFlyer(carSel); stage = 'zoom'; zoomT = 0; pickFrom.copy(cam.position); document.body.classList.remove('picking');
   const c = CH[carSel]; chosenObj = c.slot; c.slot.userData.from = c.slot.getWorldPosition(new T.Vector3()); A.attach(c.slot); c.slot.userData.ry = c.slot.rotation.y; SND.start(); SND.play('confirm'); }
 function carReset() { if (chosenObj) { CAR.attach(chosenObj); const a = carSel * CSTEP; chosenObj.position.set(Math.sin(a) * CRAD, 0, Math.cos(a) * CRAD); chosenObj.rotation.set(0, 0, 0); chosenObj.scale.setScalar(1); chosenObj = null; }
-  CAR.visible = true; CAR.scale.setScalar(1); CAR.position.y = 0; stage = 'pick'; document.body.classList.add('picking'); $('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name; }
-$('pName').textContent = CH[carSel].name; $('pGo').textContent = 'Choose ' + CH[carSel].name;
+  CAR.visible = true; CAR.scale.setScalar(1); CAR.position.y = 0; stage = 'pick'; document.body.classList.add('picking'); pNameSet(); $('pGo').textContent = 'Choose ' + CH[carSel].name; }
+pNameSet(); $('pGo').textContent = 'Choose ' + CH[carSel].name;
 $('pPrev').addEventListener('click', () => carGo(-1)); $('pNext').addEventListener('click', () => carGo(1)); $('pGo').addEventListener('click', carChoose);
 let swX = null; canvas.addEventListener('pointerdown', e => { swX = e.clientX; });
 canvas.addEventListener('pointerup', e => { if (stage !== 'pick' || swX == null) return; if (roomHit(e) >= 0) { swX = null; return; } const dx = e.clientX - swX; swX = null; if (Math.abs(dx) > 40) { carGo(dx < 0 ? 1 : -1); e.preventDefault(); return; }
@@ -2072,16 +2081,19 @@ const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
 // ---------- the arcade pass: one progression over every game ----------
 const passQ = []; let passBusy = false;
-function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'level' ? 'Level ' + o.level + '!  +' + o.coins + ' coins' : 'Mission done: ' + o.text + '  +' + o.coins + ' coins')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
-function passUi() { const g = PASS.get(); $('mPassS').textContent = 'Lv ' + g.level + ' · ' + g.coins + ' coins'; if (panelKey === 'pass') passRender(); TRC = PASS.trail(); }
+function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'hero' ? o.hero + ' reached level ' + o.level + '!  +' + o.coins + ' coins' : o.kind === 'level' ? 'Level ' + o.level + '!  +' + o.coins + ' coins' : 'Mission done: ' + o.text + '  +' + o.coins + ' coins')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
+function passUi() { const g = PASS.get(); $('mPassS').textContent = 'Lv ' + g.level + ' · ' + g.coins + ' coins'; if (panelKey === 'pass') passRender(); TRC = PASS.trail(); HLV = PASS.heroLevel(HERO_LIST[heroIdx][2]); if (typeof carSel === 'number' && stage === 'pick') pNameSet(); }
 function passRender() { const g = PASS.get(), v = $('passView'), esc = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   v.innerHTML = '<div class="pv-top"><div class="pv-lv"><div><small>LEVEL</small><b>' + g.level + '</b></div></div><div><div class="pv-coins"><i></i>' + g.coins.toLocaleString('en') + ' <small>arcade coins</small></div><div class="pv-bar"><i style="width:' + Math.round(g.into / g.need * 100) + '%"></i></div><small>' + g.into + ' / ' + g.need + ' XP to level ' + (g.level + 1) + '</small></div></div>'
     + '<h3>Missions of the day</h3>' + g.missions.map(m => '<div class="pv-m' + (m.done ? ' done' : '') + '"><div><b>' + esc(m.text) + '</b><small>+' + m.coins + ' coins · +' + m.xp + ' XP</small></div><span class="pv-n">' + (m.done ? 'Done' : m.p.toLocaleString('en') + ' / ' + m.n.toLocaleString('en')) + '</span><div class="pv-bar"><i style="width:' + Math.round(m.p / m.n * 100) + '%"></i></div>' + (!m.done && m.game ? '<button type="button" data-g="' + m.game + '">Play ' + esc(PASS.titles[m.game]) + '</button>' : '') + '</div>').join('')
+    + '<h3>Your heroes</h3><div class="pv-h">' + PASS.heroes().map(h => '<div class="pv-hc l' + h.level + '"><img alt="" src="assets/heroes/' + h.id + '.png"><b>' + esc(h.name) + '</b><span class="pstars">' + '\u2605'.repeat(h.level) + '<i>' + '\u2605'.repeat(3 - h.level) + '</i></span><div class="pv-bar"><i style="width:' + (h.next ? Math.round((h.xp - h.from) / (h.next - h.from) * 100) : 100) + '%"></i></div><small>' + (h.next ? (h.next - h.xp) + ' XP to level ' + (h.level + 1) : 'Top level') + '</small></div>').join('') + '</div><p class="pv-note" style="margin-top:10px">Each hero has 3 levels of its own. A hero earns XP when you play or fly with it. Level 2 and 3 give it a brighter aura in the city and a small perk in the arcade games.</p>'
     + '<h3>Flight trails</h3><div class="pv-tr">' + PASS.trails.map(t => { const own = g.owned.indexOf(t.id) >= 0, on = g.trail === t.id; return '<button type="button" class="pv-t' + (on ? ' on' : '') + (!own && g.coins < t.cost ? ' no' : '') + '" data-t="' + t.id + '"><i style="background:' + t.css + '"></i>' + t.name + '<small>' + (on ? 'In use' : own ? 'Owned · tap to use' : t.cost + ' coins') + '</small></button>'; }).join('') + '</div>'
     + '<p class="pv-note">You earn XP by playing any game. Arcade coins come from flying through the city, from missions and from new levels. They only buy trails here: they are not $ROBIN.</p>';
+  
   v.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.g; closePanel(); openPlay(id, 'choose'); }));
   v.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { if (PASS.buy(b.dataset.t)) SND.play('coin'); else SND.play('wrong'); })); }
-let TRC = PASS.trail(); PASS.onChange(passUi); passUi();
+const aura = new T.Sprite(new T.SpriteMaterial({ map: radT.t, color: new T.Color(1.9, 1.5, .6), transparent: true, opacity: .3, depthWrite: false, blending: T.AdditiveBlending })); aura.visible = false; aura.userData.noInk = true; B.add(aura);
+let HLV = 1; let TRC = PASS.trail(); PASS.onChange(passUi); passUi();
 $('coins').addEventListener('click', () => openPanel('pass')); $('coins').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('pass'); } });
 
 // ---------- play a game inside the arcade: free, or for the pot with a wallet ----------
@@ -2092,7 +2104,7 @@ function plShow(o) { const c = $('plCard'); c.className = 'plcard' + (o.win ? ' 
 function plAcct() { $('plMe').innerHTML = ''; if (PLAY.me) { $('plMe').append('Playing as '); const b = document.createElement('b'); b.textContent = PLAY.me; $('plMe').appendChild(b); } }
 async function plLoadPot() { if (!RVT) { PLAY.potOn = false; return; } try { await RVT.ready(); PLAY.cfg = await RVT.vaultView('config'); PLAY.potOn = true; } catch (e) { PLAY.potOn = false; } PLAY.me = RVT.guestId() || null; if (!PLAY.me) { try { PLAY.me = await RVT.account(); } catch (e) {} } plAcct(); }
 function plWon(out, me) { let won = '0'; try { (out.receipts_outcome || []).forEach(o => (o.outcome.logs || []).forEach(l => { const m = l.match(/^JACKPOT (\S+) won (\d+)/); if (m && m[1] === me) won = m[2]; })); } catch (e) {} return won; }
-function plLaunch(paid) { clearInterval(PLAY.poll); const f = document.createElement('iframe'); f.title = PLAY.title; f.allow = 'autoplay; fullscreen; gamepad'; f.src = 'games/' + PLAY.id + '.html' + (paid ? '?pot=1' : ''); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); $('plBody').appendChild(f); $('plBody').classList.add('game'); PLAY.game = true; clearTimeout(PLAY.xpT); { const gid = PLAY.id; PLAY.xpT = setTimeout(() => { if (PLAY.game && PLAY.id === gid) passToast(PASS.event('play', { game: gid })); }, 20000); } f.addEventListener('load', () => { try { f.focus(); f.contentWindow.focus(); } catch (e) {} }); }
+function plLaunch(paid) { clearInterval(PLAY.poll); const f = document.createElement('iframe'); f.title = PLAY.title; f.allow = 'autoplay; fullscreen; gamepad'; f.src = 'games/' + PLAY.id + '.html' + (paid ? '?pot=1' : ''); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); $('plBody').appendChild(f); $('plBody').classList.add('game'); PLAY.game = true; clearTimeout(PLAY.xpT); { const gid = PLAY.id; PLAY.xpT = setTimeout(() => { if (PLAY.game && PLAY.id === gid) passToast(PASS.event('play', { game: gid, hero: gid === 'skyhoot' ? 'hoot' : PASS.arcadeHero() })); }, 20000); } f.addEventListener('load', () => { try { f.focus(); f.contentWindow.focus(); } catch (e) {} }); }
 function plResult(won, paid, extra) { const w = BigInt(won || 0) > 0n; if (w) SND.play('win'); plShow({ win: w, tag: w ? 'JACKPOT!' : paid ? 'YOU ARE IN' : 'FREE ROLL', head: w ? 'You won ' + rvFmt(won) + ' ' + rvSym() : paid ? 'No jackpot this time' : 'Good luck!', text: w ? 'It is already in your account.' : (extra || ''), btns: [{ label: 'Start the game', go: () => plLaunch(paid) }] }); }
 function plChoose() { const c = PLAY.cfg; plShow({ tag: PLAY.potOn ? 'JACKPOT ' + rvFmt(c.jackpot) + ' ' + rvSym() : 'ROBIN ARCADE', head: 'How do you want to play?', text: PLAY.potOn ? 'For the pot costs ' + rvFmt(c.price) + ' ' + rvSym() + ': 1 in ' + Number(c.odds_paid).toLocaleString('en') + ' to win the jackpot right now, and the play counts for the weekly prize pool.' : 'The prize pool is offline right now, but every game is free to play.',
   btns: (PLAY.potOn ? [{ label: 'Play for the pot', go: plPot }] : []).concat([{ label: 'Play free', cls: PLAY.potOn ? 'c' : 'y', go: plFree }]), note: 'Every play for the pot is on-chain. No one can change the rules, the draws or the payouts.' }); }
@@ -2125,7 +2137,7 @@ function closePlay() { if (!PLAY.open) return; clearInterval(PLAY.poll); clearTi
 $('plBack').addEventListener('click', closePlay);
 $('cFree').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'free'); });
 $('cPot').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'pot'); });
-addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; if (e.data.rvScore && PASS.titles[e.data.rvScore.id]) passToast(PASS.event('score', { game: e.data.rvScore.id, score: +e.data.rvScore.score || 0, best: !!e.data.rvScore.best })); else if (e.data.rvPlay) openPlay(e.data.rvPlay, e.data.pot ? 'pot' : 'choose'); else if (e.data.rvPanel) { if (PANELS[e.data.rvPanel]) openPanel(e.data.rvPanel); else closePanel(); } });
+addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; if (e.data.rvScore && PASS.titles[e.data.rvScore.id]) passToast(PASS.event('score', { game: e.data.rvScore.id, score: +e.data.rvScore.score || 0, best: !!e.data.rvScore.best, hero: e.data.rvScore.hero })); else if (e.data.rvPlay) openPlay(e.data.rvPlay, e.data.pot ? 'pot' : 'choose'); else if (e.data.rvPanel) { if (PANELS[e.data.rvPanel]) openPanel(e.data.rvPanel); else closePanel(); } });
 function plResume() { try { const q = new URLSearchParams(location.search), paid = JSON.parse(sessionStorage.getItem('rv-play-paid') || 'null'), res = JSON.parse(sessionStorage.getItem('rv-play-resume') || 'null'), fresh = x => x && Date.now() - x.t < 15 * 60000;
     sessionStorage.removeItem('rv-play-paid'); sessionStorage.removeItem('rv-play-resume');
     if (q.get('transactionHashes') && fresh(paid)) { history.replaceState(null, '', location.pathname); openPlay(paid.id, 'paid'); } else if (fresh(res)) { history.replaceState(null, '', location.pathname); openPlay(res.id, 'pot'); } } catch (e) {} }
@@ -2178,7 +2190,7 @@ function frame(now) {
     const vel = Math.min(1, Math.abs(prog - (frame.pp || 0)) / Math.max(dt, .001) * 6); frame.pp = prog; frame.v = lerp(frame.v || 0, vel, Math.min(1, dt * 3));
     const fy = 3 + Math.sin(time * 1.7) * .22; // low between the buildings: under the string lights, above the cars
     flyer.position.set(fP.x, fy, fP.z); flyer.lookAt(fP.x + fT.x, fy - frame.v * .3, fP.z + fT.z); flyer.rotateZ(turn);
-    animFlyer(time, frame.v);
+    animFlyer(time, frame.v); { if (frame.hi !== heroIdx) { frame.hi = heroIdx; HLV = PASS.heroLevel(HERO_LIST[heroIdx][2]); } const lv = HLV; aura.visible = lv > 1 && stage === 'city'; if (lv > 1) { aura.position.copy(flyer.position); const sc = (lv === 3 ? 5.2 : 3.6) * (1 + Math.sin(time * 3) * .06); aura.scale.set(sc, sc, 1); aura.material.opacity = lv === 3 ? .5 : .3; } }
     blob.position.set(fP.x, .17, fP.z); blob.material.opacity = .42;
     COINS.forEach((c, ci) => { if (c.userData.u - fu < .002 && c.userData.u - fu > -.008 && stage === 'city') collect(ci); c.rotation.y = time * 2.4 + c.userData.u * 40; const d = c.userData.u - fu; c.visible = d > -.01; c.scale.setScalar(d < .004 && d > -.01 ? Math.max(.01, 1 - (.004 - d) * 140) : 1); });
     const rAt = fP, look = road.getPointAt(Math.min(.999, fu + .05));

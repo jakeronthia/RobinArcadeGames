@@ -30,6 +30,7 @@ body:not(.playing) #mHud .pill{opacity:0}\
 .lbl{font-size:12px;font-weight:900;letter-spacing:.16em;color:var(--mute);margin-bottom:12px}\
 .nb{display:inline-block;margin:0 0 12px;padding:4px 12px;border-radius:999px;background:var(--pink);font-size:12px;font-weight:900;letter-spacing:.12em}\
 .mis{margin:0 0 14px;padding:8px 12px;border-radius:14px;background:rgba(255,201,60,.1);border:1.5px solid rgba(255,201,60,.4);color:#ffe9a8;font-size:13px;font-weight:800;line-height:1.3}.mis b{color:var(--gold)}.mis.ok{background:rgba(61,220,106,.12);border-color:#3ddc6a;color:#bff5cf}\
+.lvl{margin:-4px 0 14px;color:var(--dim);font-size:13px;font-weight:800;line-height:1.5}.lvl b{color:#fff}.lvl .st{color:var(--gold);letter-spacing:1px}.lvl .st i{font-style:normal;color:#4a4270}\
 .pot{display:inline-block;margin-bottom:10px;padding:3px 10px;border-radius:999px;border:1.5px solid var(--gold);color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.12em}\
 .heroes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 16px}\
 .heroes button{width:54px;height:54px;border-radius:16px;border:2px solid var(--line);background:#120d28 center/84% no-repeat;cursor:pointer;padding:0}\
@@ -53,7 +54,11 @@ body:not(.playing) #mHud .pill{opacity:0}\
       try { M.best = +localStorage.getItem('mini-' + o.id + '-best') || 0; M.hero = localStorage.getItem('mini-hero') || 'hoot'; } catch (e) {}
       // one hero everywhere: the one you chose in the arcade is the one you play with
       var ORDER = ['leonidas', 'atreus', 'hoot', 'trey', 'baller', 'frazzle', 'ilia', 'spud', 'sirplop']; try { var ai = localStorage.getItem('rv-hero'); if (ai !== null && ORDER[+ai]) M.hero = ORDER[+ai]; } catch (e) {}
-      if (HEROES.indexOf(M.hero) < 0) M.hero = 'hoot'; if (o.hero) M.hero = o.hero;
+      var arcadeH = M.hero; if (HEROES.indexOf(M.hero) < 0) M.hero = 'hoot'; if (HEROES.indexOf(arcadeH) < 0) arcadeH = 'hoot'; if (o.hero) M.hero = o.hero;
+      // the hero that earns XP here, and its level (1 to 3) from the arcade pass: higher levels get a small perk in every game
+      M.xpHero = function () { return o.pickHero ? M.hero : (o.xpHero || arcadeH); };
+      M.heroLv = function () { try { var P = JSON.parse(localStorage.getItem('rv-pass') || 'null'), xp = (P && P.heroes && P.heroes[M.xpHero()]) || 0; return xp >= 200 ? 3 : xp >= 60 ? 2 : 1; } catch (e) { return 1; } };
+      function lvHtml() { var lv = M.heroLv(), perk = o.perks ? o.perks[lv - 1] : ''; return '<b>' + HNAME[M.xpHero()] + '</b> · level ' + lv + ' <span class="st">' + '\u2605'.repeat(lv) + '<i>' + '\u2605'.repeat(3 - lv) + '</i></span>' + (perk ? '<br>' + perk : ''); }
       // today's mission for this game, from the arcade pass
       function mission() { try { var d = new Date(), day = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(), P = JSON.parse(localStorage.getItem('rv-pass') || 'null'); if (!P || P.day !== day) return null; return (P.missions || []).filter(function (m) { return m.type === 'score' && m.game === o.id; })[0] || null; } catch (e) { return null; } }
       function misHtml(score) { var m = mission(); if (!m) return ''; var ok = m.done || (score != null && score >= m.n); return '<div class="mis' + (ok ? ' ok' : '') + '">' + (ok ? 'MISSION DONE · ' : "TODAY'S MISSION · ") + m.text + (ok ? '' : ' · <b>+' + m.coins + ' coins</b>') + '</div>'; }
@@ -64,11 +69,11 @@ body:not(.playing) #mHud .pill{opacity:0}\
       // menu
       var menu = M.menu = el('div', 'ov'); menu.id = 'mMenu';
       var hs = ''; if (o.pickHero) { hs = '<div class="heroes" role="group" aria-label="Choose your hero">' + HEROES.map(function (h) { return '<button type="button" data-h="' + h + '" aria-label="' + HNAME[h] + '" aria-pressed="' + (h === M.hero) + '" style="background-image:url(' + BASE + 'heroes/' + h + '.png)"></button>'; }).join('') + '</div>'; }
-      menu.innerHTML = '<div class="card">' + (pot ? '<div class="pot">PLAYING FOR THE POT</div><br>' : '') + '<div class="tag">ROBIN ARCADE</div><h1>' + o.title + '</h1><p>' + o.help + '</p><div id="mMis0">' + misHtml() + '</div>' + hs + '<button class="go" id="mPlay" type="button">PLAY</button><div class="best">BEST <b id="mBest0">' + M.best + '</b></div></div>';
+      menu.innerHTML = '<div class="card">' + (pot ? '<div class="pot">PLAYING FOR THE POT</div><br>' : '') + '<div class="tag">ROBIN ARCADE</div><h1>' + o.title + '</h1><p>' + o.help + '</p><div id="mMis0">' + misHtml() + '</div>' + hs + '<div class="lvl" id="mLvl">' + lvHtml() + '</div><button class="go" id="mPlay" type="button">PLAY</button><div class="best">BEST <b id="mBest0">' + M.best + '</b></div></div>';
       document.body.appendChild(menu);
       var over = M.overEl = el('div', 'ov', '<div class="card"><div class="tag" id="mOverTag">GAME OVER</div><div class="big" id="mFinal">0</div><div class="lbl" id="mFinalL">' + (o.scoreLabel || 'SCORE') + '</div><div class="nb" id="mNew" hidden>NEW BEST!</div><p id="mLine" hidden></p><div id="mMis1"></div><div><button class="go" id="mAgain" type="button">PLAY AGAIN</button></div><div class="best">BEST <b id="mBest1">0</b></div></div>'); over.id = 'mOver'; over.hidden = true; document.body.appendChild(over);
       var $ = function (id) { return document.getElementById(id); }; M.$ = $;
-      menu.querySelectorAll('.heroes button').forEach(function (b) { b.addEventListener('click', function () { M.hero = b.dataset.h; try { localStorage.setItem('mini-hero', M.hero); var oi = ORDER.indexOf(M.hero); if (oi >= 0) localStorage.setItem('rv-hero', oi); } catch (e) {} menu.querySelectorAll('.heroes button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); snd('click'); }); });
+      menu.querySelectorAll('.heroes button').forEach(function (b) { b.addEventListener('click', function () { M.hero = b.dataset.h; try { localStorage.setItem('mini-hero', M.hero); var oi = ORDER.indexOf(M.hero); if (oi >= 0) localStorage.setItem('rv-hero', oi); } catch (e) {} menu.querySelectorAll('.heroes button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); $('mLvl').innerHTML = lvHtml(); snd('click'); }); });
       HEROES.forEach(img);
       function begin() { if (M.state === 'play') return; if (window.SND) { SND.start(); } snd('start'); music(true); M.state = 'play'; M.scoreV = 0; $('mScore').textContent = '0'; M.extra(null); menu.hidden = true; over.hidden = true; document.body.classList.add('playing'); M.parts.length = 0; M.pops.length = 0; M.sh = 0; o.start && o.start(); }
       M.begin = begin;
@@ -99,8 +104,8 @@ body:not(.playing) #mHud .pill{opacity:0}\
     add: function (n) { M.score(M.scoreV + n); },
     extra: function (label, v) { var p = M.$('mExtraP'); if (label == null) { p.hidden = true; return; } p.hidden = false; M.$('mExtraL').textContent = label; M.$('mExtra').textContent = v; },
     // end of a game: score is what counts for the record
-    over: function (line, tag) { if (M.state !== 'play') return; M.state = 'over'; M.lock = true; var s = M.scoreV, nb = s > M.best; try { if (parent !== window) parent.postMessage({ rvScore: { id: M.o.id, score: s, best: nb && s > 0 } }, location.origin); } catch (e) {} if (nb) { M.best = s; try { localStorage.setItem('mini-' + M.o.id + '-best', s); } catch (e) {} }
-      setTimeout(function () { M.lock = false; document.body.classList.remove('playing'); M.$('mFinal').textContent = s.toLocaleString('en'); M.$('mNew').hidden = !nb; M.$('mBest1').textContent = M.best.toLocaleString('en'); M.$('mBest0').textContent = M.best.toLocaleString('en'); M.$('mOverTag').textContent = tag || 'GAME OVER'; var l = M.$('mLine'); l.hidden = !line; l.textContent = line || ''; M.$('mMis1').innerHTML = M.misHtml(s); M.$('mMis0').innerHTML = M.misHtml(s); M.overEl.hidden = false; snd(nb && s > 0 ? 'win' : 'lose'); M.$('mAgain').focus({ preventScroll: true }); }, M.o.overDelay || 900); },
+    over: function (line, tag) { if (M.state !== 'play') return; M.state = 'over'; M.lock = true; var s = M.scoreV, nb = s > M.best; try { if (parent !== window) parent.postMessage({ rvScore: { id: M.o.id, score: s, best: nb && s > 0, hero: M.xpHero() } }, location.origin); } catch (e) {} if (nb) { M.best = s; try { localStorage.setItem('mini-' + M.o.id + '-best', s); } catch (e) {} }
+      setTimeout(function () { M.lock = false; document.body.classList.remove('playing'); M.$('mFinal').textContent = s.toLocaleString('en'); M.$('mNew').hidden = !nb; M.$('mBest1').textContent = M.best.toLocaleString('en'); M.$('mBest0').textContent = M.best.toLocaleString('en'); M.$('mOverTag').textContent = tag || 'GAME OVER'; var l = M.$('mLine'); l.hidden = !line; l.textContent = line || ''; M.$('mMis1').innerHTML = M.misHtml(s); M.$('mMis0').innerHTML = M.misHtml(s); setTimeout(function () { M.$('mLvl').innerHTML = lvHtml(); }, 400); M.overEl.hidden = false; snd(nb && s > 0 ? 'win' : 'lose'); M.$('mAgain').focus({ preventScroll: true }); }, M.o.overDelay || 900); },
     // ---- juice ----
     parts: [], pops: [], sh: 0, fl: 0,
     shake: function (a) { M.sh = Math.max(M.sh, a); }, flash: function (a) { M.fl = Math.max(M.fl, a); },

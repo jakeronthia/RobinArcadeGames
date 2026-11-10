@@ -27,10 +27,11 @@
     var r = M.rng(5); x.fillStyle = 'rgba(255,255,255,.035)'; for (var i = 0; i < 160; i++) x.fillRect((r() * M.W / (36 * u) | 0) * 36 * u + 2 * u, (r() * M.H / bh | 0) * bh + 2 * u, 32 * u, bh - 3 * u);
     var sh = x.createLinearGradient(0, 0, 0, 90 * u); sh.addColorStop(0, 'rgba(8,5,18,.75)'); sh.addColorStop(1, 'rgba(8,5,18,0)'); x.fillStyle = sh; x.fillRect(0, 0, M.W, 90 * u);
     wins.forEach(function (w) { x.fillStyle = '#b9a6d8'; x.strokeStyle = M.INK; x.lineWidth = 3 * u; x.lineJoin = 'round'; M.rr(x, w.x - 8 * u, w.y - 8 * u, w.w + 16 * u, w.h + 16 * u, 6 * u); x.fill(); x.stroke(); M.rr(x, w.x - 13 * u, w.y + w.h + 6 * u, w.w + 26 * u, 11 * u, 4 * u); x.fillStyle = '#d6c8ee'; x.fill(); x.stroke(); }); }
-  function reset() { time = 0; spawnT = .7; lives = 3; combo = 0; caught = 0; hurt = 0; wins.forEach(function (w) { w.kind = null; w.up = 0; w.hit = -1; }); hud(); }
+  var lvB = 0;
+  function reset() { lvB = (M.heroLv() - 1) * .06; time = 0; spawnT = .7; lives = 3; combo = 0; caught = 0; hurt = 0; wins.forEach(function (w) { w.kind = null; w.up = 0; w.hit = -1; }); hud(); }
   function hud() { M.extra('LIVES', lives > 0 ? '♥'.repeat(lives) : '-'); }
   function spawn() { var free = wins.filter(function (w) { return !w.kind && w.up < .02; }), busy = wins.length - free.length; if (!free.length || busy >= Math.min(4, 2 + Math.floor(time / 18))) return; var w = free[Math.random() * free.length | 0], k = Math.random();
-    w.kind = k < .22 ? 'hero' : k < .34 ? 'fast' : 'thief'; w.dur = Math.max(.72, 1.75 - time * .011) * (w.kind === 'fast' ? .62 : w.kind === 'hero' ? 1.15 : 1); w.t = 0; w.hit = -1; w.hero = M.heroes[Math.random() * M.heroes.length | 0]; w.flip = Math.random() < .5; M.snd('pop', w.kind === 'hero' ? 1.5 : 1); }
+    w.kind = k < .22 ? 'hero' : k < .34 ? 'fast' : 'thief'; w.dur = Math.max(.72, 1.75 - time * .011) * (w.kind === 'fast' ? .62 : w.kind === 'hero' ? 1.15 : 1) * (1 + (lvB || 0)); w.t = 0; w.hit = -1; w.hero = M.heroes[Math.random() * M.heroes.length | 0]; w.flip = Math.random() < .5; M.snd('pop', w.kind === 'hero' ? 1.5 : 1); }
   function loseLife(w, why) { lives--; combo = 0; hurt = 1; hud(); M.shake(.7); M.snd('wrong'); M.pop(w.x + w.w / 2, w.y - 6 * M.u, why, '#ff5a78', 22); if (lives <= 0) { M.snd('hit'); M.over('You caught ' + caught + ' thie' + (caught === 1 ? 'f' : 'ves') + ' tonight.'); } }
   function whack(w) { var cx = w.x + w.w / 2, cy = w.y + w.h / 2, u = M.u; if (!w.kind || w.hit >= 0) { combo = 0; M.snd('tick'); return; }
     if (w.kind === 'hero') { w.hit = 0; loseLife(w, 'NOT THE SQUAD!'); return; }
@@ -57,7 +58,7 @@
       if (active && w.hit < 0 && w.kind !== 'hero') { var left = 1 - w.t / w.dur; ctx.fillStyle = M.INK; ctx.fillRect(w.x, w.y + w.h + 8 * u, w.w, 5 * u); ctx.fillStyle = left < .3 ? '#ff5a78' : '#ffc93c'; ctx.fillRect(w.x, w.y + w.h + 8 * u, w.w * left, 5 * u); } }
     if (hurt > .02) { ctx.fillStyle = 'rgba(255,50,80,' + hurt * .3 + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
     if (M.state === 'play' && time < 5 && M.scoreV === 0) { ctx.globalAlpha = .9; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (15 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 4 * u; ctx.strokeStyle = M.INK; ctx.strokeText('TAP THE THIEVES, NOT THE SQUAD', W / 2, H - 9 * u); ctx.fillText('TAP THE THIEVES, NOT THE SQUAD', W / 2, H - 9 * u); ctx.globalAlpha = 1; } }
-  M.init({ id: 'wanted', title: 'Wanted!', accent: '#ff3d8a', music: 'patrol', hero: 'hoot',
+  M.init({ id: 'wanted', title: 'Wanted!', accent: '#ff3d8a', music: 'patrol', hero: 'hoot', perks: ['', 'Perk: thieves stay a little longer', 'Perk: thieves stay the longest'],
     help: 'Thieves pop up at the windows. Tap them before they get away, but never tap one of the squad. Three mistakes and the night is over.',
     start: reset, resize: layout, down: function (x, y) { var w = at(x, y); if (w) whack(w); },
     key: function (k) { k = k.toLowerCase(); for (var i = 0; i < wins.length; i++) if (wins[i].key === k) { whack(wins[i]); return; } },

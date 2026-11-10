@@ -21,7 +21,7 @@
   function norm(x) { x %= TAU; return x < 0 ? x + TAU : x; }
   function dist(x, y) { var d = Math.abs(norm(x) - norm(y)); return d > Math.PI ? TAU - d : d; }
   function speed() { return Math.min(5.4, 2.0 + M.scoreV * .075); }
-  function newTarget(flip) { if (flip) dir = -dir; tgt = norm(a + dir * (1.3 + Math.random() * 3.1)); hw = Math.max(.15, .42 - M.scoreV * .009); inside = false; }
+  function newTarget(flip) { if (flip) dir = -dir; tgt = norm(a + dir * (1.3 + Math.random() * 3.1)); hw = Math.max(.15, .42 - M.scoreV * .009) * (1 + (M.heroLv() - 1) * .07); inside = false; }
   function reset() { a = -Math.PI / 2; dir = 1; strikes = 0; pins = 0; locks = 0; pulse = 0; alarm = 0; heroB = 0; lastTick = 0; doorSpin = 0; coinsFx = 0; hw = .42; newTarget(false); hud(); }
   function hud() { M.extra('LOCK', locks + 1); }
   function geo() { var cx = M.W / 2, cy = M.H * .47, R = Math.min(M.W * .345, M.H * .27); return [cx, cy, R]; }
@@ -67,7 +67,7 @@
     // the hero listens at the door
     var hs = 92 * u; M.drawHero(ctx, M.hero, hs * .55, H - hs * .5 - heroB * 14 * u + Math.sin(M.t * 2.4) * 2 * u, hs, strikes ? Math.sin(M.t * 30) * alarm * .08 : 0, false, 1 + heroB * .06, 1 - heroB * .06);
     if (M.state === 'play' && M.scoreV === 0 && strikes === 0) { ctx.globalAlpha = .6 + Math.sin(M.t * 5) * .3; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (17 * u) + 'px Fredoka, sans-serif'; ctx.fillText('TAP WHEN THE NEEDLE IS ON GOLD', cx, Math.min(H - 26 * u, cy + DR + 34 * u)); ctx.globalAlpha = 1; } }
-  M.init({ id: 'safecracker', title: 'Safe Cracker', accent: '#ffc93c', music: 'vault', pickHero: true,
+  M.init({ id: 'safecracker', title: 'Safe Cracker', accent: '#ffc93c', music: 'vault', pickHero: true, perks: ['', 'Perk: a wider gold zone', 'Perk: the widest gold zone'],
     help: 'The needle spins around the dial. Tap when it is on the gold zone. Five clicks open a lock, three misses set off the alarm.',
     start: reset, down: tap, key: function (k) { if (k === ' ' || k === 'Enter') tap(); },
     update: step, draw: draw });
