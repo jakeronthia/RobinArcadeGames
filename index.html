@@ -635,7 +635,7 @@ LAMPS.forEach(p => addStreak(p, 0xffc890));
 
 // districts along the avenue
 const U = [.13, .28, .43, .58, .73, .88];
-D.forEach((d, i) => { if (d.after) { const b = DI(d.after); d.u = b.u + .04; d.side = -b.side; } else { d.u = U[i]; d.side = i % 2 ? -1 : 1; } const p = road.getPointAt(d.u), t = road.getTangentAt(d.u); d.nrm = new T.Vector3(-t.z, 0, t.x).multiplyScalar(d.side); d.c = p.clone().addScaledVector(d.nrm, 22); d.road = p; });
+D.forEach((d, i) => { if (d.after) { const b = DI(d.after); d.u = b.u + .075; d.side = -b.side; } else { d.u = U[i]; d.side = i % 2 ? -1 : 1; } const p = road.getPointAt(d.u), t = road.getTangentAt(d.u); d.nrm = new T.Vector3(-t.z, 0, t.x).multiplyScalar(d.side); d.c = p.clone().addScaledVector(d.nrm, 22); d.road = p; });
 const DS = D.slice().sort((a, b) => a.u - b.u); DS.forEach((d, k) => { d.n = String(k + 1).padStart(2, '0'); }); // the order you meet them along the avenue
 function nearestRoad(x, z) { let m = 1e9, b = rp[0]; for (let i = 0; i <= RS; i += 2) { const dx = rp[i].x - x, dz = rp[i].z - z, dd = dx * dx + dz * dz; if (dd < m) { m = dd; b = rp[i]; } } return b; }
 function distToRoad(x, z) { let m = 1e9; for (let i = 0; i <= RS; i += 3) { const dx = rp[i].x - x, dz = rp[i].z - z; const dd = dx * dx + dz * dz; if (dd < m) m = dd; } return Math.sqrt(m); }
@@ -959,7 +959,7 @@ for (let x = -140; x <= 140; x += 14) for (let z = 58; z >= -320; z -= 14) {
   const r0 = mulberry((x + 500) * 7919 + (z + 500) * 104729); r0();
   const jx = x + (r0() - .5) * 2, jz = z + (r0() - .5) * 2;
   const dr = distToRoad(jx, jz); if (dr < 12.5) continue;
-  let near = false; for (const d of D) if (Math.hypot(d.c.x - jx, d.c.z - jz) < 23) near = true; if (near) continue;
+  let near = false; for (const d of D) if (Math.hypot(d.c.x - jx, d.c.z - jz) < (d.after ? 18.5 : 23)) near = true; if (near) continue;
   const rnd = r0(); if (rnd < .06) continue;
   const w = 8.5 + r0() * 2.5, dd = 8.5 + r0() * 2.5, far = Math.min(1, (dr - 12) / 60);
   let type = 'mid', h = 8 + r0() * 12;
@@ -1030,9 +1030,9 @@ function waterTower(g, x, y, z, s) {
 }
 function lampPost(g, x, z, h) { const s = PM(0x24202e, .4, .7); const p = new T.Mesh(new T.CylinderGeometry(.07, .1, h, 14), s); p.position.set(x, h / 2, z); g.add(p); const hd = new T.Mesh(new T.SphereGeometry(.22, 20, 14), GLOWM(0xffd9a0, 3.5)); hd.position.set(x, h + .1, z); g.add(hd); const cap = new T.Mesh(new T.ConeGeometry(.3, .22, 20), s); cap.position.set(x, h + .38, z); g.add(cap); }
 function stringLights(g, a, b, sag, n) { const pts = []; for (let i = 0; i <= n; i++) { const f = i / n, p = a.clone().lerp(b, f); p.y -= Math.sin(f * Math.PI) * sag; pts.push(p); } const ln = new T.Line(new T.BufferGeometry().setFromPoints(pts), new T.LineBasicMaterial({ color: 0x14101c })); g.add(ln); const cols = [0xffd27a, 0xff6a9a, 0x7fe3ff, 0xffb35a]; pts.slice(1, -1).forEach((p, i) => { const s = new T.Mesh(new T.SphereGeometry(.09, 10, 8), GLOWM(cols[i % 4], 3.2)); s.position.copy(p); s.position.y -= .1; g.add(s); }); }
-function padBase(g, col, rim) {
-  const base = new T.Mesh(roundedBox(30, .5, 30, .2, 3), PM(col, .7)); base.position.y = .05; g.add(base);
-  for (const [x, z, w, d] of [[0, 15.02, 30, .08], [0, -15.02, 30, .08], [15.02, 0, .08, 30], [-15.02, 0, .08, 30]]) { const e = new T.Mesh(new T.BoxGeometry(w, .1, d), GLOWM(rim, 2.2)); e.position.set(x, .28, z); g.add(e); }
+function padBase(g, col, rim, pw) { pw = pw || 30; const hw = pw / 2 + .02;
+  const base = new T.Mesh(roundedBox(pw, .5, 30, .2, 3), PM(col, .7)); base.position.y = .05; g.add(base);
+  for (const [x, z, w, d] of [[0, 15.02, pw, .08], [0, -15.02, pw, .08], [hw, 0, .08, 30], [-hw, 0, .08, 30]]) { const e = new T.Mesh(new T.BoxGeometry(w, .1, d), GLOWM(rim, 2.2)); e.position.set(x, .28, z); g.add(e); }
 }
 
 // ---------- the five arcade games as small districts, each with its own live moment ----------
@@ -1040,33 +1040,32 @@ const faceTo = (o, dx, dz) => { o.rotation.y = Math.atan2(-dz, dx); };
 const MINI = {
   // Sky Hoot: the owl weaves between chimneys and hanging neon signs
   skyhoot(d, g, L) {
-    padBase(g, 0x1a1a34, 0x7fe3ff);
-    const tw = [[-10.5, 6], [-3.5, 9.5], [3.5, 5], [10.5, 8]];
-    tw.forEach(([x, h], k) => building(L(x, .3, 0), { type: 'mid', w: 4.6, d: 4.6, h, seed: 700 + k, escape: false, flat: true, tint: 0x8a4a58 }));
-    [[-11, -11, 7, 17], [11, -11, 7, 20], [0, -12, 6, 13]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 710 + k, tint: 0x4c4068 }));
+    padBase(g, 0x1a1a34, 0x7fe3ff, 18);
+    const tw = [[-6.6, 6], [-2.2, 9.5], [2.2, 5], [6.6, 8]];
+    tw.forEach(([x, h], k) => building(L(x, .3, 0), { type: 'mid', w: 3.2, d: 4.2, h, seed: 700 + k, escape: false, flat: true, tint: 0x8a4a58 }));
+    [[-5.6, -11, 5.6, 17], [5.6, -11, 5.6, 13]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 710 + k, flat: true, tint: 0x4c4068 }));
     const steel = PM(0x3a3648, .5, .6);
-    for (const sx of [-14.2, 14.2]) { const p = new T.Mesh(new T.BoxGeometry(.5, 21, .5), steel); p.position.set(sx, 10.5, 0); g.add(p); }
-    const beam = new T.Mesh(new T.BoxGeometry(29, .5, .6), steel); beam.position.set(0, 21.2, 0); g.add(beam);
+    for (const sx of [-8.7, 8.7]) { const p = new T.Mesh(new T.BoxGeometry(.5, 21, .5), steel); p.position.set(sx, 10.5, 0); g.add(p); }
+    const beam = new T.Mesh(new T.BoxGeometry(17.9, .5, .6), steel); beam.position.set(0, 21.2, 0); g.add(beam);
     const cols = [0xff3d8a, 0x7fe3ff, 0xffc93c, 0x3ddc6a];
     const gates = tw.map(([x, h], k) => { const top = h + .3, gap = 4.8, sb = top + gap, sh = 20.2 - sb;
-      const sg = new T.Mesh(roundedBox(2.5, sh, .5, .15, 3), toon(0x17122e)); sg.position.set(x, sb + sh / 2, 0); g.add(sg);
-      for (const [w2, h2, ox, oy] of [[2.1, .12, 0, sh / 2 - .3], [2.1, .12, 0, -sh / 2 + .3], [.12, sh - .6, -1, 0], [.12, sh - .6, 1, 0]]) { const e = new T.Mesh(new T.BoxGeometry(w2, h2, .08), GLOWM(cols[k], 2.4)); e.position.set(x + ox, sb + sh / 2 + oy, .28); g.add(e); }
+      const sg = new T.Mesh(roundedBox(2.2, sh, .5, .15, 3), toon(0x17122e)); sg.position.set(x, sb + sh / 2, 0); g.add(sg);
+      for (const [w2, h2, ox, oy] of [[1.8, .12, 0, sh / 2 - .3], [1.8, .12, 0, -sh / 2 + .3], [.12, sh - .6, -.85, 0], [.12, sh - .6, .85, 0]]) { const e = new T.Mesh(new T.BoxGeometry(w2, h2, .08), GLOWM(cols[k], 2.4)); e.position.set(x + ox, sb + sh / 2 + oy, .28); g.add(e); }
       const bar = new T.Mesh(new T.BoxGeometry(.5, Math.max(.4, sh - 1.6), .08), GLOWM(cols[k], 1.5)); bar.position.set(x, sb + sh / 2, .28); g.add(bar);
-      for (const cx of [-.8, .8]) { const c = new T.Mesh(new T.CylinderGeometry(.04, .04, .9, 6), steel); c.position.set(x + cx, 20.6, 0); g.add(c); }
+      for (const cx of [-.7, .7]) { const c = new T.Mesh(new T.CylinderGeometry(.04, .04, .9, 6), steel); c.position.set(x + cx, 20.6, 0); g.add(c); }
       const coin = new T.Mesh(new T.CylinderGeometry(.45, .45, .1, 20).rotateX(Math.PI / 2), GLOWM(0xffc93c, 2)); coin.position.set(x, top + gap / 2, 0); g.add(coin);
       return { x, y: top + gap / 2, coin }; });
-    const owl = heroAt(g, makeOwl, 2.5, -16, 9, 0, 0); const pts = [[-16.5, 10]].concat(gates.map(q => [q.x, q.y]), [[16.5, 10]]);
-    let px = -16, lastT = 0, passed = -1;
-    anim.push(t => { const dt = Math.min(.1, t - lastT); lastT = t; if (!owl || !near(d)) return; px += dt * 5.2; if (px > 16.4) { px = -16.4; passed = -1; gates.forEach(q => q.coin.visible = true); }
+    const owl = heroAt(g, makeOwl, 2.3, -12, 9, 0, 0); const pts = [[-12.5, 10]].concat(gates.map(q => [q.x, q.y]), [[12.5, 10]]);
+    let px = -12, lastT = 0, passed = -1;
+    anim.push(t => { const dt = Math.min(.1, t - lastT); lastT = t; if (!owl || !near(d)) return; px += dt * 4; if (px > 12.4) { px = -12.4; passed = -1; gates.forEach(q => q.coin.visible = true); }
       let y = 10; for (let k = 0; k < pts.length - 1; k++) if (px >= pts[k][0] && px <= pts[k + 1][0]) { const f = (px - pts[k][0]) / (pts[k + 1][0] - pts[k][0]), e = f * f * (3 - 2 * f); y = pts[k][1] + (pts[k + 1][1] - pts[k][1]) * e; }
       owl.position.set(px, y - 1.25 + Math.abs(Math.sin(t * 9)) * .35, 0); faceTo(owl, 1, 0); owl.rotation.z = Math.sin(t * 9) * .12;
       gates.forEach((q, k) => { q.coin.rotation.y = t * 3; if (k > passed && px > q.x) { passed = k; q.coin.visible = false; pop(g, '+1', '#ffffff', q.x, q.y + 2.4, 1, 2.2); } }); });
   },
   // Safe Cracker: a giant dial on the locksmith wall, the needle keeps finding the gold zone
   safecracker(d, g, L) {
-    padBase(g, 0x241c14, 0xffc93c);
-    building(L(0, .3, -10), { type: 'mid', w: 20, d: 7, h: 13, seed: 720, escape: false, flat: true, tint: 0x6a5a48 });
-    [[-13, 4, 4, 7], [13, 4, 4, 9]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 722 + k, escape: false, tint: 0x5a4c78 }));
+    padBase(g, 0x241c14, 0xffc93c, 18);
+    building(L(0, .3, -10), { type: 'mid', w: 16.5, d: 7, h: 13, seed: 720, escape: false, flat: true, tint: 0x6a5a48 });
     const C = new T.Group(); C.position.set(0, 6.4, -6.3); g.add(C);
     C.add(new T.Mesh(new T.CylinderGeometry(5.2, 5.2, .5, 64).rotateX(Math.PI / 2), PM(0x7d77a8, .35, .8)));
     const rim = new T.Mesh(new T.TorusGeometry(5.2, .2, 12, 72), PM(0xffc93c, .3, .9)); rim.position.z = .25; C.add(rim);
@@ -1078,7 +1077,7 @@ const MINI = {
     const pinsM = []; for (let k = 0; k < 5; k++) { const a = Math.PI / 2 + (k - 2) * .5, off = new T.Mesh(new T.SphereGeometry(.17, 12, 8), toon(0x2b2350)), onM = new T.Mesh(new T.SphereGeometry(.19, 12, 8), GLOWM(0x3ddc6a, 2.4)); off.position.set(Math.cos(a) * .95, Math.sin(a) * .95 - .2, .78); onM.position.copy(off.position); onM.visible = false; C.add(off, onM); pinsM.push(onM); }
     const nd = new T.Group(); nd.position.z = .62; C.add(nd); nd.add(new T.Mesh(new T.BoxGeometry(2.8, .16, .1).translate(2.9, 0, 0), GLOWM(0xff3d8a, 2)));
     const tip = new T.Mesh(new T.SphereGeometry(.24, 14, 10), GLOWM(0xff3d8a, 2)); tip.position.x = 4.3; nd.add(tip);
-    const h = heroAt(g, makeBeagle, 2.2, -6.6, .35, 1.2, 0); if (h) faceTo(h, 6.6, -7.5);
+    const h = heroAt(g, makeBeagle, 2.2, -5.6, .35, 1.2, 0); if (h) faceTo(h, 5.6, -7.5);
     let a = 0, dir = 1, tA = 2.2, pins = 0, lastT = 0, cool = 0, spin = 0; arc.rotation.z = tA - .4;
     const ad = (x, y) => { let q = Math.abs(((x - y) % 6.2832 + 6.2832) % 6.2832); return q > Math.PI ? 6.2832 - q : q; };
     anim.push(t => { const dt = Math.min(.1, t - lastT); lastT = t; if (!near(d)) return; a += dir * 2.6 * dt; nd.rotation.z = a; cool -= dt; spin *= Math.pow(.2, dt); hub.rotation.z = spin * 6;
@@ -1089,40 +1088,39 @@ const MINI = {
   },
   // Loot Tower: the crane drops crates of loot on the roof, the tower grows, then starts again
   loottower(d, g, L) {
-    padBase(g, 0x1e1a2c, 0xff8a3d);
-    building(L(0, .3, -1), { type: 'mid', w: 9, d: 9, h: 4.5, seed: 730, escape: false, flat: true, tint: 0x5a4c78 });
-    [[-11, -11, 7, 15], [11, -11, 7, 12]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 732 + k, tint: 0x4c4068 }));
+    padBase(g, 0x1e1a2c, 0xff8a3d, 18);
+    building(L(1.2, .3, -1), { type: 'mid', w: 8, d: 9, h: 4.5, seed: 730, escape: false, flat: true, tint: 0x5a4c78 });
+    [[-5.6, -11, 5.6, 15], [5.6, -11, 5.6, 12]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 732 + k, flat: true, tint: 0x4c4068 }));
     const yel = PM(0xffc93c, .5, .3), dk = PM(0x2a2636, .5, .5);
-    const mast = new T.Mesh(new T.BoxGeometry(.9, 24.5, .9), yel); mast.position.set(-12.5, 12.5, -1); g.add(mast);
-    for (let k = 0; k < 9; k++) { const b = new T.Mesh(new T.BoxGeometry(1.3, .1, .1), dk); b.position.set(-12.5, 2.5 + k * 2.5, -.5); b.rotation.z = k % 2 ? .7 : -.7; g.add(b); }
-    const jib = new T.Mesh(new T.BoxGeometry(27, .7, .7), yel); jib.position.set(-.5, 24.4, -1); g.add(jib);
-    const cw = new T.Mesh(new T.BoxGeometry(2.6, 1.7, 1.7), dk); cw.position.set(-13.6, 23.4, -1); g.add(cw);
-    const cabin = new T.Mesh(roundedBox(1.8, 1.6, 1.6, .15, 3), PM(0xff8a3d, .5)); cabin.position.set(-11.2, 23, -1); g.add(cabin);
+    const mast = new T.Mesh(new T.BoxGeometry(.9, 24.5, .9), yel); mast.position.set(-7.8, 12.5, -1); g.add(mast);
+    for (let k = 0; k < 9; k++) { const b = new T.Mesh(new T.BoxGeometry(1.3, .1, .1), dk); b.position.set(-7.8, 2.5 + k * 2.5, -.5); b.rotation.z = k % 2 ? .7 : -.7; g.add(b); }
+    const jib = new T.Mesh(new T.BoxGeometry(17.4, .7, .7), yel); jib.position.set(-.1, 24.4, -1); g.add(jib);
+    const cw = new T.Mesh(new T.BoxGeometry(2.6, 1.7, 1.7), dk); cw.position.set(-7.7, 23.3, -2.2); g.add(cw);
+    const cabin = new T.Mesh(roundedBox(1.8, 1.6, 1.6, .15, 3), PM(0xff8a3d, .5)); cabin.position.set(-6.4, 23, -1); g.add(cabin);
     const trolley = new T.Group(); trolley.position.set(0, 24, -1); g.add(trolley); trolley.add(new T.Mesh(new T.BoxGeometry(1.5, .6, 1.2), PM(0xff3d8a, .5)));
     const cable = new T.Mesh(new T.CylinderGeometry(.05, .05, 1, 6).translate(0, -.5, 0), dk); trolley.add(cable);
-    const CG = roundedBox(4, 1.3, 4, .1, 2), CM = [toon(0xc98f4e), toon(0xe0a85e), toon(0xb9773c), toon(0xffc93c)], BAND = toon(0x7a4a22);
-    function crate(k) { const c = new T.Group(); c.add(new T.Mesh(CG, CM[k % 4 === 3 ? 3 : k % 3])); for (const yy of [-.5, .5]) { const b = new T.Mesh(new T.BoxGeometry(4.08, .16, 4.08), BAND); b.position.y = yy; c.add(b); } g.add(c); return c; }
+    const CG = roundedBox(3.4, 1.3, 3.4, .1, 2), CM = [toon(0xc98f4e), toon(0xe0a85e), toon(0xb9773c), toon(0xffc93c)], BAND = toon(0x7a4a22);
+    function crate(k) { const c = new T.Group(); c.add(new T.Mesh(CG, CM[k % 4 === 3 ? 3 : k % 3])); for (const yy of [-.5, .5]) { const b = new T.Mesh(new T.BoxGeometry(3.48, .16, 3.48), BAND); b.position.y = yy; c.add(b); } g.add(c); return c; }
     const base = 4.8, stack = []; let hang = crate(0), fall = null, n = 1, lastT = 0, wait = 1.2, resetT = 0;
-    const rider = heroAt(g, makeCorgi, 2, 0, base, -1, 0); let ry = base, rvy = 0;
-    anim.push(t => { const dt = Math.min(.1, t - lastT); lastT = t; if (!near(d)) return; const tx = Math.sin(t * 1.5) * 7, top = base + stack.length * 1.3, hy = Math.max(top + 4.2, 12);
+    const rider = heroAt(g, makeCorgi, 2, 1.2, base, -1, 0); let ry = base, rvy = 0;
+    anim.push(t => { const dt = Math.min(.1, t - lastT); lastT = t; if (!near(d)) return; const tx = 1.2 + Math.sin(t * 1.5) * 5, top = base + stack.length * 1.3, hy = Math.max(top + 4.2, 12);
       trolley.position.x = tx; cable.scale.y = 24 - .3 - (hy + .65); if (hang) hang.position.set(tx, hy, -1);
-      wait -= dt; const tgt = stack.length ? stack[stack.length - 1].position.x : 0;
+      wait -= dt; const tgt = stack.length ? stack[stack.length - 1].position.x : 1.2;
       if (hang && !fall && !resetT && wait <= 0 && Math.abs(tx - tgt) < .5) { fall = hang; hang = null; fall.vy = 0; }
       if (fall) { fall.vy -= 40 * dt; fall.position.y += fall.vy * dt; if (fall.position.y <= top + .65) { fall.position.y = top + .65; const off = fall.position.x - tgt, perfect = Math.abs(off) < .22; if (perfect) fall.position.x = tgt; stack.push(fall); fall = null; wait = .9; rvy = 7;
           pop(g, perfect ? 'PERFECT' : '+1', perfect ? '#7fe3ff' : '#ffd35a', tgt, top + 3.4, 1.5, perfect ? 2.8 : 2.2); burst(g, tgt, top + .1, -1, 0xffd9a0, 1.4);
-          if (stack.length >= 9) { resetT = 1.6; pop(g, 'NEW BEST!', '#ff6ad5', 0, top + 5.6, 1.5, 3.6); } else hang = crate(n++); } }
+          if (stack.length >= 9) { resetT = 1.6; pop(g, 'NEW BEST!', '#ff6ad5', 1.2, top + 5.6, 1.5, 3.6); } else hang = crate(n++); } }
       if (resetT) { resetT -= dt; if (resetT <= 0) { stack.forEach(c => g.remove(c)); stack.length = 0; resetT = 0; hang = crate(n++); wait = 1; } else if (resetT < .6) stack.forEach((c, k) => { c.position.x += (k % 2 ? 1 : -1) * dt * 9; c.position.y -= dt * 14; c.rotation.z += (k % 2 ? -1 : 1) * dt * 3; }); }
       if (rider) { const gy = base + stack.length * 1.3; rvy -= 30 * dt; ry += rvy * dt; if (ry < gy && !(resetT && resetT < .6)) { ry = gy; rvy = 0; } rider.position.set(tgt, ry, -1); } });
   },
   // Wanted!: thieves and heroes pop up at the windows of an old brick house
   wanted(d, g, L) {
-    padBase(g, 0x2a1a22, 0xff3d8a);
+    padBase(g, 0x2a1a22, 0xff3d8a, 18);
     const brick = toon(0x8a4452), trim = toon(0xd6c8ee), shut = toon(0x2c7f72), W0 = 16, zf = -4.5, add2 = (w, h, dp, x, y, z, m) => { const b = new T.Mesh(new T.BoxGeometry(w, h, dp), m); b.position.set(x, y, z); g.add(b); return b; };
     add2(W0, 13.4, 6, 0, 7, zf - 4, brick);
     [[.3, 1.6], [4.6, 5.6], [8.6, 9.6], [12.6, 13.7]].forEach(([y0, y1]) => add2(W0, y1 - y0, .5, 0, (y0 + y1) / 2, zf - .25, brick));
     [[-8, -6.6], [-3.4, -1.6], [1.6, 3.4], [6.6, 8]].forEach(([x0, x1]) => add2(x1 - x0, 13.4, .52, (x0 + x1) / 2, 7, zf - .25, brick));
     add2(W0 + .8, .5, 7.2, 0, 13.95, zf - 3.6, trim);
-    [[-11.5, -10, 6, 17], [11.5, -10, 6, 12]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 740 + k, tint: 0x4c4068 }));
     const WN = []; for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) { const x = (c - 1) * 5, yb = 1.6 + r * 4; add2(3.7, .22, .7, x, yb, zf + .1, trim); add2(3.9, .3, .62, x, yb + 3.15, zf - .2, trim); for (const sx of [-1, 1]) add2(.55, 3, .12, x + sx * 1.9, yb + 1.5, zf + .06, shut); const mat = basic(0x1a1230); mat.userData.hdr = 1; add2(3.2, 3, .05, x, yb + 1.5, zf - .98, mat); WN.push({ x, yb, mat, busy: false }); }
     const pool = []; ['runner', 'gun', 'runner'].forEach(k => { const w = goonAt(g, k, 2.3, 0, -10, zf - .6); if (w) pool.push({ w, goon: true }); });
     [makeCorgi, makeTrey].forEach(fn => { const w = heroAt(g, fn, 2.2, 0, -10, zf - .6, 0); if (w) pool.push({ w, goon: false }); });
@@ -1138,8 +1136,8 @@ const MINI = {
   },
   // Loot Match: a jeweller's wall of loot, rows line up, flash and refill
   lootmatch(d, g, L) {
-    padBase(g, 0x1c1634, 0xb37bff);
-    [[-11.5, -11, 6, 16], [11.5, -11, 6, 13]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 750 + k, tint: 0x4c4068 }));
+    padBase(g, 0x1c1634, 0xb37bff, 18);
+    [[-5.6, -11.5, 5.6, 16], [5.6, -11.5, 5.6, 13]].forEach(([x, z, w, h], k) => building(L(x, .3, z), { type: 'mid', w, d: w, h, seed: 750 + k, tint: 0x4c4068 }));
     const bd = new T.Mesh(roundedBox(14, 11.4, .6, .2, 3), toon(0x17122e)); bd.position.set(0, 6.8, -6); g.add(bd);
     for (const [w2, h2, ox, oy] of [[14.2, .16, 0, 5.75], [14.2, .16, 0, -5.75], [.16, 11.5, -7.05, 0], [.16, 11.5, 7.05, 0]]) { const e = new T.Mesh(new T.BoxGeometry(w2, h2, .2), GLOWM(0xb37bff, 2.4)); e.position.set(ox, 6.8 + oy, -5.75); g.add(e); }
     for (const sx of [-5, 5]) { const lg = new T.Mesh(new T.BoxGeometry(.6, 1.2, .6), toon(0x2b2448)); lg.position.set(sx, .7, -6); g.add(lg); }
@@ -1317,7 +1315,7 @@ function district(i) {
 }
 D.forEach((_, i) => district(i));
 const VIEWS = { patrol: [[2, 15, 25], [0, 8, 0]], rush: [[0, 11, 21], [0, 2, 3]], brawl: [[0, 15, 18], [0, 0, -1]], nightshift: [[0, 16, 23], [0, 7, 0]], tycoon: [[-2, 17, 15], [-2, 0, 2]], vault: [[0, 14, 20], [0, 2, 1]],
-  skyhoot: [[0, 12, 27], [0, 10.5, 0]], safecracker: [[0, 9, 21], [0, 6.4, -5]], loottower: [[2, 12, 22], [0, 10, 0]], wanted: [[0, 10, 23], [0, 7.2, -4]], lootmatch: [[0, 9, 22], [0, 6.8, -5]] };
+  skyhoot: [[0, 12, 25], [0, 10.5, 0]], safecracker: [[0, 9, 21], [0, 6.4, -5]], loottower: [[2, 12, 22], [0, 10, 0]], wanted: [[0, 10, 23], [0, 7.2, -4]], lootmatch: [[0, 9, 22], [0, 6.8, -5]] };
 D.forEach(d => { const v = VIEWS[d.id]; d.view = [new T.Vector3(...v[0]), new T.Vector3(...v[1])]; });
 
 B.traverse(o => { if (!o.material || !(o.isMesh || o.isLineSegments)) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.userData.hdr) return; if ((m.isMeshBasicMaterial || m.isLineBasicMaterial) && !(m.map && m.map.isVideoTexture) && Math.max(m.color.r, m.color.g, m.color.b) <= 1.001 && m.blending !== T.AdditiveBlending) { m.userData.hdr = 1; m.color.multiplyScalar(m.map ? 2 : 2.4); } }); });
@@ -1372,11 +1370,11 @@ function neonSign(i, text, x, y, z, w, o) {
 { screenAt(5, 0, 5.2, -8.47, 3.8, 4.6); neonSign(5, 'DEFEND THE VAULT', 0, 10.85, -10.5, 14); }
 // the five arcade games: a portrait screen with the game and a neon sign each
 { const ix = id => D.indexOf(DI(id));
-  screenAt(ix('skyhoot'), 0, 17.8, -11.5, 4.2, 6, { led: true, legs: 1.5 }); neonSign(ix('skyhoot'), 'SKY HOOT', 0, 20.5, 0, 9);
-  screenAt(ix('safecracker'), 7.9, 6.6, -6.2, 3.4, 4.9, { led: true }); neonSign(ix('safecracker'), 'SAFE CRACKER', 0, 12.4, -7.5, 12);
-  screenAt(ix('loottower'), 11, 16.6, -9.5, 4.2, 6, { led: true, legs: 1.3 }); neonSign(ix('loottower'), 'LOOT TOWER', -11, 14.4, -8.6, 8);
+  screenAt(ix('skyhoot'), 5.6, 17.8, -10.5, 4.2, 6, { led: true, legs: 1.5 }); neonSign(ix('skyhoot'), 'SKY HOOT', 0, 20.5, 0, 9);
+  screenAt(ix('safecracker'), 5, 17.6, -9, 4.2, 6, { led: true, legs: 1.3 }); neonSign(ix('safecracker'), 'SAFE CRACKER', -2.6, 12.4, -7.5, 10);
+  screenAt(ix('loottower'), 5.6, 16.6, -10, 4.2, 6, { led: true, legs: 1.3 }); neonSign(ix('loottower'), 'LOOT TOWER', -5.2, 14.4, -8.6, 6.5);
   screenAt(ix('wanted'), 4.6, 18.2, -6.5, 4.2, 6, { led: true, legs: 1 }); neonSign(ix('wanted'), 'WANTED!', -4, 13.3, -5.4, 7);
-  screenAt(ix('lootmatch'), 11.5, 17.6, -9.6, 4.2, 6, { led: true, legs: 1.3 }); neonSign(ix('lootmatch'), 'LOOT MATCH', 0, 12.7, -6, 9); }
+  screenAt(ix('lootmatch'), 5.6, 17.6, -10.2, 4.2, 6, { led: true, legs: 1.3 }); neonSign(ix('lootmatch'), 'LOOT MATCH', 0, 12.7, -6, 9); }
 // runner hero on the avenue
 let runner = null, owlP = null; const flyer = new T.Group(); B.add(flyer);
 const blob = new T.Mesh(new T.PlaneGeometry(4, 4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: radT.t, color: 0x000000, transparent: true, opacity: .5, depthWrite: false })); blob.renderOrder = 2; B.add(blob);
@@ -1789,7 +1787,7 @@ function drawJB(time) {
 const num18 = v => { try { return Number(BigInt(v || 0) / 10n ** 16n) / 100; } catch (e) { return 0; } };
 async function loadJB() { try { const c = await RV.vaultView('config'); const w = await RV.vaultView('get_week', { week: c.week }); const prev = JB.jack; JB.jack = num18(c.jackpot); JB.pool = num18(w.pool); JB.burn = num18(c.burned); JB.plays = Number(c.plays_paid) + Number(c.plays_free); if (JB.ok && c.jackpots_won > JB.won) JB.party = performance.now(); JB.won = c.jackpots_won; if (!JB.ok) JB.shown = JB.jack * .6; JB.ok = true; } catch (e) {} }
 if (window.RobinVault) { loadJB(); setInterval(loadJB, 20000); }
-{ const u = .236, p = road.getPointAt(u); const g = new T.Group(); g.position.set(p.x, 3.6, p.z); B.add(g);
+{ const u = .995, p = road.getPointAt(u); const g = new T.Group(); g.position.set(p.x, .4, p.z); B.add(g);
   const back = road.getPointAt(0); g.lookAt(back.x, 0, back.z); g.scale.setScalar(.85);
   const steel = new T.MeshStandardMaterial({ color: 0x2c2838, roughness: .4, metalness: .7 });
   for (const sx of [-7.4, 7.4]) { const leg = new T.Mesh(new T.CylinderGeometry(.4, .5, 26.5, 20), steel); leg.position.set(sx, 9, -.6); g.add(leg); const ft = new T.Mesh(roundedBox(1.6, .6, 1.6, .15, 2), steel); ft.position.set(sx, -3.9, -.6); g.add(ft); }
