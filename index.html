@@ -2079,6 +2079,24 @@ function tickFlight(dt) {
 
 const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
+// ---------- sculpted models: assets/models/heroes.json lists hero .glb files to mount in the room in place of the built ones ----------
+const GLBM = [];
+fetch('assets/models/heroes.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(list => { const ids = Object.keys(list || {}).filter(id => HERO_LIST.some(h => h[2] === id) && list[id] && list[id].file); if (!ids.length) return;
+  const sc = document.createElement('script'); sc.src = 'assets/fx/GLTFLoader.js'; sc.onload = () => { const loader = new T.GLTFLoader();
+    ids.forEach(id => { const i = HERO_LIST.findIndex(h => h[2] === id), cfg = list[id], c = CH[i];
+      loader.load('assets/models/' + cfg.file, g => { const m = g.scene, wrap = new T.Group(); wrap.add(m);
+        // same height as the built hero, feet on the pedestal, centred
+        const bb = new T.Box3().setFromObject(m), size = bb.getSize(new T.Vector3()), k = .62 / Math.max(.001, size.y) * (cfg.scale || 1); m.scale.setScalar(k);
+        const b2 = new T.Box3().setFromObject(m), ctr = b2.getCenter(new T.Vector3()); m.position.x -= ctr.x; m.position.z -= ctr.z; m.position.y -= b2.min.y;
+        m.rotation.y = (cfg.rotY || 0) * Math.PI / 180; wrap.rotation.y = c.h.rotation.y + Math.PI / 2; wrap.position.y = .08 + (cfg.y || 0);
+        m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.userData.slot = i; o.frustumCulled = false; const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(mm => { if (mm && mm.isMeshStandardMaterial) { mm.envMap = ENV.night; mm.envMapIntensity = .6; mm.needsUpdate = true; } }); } });
+        if (cfg.compare) { const sx = Math.cos(c.h.rotation.y + Math.PI / 2) * .3, sz = -Math.sin(c.h.rotation.y + Math.PI / 2) * .3; wrap.position.x = sx; wrap.position.z = sz; c.h.position.x = -sx; c.h.position.z = -sz; wrap.scale.setScalar(.72); c.h.scale.multiplyScalar(.72); } else c.h.visible = false;
+        c.slot.add(wrap); c.glb = wrap;
+        if (g.animations && g.animations.length) { const mx2 = new T.AnimationMixer(m); mx2.clipAction(g.animations[0]).play(); GLBM.push(mx2); }
+      }, undefined, e => console.warn('hero model not loaded', id, e)); });
+    let lt = 0; ROOM_ANIM.push(t => { const d = Math.min(.1, Math.max(0, t - lt)); lt = t; GLBM.forEach(x => x.update(d)); }); };
+  document.head.appendChild(sc); });
+
 // ---------- the arcade pass: one progression over every game ----------
 const passQ = []; let passBusy = false;
 function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'hero' ? o.hero + ' reached level ' + o.level + '!  +' + o.coins + ' coins' : o.kind === 'level' ? 'Level ' + o.level + '!  +' + o.coins + ' coins' : 'Mission done: ' + o.text + '  +' + o.coins + ' coins')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
