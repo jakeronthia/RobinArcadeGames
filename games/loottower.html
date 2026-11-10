@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Loot Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="../assets/fx/music.js"></script>
+<script src="../assets/fx/snd.js"></script>
+<script src="../assets/fx/mini.js"></script>
+<script>
+/* Loot Tower: the crane slides a crate of recovered loot above the tower, tap to drop it.
+   Whatever hangs over the edge falls off, so the tower gets thinner. Miss the tower and it is over. */
+(function () {
+  var M = Mini, sky = M.sky({ seed: 23 });
+  var stack, mov, drop, debris, cam, camT, combo, heroY, heroVy, heroX, land, BH, BASE;
+  var COLS = [['#c98f4e', '#8a5a2b'], ['#e0a85e', '#9c6a30'], ['#b9773c', '#7a4a22'], ['#ffc93c', '#b07a12'], ['#58c7b0', '#2c7f72'], ['#d96a7a', '#8f3345']];
+  function col(n) { return n % 7 === 6 ? COLS[3] : n % 11 === 10 ? COLS[4] : COLS[n % 3]; }
+  function reset() { BH = 36 * M.u; BASE = Math.min(180 * M.u, M.W * .52); stack = [{ x: M.W / 2 - BASE / 2, w: BASE, c: col(0), s: 1 }]; debris = []; drop = null; cam = 0; camT = 0; combo = 0; heroY = 0; heroVy = 0; heroX = M.W / 2; land = 0; spawn(); }
+  function topY(i) { return M.H * .78 - (i + 1) * BH; } // world y of the top face of crate i
+  function spawn() { var n = stack.length, top = stack[n - 1], sp = Math.min(430, 150 + n * 7) * M.u, left = Math.random() < .5; var lo = Math.max(-top.w * .35, top.x - 230 * M.u), hi = Math.min(M.W - top.w * .65, top.x + 230 * M.u); mov = { w: top.w, x: left ? lo : hi, lo: lo, hi: hi, dir: left ? 1 : -1, sp: sp, c: col(n), s: n + 1 }; }
+  function tap() { if (!mov || drop) return; drop = { x: mov.x, w: mov.w, c: mov.c, s: mov.s, y: topY(stack.length) - 46 * M.u, vy: 300 * M.u }; mov = null; M.snd('swap'); }
+  function settle() { var n = stack.length, top = stack[n - 1], d = drop, u = M.u, y = topY(n), dx = d.x - top.x; drop = null;
+    if (Math.abs(dx) < 6 * u) { // perfect
+      combo++; var w = top.w; if (combo >= 3 && w < BASE) w = Math.min(BASE, w + 10 * u); var nx = top.x - (w - top.w) / 2; stack.push({ x: nx, w: w, c: d.c, s: d.s }); M.add(2); M.snd('perfect', 1 + Math.min(combo, 8) * .07); M.snd('thud');
+      M.pop(nx + w / 2, y + cam - 20 * u, combo > 1 ? 'PERFECT x' + combo : 'PERFECT', '#7fe3ff', 24); M.burst(nx, y + cam + BH, '#fff', 6, 150, { r: 3, life: .4 }); M.burst(nx + w, y + cam + BH, '#fff', 6, 150, { r: 3, life: .4 }); M.flash(.08); }
+    else { var l = Math.max(d.x, top.x), r = Math.min(d.x + d.w, top.x + top.w), ov = r - l;
+      if (ov <= 4 * u) { debris.push({ x: d.x, y: y, w: d.w, h: BH, vx: (dx > 0 ? 70 : -70) * u, vy: 40 * u, rot: 0, vr: dx > 0 ? 2.4 : -2.4, c: d.c, s: d.s }); M.shake(.8); M.snd('hit'); heroVy = -260 * u;
+        M.over('A tower of ' + (n - 1) + ' crate' + (n - 1 === 1 ? '' : 's') + '.'); return; }
+      combo = 0; stack.push({ x: l, w: ov, c: d.c, s: d.s }); M.add(1); M.snd('thud', 1 - Math.min(n, 30) * .008);
+      var cw = d.w - ov, cx = dx > 0 ? r : d.x; debris.push({ x: cx, y: y, w: cw, h: BH, vx: (dx > 0 ? 90 : -90) * u, vy: -30 * u, rot: 0, vr: dx > 0 ? 3 : -3, c: d.c, s: d.s + 50 }); M.pop(l + ov / 2, y + cam - 18 * u, '+1', '#fff', 20); }
+    var t = stack[stack.length - 1]; land = 1; M.shake(.15); M.burst(t.x + t.w / 2, y + cam + BH, 'rgba(220,210,255,.6)', 8, 120, { r: 4, g: 60, life: .45 }); heroVy = -330 * u; M.extra(combo > 1 ? 'COMBO' : 'CRATES', combo > 1 ? 'x' + combo : stack.length - 1); spawn(); }
+  function step(dt, playing) { var u = M.u, n = stack.length;
+    if (playing) { if (mov) { mov.x += mov.dir * mov.sp * dt; var lo = mov.lo, hi = mov.hi; if (mov.x < lo) { mov.x = lo; mov.dir = 1; } if (mov.x > hi) { mov.x = hi; mov.dir = -1; } }
+      if (drop) { drop.vy += 2600 * u * dt; drop.y += drop.vy * dt; if (drop.y >= topY(n)) settle(); } }
+    camT = Math.max(0, (stack.length - 4) * BH); cam += (camT - cam) * Math.min(1, dt * 4); land *= Math.pow(.003, dt);
+    for (var i = debris.length - 1; i >= 0; i--) { var d = debris[i]; d.vy += 1500 * u * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.rot += d.vr * dt; if (d.y + cam > M.H + 200) debris.splice(i, 1); }
+    // the hero rides the top crate
+    var t = stack[stack.length - 1], gy = topY(stack.length - 1); heroX += (t.x + t.w / 2 - heroX) * Math.min(1, dt * 10); heroVy += 1600 * u * dt; heroY += heroVy * dt; if (M.state !== 'over' && heroY > gy) { heroY = gy; heroVy = 0; } }
+  function crate(ctx, x, y, w, h, c, seed) { var u = M.u; M.rr(ctx, x, y, w, h, 4 * u); M.ink(ctx, c[0], 3); if (w < 10 * u) return; ctx.save(); M.rr(ctx, x, y, w, h, 4 * u); ctx.clip();
+    ctx.fillStyle = c[1]; ctx.fillRect(x, y, w, 5 * u); ctx.fillRect(x, y + h - 5 * u, w, 5 * u); ctx.fillRect(x, y, 5 * u, h); ctx.fillRect(x + w - 5 * u, y, 5 * u, h);
+    ctx.strokeStyle = 'rgba(0,0,0,.16)'; ctx.lineWidth = 1.5 * u; for (var px = x + 26 * u; px < x + w - 8 * u; px += 26 * u) { ctx.beginPath(); ctx.moveTo(px, y + 5 * u); ctx.lineTo(px, y + h - 5 * u); ctx.stroke(); }
+    if (w > 44 * u) { ctx.fillStyle = 'rgba(20,10,30,.55)'; ctx.font = '700 ' + (17 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(seed % 4 === 0 ? '$ROBIN' : seed % 4 === 2 ? 'LOOT' : '$', x + w / 2, y + h / 2 + u); } ctx.restore(); }
+  function draw(ctx, W, H) { var u = M.u, n = stack.length, i;
+    M.drawSky(ctx, sky, M.t * 6, { base: H + cam * .35, wind: .3 });
+    ctx.save(); ctx.translate(0, cam);
+    // the roof the tower stands on
+    var ry = H * .78, rw = Math.min(W * .9, 330 * u); ctx.fillStyle = '#4a2e5a'; ctx.fillRect(W / 2 - rw / 2, ry + 14 * u, rw, H); ctx.lineWidth = 3 * u; ctx.strokeStyle = M.INK; ctx.strokeRect(W / 2 - rw / 2, ry + 14 * u, rw, H);
+    for (i = 0; i < 4; i++) { var wx = W / 2 - rw / 2 + (i + .5) * rw / 4 - 13 * u; ctx.fillStyle = i % 2 ? '#ffd27a' : '#2b1f45'; ctx.fillRect(wx, ry + 44 * u, 26 * u, 34 * u); ctx.strokeRect(wx, ry + 44 * u, 26 * u, 34 * u); }
+    M.rr(ctx, W / 2 - rw / 2 - 8 * u, ry, rw + 16 * u, 16 * u, 4 * u); M.ink(ctx, '#b9a6d8');
+    for (i = Math.max(0, n - 26); i < n; i++) { var s = stack[i], sq = i === n - 1 ? land * .12 : 0; crate(ctx, s.x - s.w * sq / 2, topY(i) + BH * sq, s.w * (1 + sq), BH * (1 - sq), s.c, s.s); }
+    for (i = 0; i < debris.length; i++) { var d = debris[i]; ctx.save(); ctx.translate(d.x + d.w / 2, d.y + d.h / 2); ctx.rotate(d.rot); crate(ctx, -d.w / 2, -d.h / 2, d.w, d.h, d.c, d.s); ctx.restore(); }
+    if (drop) crate(ctx, drop.x, drop.y, drop.w, BH, drop.c, drop.s);
+    var hs = 60 * u; M.drawHero(ctx, M.hero, heroX, heroY - hs * .46, hs, M.state === 'over' ? M.t * 6 : 0, false, 1 + land * .1, 1 - land * .1);
+    ctx.restore();
+    // crane: rail, trolley, cable, hook
+    if (mov) { var my = topY(n) - 46 * u + cam, cx = mov.x + mov.w / 2, railY = Math.max(64 * u, my - 120 * u); ctx.fillStyle = '#ffc93c'; ctx.fillRect(-10, railY, W + 20, 9 * u); ctx.lineWidth = 3 * u; ctx.strokeStyle = M.INK; ctx.strokeRect(-10, railY, W + 20, 9 * u);
+      ctx.fillStyle = M.INK; for (i = 0; i < W / (22 * u) + 1; i++) ctx.fillRect(i * 22 * u + (M.t * 0) % 22, railY + 2 * u, 9 * u, 5 * u);
+      M.rr(ctx, cx - 17 * u, railY - 6 * u, 34 * u, 20 * u, 5 * u); M.ink(ctx, '#ff3d8a'); ctx.beginPath(); ctx.moveTo(cx, railY + 14 * u); ctx.lineTo(cx, my - 8 * u); ctx.lineWidth = 3 * u; ctx.strokeStyle = '#c9c3ea'; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - mov.w * .32, my); ctx.lineTo(cx, my - 12 * u); ctx.lineTo(cx + mov.w * .32, my); ctx.lineWidth = 2.5 * u; ctx.strokeStyle = '#c9c3ea'; ctx.stroke();
+      crate(ctx, mov.x, my, mov.w, BH, mov.c, mov.s); }
+    if (M.state === 'play' && n === 1 && !drop) { ctx.globalAlpha = .6 + Math.sin(M.t * 5) * .3; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (17 * u) + 'px Fredoka, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('TAP TO DROP THE CRATE', W / 2, H * .92); ctx.globalAlpha = 1; } }
+  M.init({ id: 'loottower', title: 'Loot Tower', accent: '#ffc93c', music: 'tycoon', pickHero: true, scoreLabel: 'SCORE',
+    help: 'Tap to drop the crate on the tower. Anything hanging over the edge falls off. Land it perfectly to keep the tower wide.',
+    start: reset, resize: function () { if (stack && M.state !== 'play') reset(); }, down: tap, key: function (k) { if (k === ' ' || k === 'Enter' || k === 'ArrowDown') tap(); },
+    update: function (dt) { step(dt, true); }, idle: function (dt) { step(dt, false); }, draw: draw });
+  reset();
+  window.__g = function () { return { mov: mov, top: stack[stack.length - 1], drop: drop }; };
+})();
+</script>
+</body>
+</html>

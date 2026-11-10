@@ -184,6 +184,24 @@ window.GAMES.push({
     best: function () { return +localStorage.getItem('mini-safecracker-best') || 0; }
 });
 
+window.GAMES.push({
+    id: 'loottower',
+    accent: '#ffc93c',
+    badge: 'NEW',
+    title: 'Loot Tower',
+    file: 'games/loottower.html',
+    orient: 'portrait',
+    blurb: 'Stack the recovered loot as high as you can. Miss the edge and the tower gets thinner.',
+    about: 'The squad took the loot back and now it has to go somewhere. A crane slides each crate above the rooftop: tap to drop it on the tower. Anything hanging over the edge falls into the street, so every sloppy drop leaves you less room. Land three perfect crates in a row and the tower grows wide again.',
+    shot: 'assets/shots/loottower.jpg',
+    clip: 'assets/clips/loottower.mp4',
+    pos: 'center',
+    controls: [
+      ['Drop the crate', 'Space or click', 'tap anywhere']
+    ],
+    best: function () { return +localStorage.getItem('mini-loottower-best') || 0; }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },
