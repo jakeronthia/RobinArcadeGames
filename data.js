@@ -166,6 +166,24 @@ window.GAMES.push({
     best: function () { return +localStorage.getItem('mini-skyhoot-best') || 0; }
 });
 
+window.GAMES.push({
+    id: 'safecracker',
+    accent: '#ffc93c',
+    badge: 'NEW',
+    title: 'Safe Cracker',
+    file: 'games/safecracker.html',
+    orient: 'portrait',
+    blurb: 'Stop the needle on gold. Five clicks open a lock, three misses ring the alarm.',
+    about: 'The thieves locked the loot in their own safe. The needle spins around the dial and you tap when it sits on the gold zone. Every click the zone gets smaller and the needle faster. Five clicks open a lock, a perfect hit is worth double, and three misses set off the alarm.',
+    shot: 'assets/shots/safecracker.jpg',
+    clip: 'assets/clips/safecracker.mp4',
+    pos: 'center',
+    controls: [
+      ['Stop the needle', 'Space or click', 'tap anywhere']
+    ],
+    best: function () { return +localStorage.getItem('mini-safecracker-best') || 0; }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },

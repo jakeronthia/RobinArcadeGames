@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Safe Cracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="../assets/fx/music.js"></script>
+<script src="../assets/fx/snd.js"></script>
+<script src="../assets/fx/mini.js"></script>
+<script>
+/* Safe Cracker: the needle spins around the dial, tap while it is inside the gold zone.
+   Five clicks open a lock. Three misses set off the alarm. */
+(function () {
+  var M = Mini, TAU = Math.PI * 2;
+  var a, dir, tgt, hw, inside, strikes, pins, locks, pulse, alarm, heroB, lastTick, doorSpin, coinsFx;
+  function norm(x) { x %= TAU; return x < 0 ? x + TAU : x; }
+  function dist(x, y) { var d = Math.abs(norm(x) - norm(y)); return d > Math.PI ? TAU - d : d; }
+  function speed() { return Math.min(5.4, 2.0 + M.scoreV * .075); }
+  function newTarget(flip) { if (flip) dir = -dir; tgt = norm(a + dir * (1.3 + Math.random() * 3.1)); hw = Math.max(.15, .42 - M.scoreV * .009); inside = false; }
+  function reset() { a = -Math.PI / 2; dir = 1; strikes = 0; pins = 0; locks = 0; pulse = 0; alarm = 0; heroB = 0; lastTick = 0; doorSpin = 0; coinsFx = 0; hw = .42; newTarget(false); hud(); }
+  function hud() { M.extra('LOCK', locks + 1); }
+  function geo() { var cx = M.W / 2, cy = M.H * .47, R = Math.min(M.W * .345, M.H * .27); return [cx, cy, R]; }
+  function miss(why) { strikes++; alarm = 1; M.shake(.7); M.snd('wrong'); var g = geo(); M.pop(g[0], g[1] - g[2] - 34 * M.u, why, '#ff5a78', 24);
+    if (strikes >= 3) { M.snd('hit'); M.over('The alarm went off. You opened ' + locks + ' lock' + (locks === 1 ? '' : 's') + '.', 'BUSTED'); } else newTarget(false); }
+  function tap() { if (M.state !== 'play') return; var d = dist(a, tgt), g = geo();
+    if (d <= hw) { var perfect = d < hw * .32, pts = perfect ? 2 : 1; M.add(pts); pins++; pulse = 1; heroB = 1; M.snd(perfect ? 'perfect' : 'dial', perfect ? 1 + pins * .06 : .8 + pins * .08); if (!perfect) M.snd('thud', 1.4);
+      var px = g[0] + Math.cos(a) * g[2], py = g[1] + Math.sin(a) * g[2]; M.burst(px, py, perfect ? ['#fff', '#ffc93c', '#7fe3ff'] : ['#ffc93c', '#ffe08a'], perfect ? 16 : 8, 190, { r: 3.5, life: .5 }); M.pop(px, py - 22 * M.u, perfect ? 'PERFECT +2' : '+1', perfect ? '#7fe3ff' : '#ffc93c', perfect ? 24 : 20);
+      if (pins >= 5) { pins = 0; locks++; M.add(3); doorSpin = 1; coinsFx = 1; M.flash(.3); M.snd('unlock'); M.pop(g[0], g[1], 'LOCK OPEN +3', '#3ddc6a', 30); M.burst(g[0], g[1], ['#ffc93c', '#ffe08a', '#fff'], 34, 380, { r: 5, life: 1, up: 160 }); if (strikes > 0) strikes--; hud(); }
+      newTarget(true); }
+    else miss('MISS'); }
+  function step(dt) { var w = speed(), prev = a; a = norm(a + dir * w * dt);
+    var d = dist(a, tgt); if (d <= hw) inside = true; else if (inside) { inside = false; miss('TOO LATE'); }
+    var tk = Math.floor(a / (TAU / 24)); if (tk !== lastTick) { lastTick = tk; M.snd('tick'); } }
+  function draw(ctx, W, H, dt) { var u = M.u, g = geo(), cx = g[0], cy = g[1], R = g[2];
+    pulse *= Math.pow(.004, dt); alarm *= Math.pow(.05, dt); heroB *= Math.pow(.01, dt); doorSpin *= Math.pow(.2, dt); coinsFx *= Math.pow(.1, dt);
+    // vault room
+    var bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0d0a20'); bg.addColorStop(1, '#231a48'); ctx.fillStyle = bg; ctx.fillRect(-20, -20, W + 40, H + 40);
+    ctx.fillStyle = 'rgba(255,255,255,.025)'; for (var y = 0; y < H; y += 34 * u) for (var x = (Math.round(y / (34 * u)) % 2 ? 0 : -36 * u); x < W; x += 72 * u) ctx.fillRect(x + 2 * u, y + 2 * u, 68 * u, 30 * u);
+    var danger = strikes / 3; if (alarm > .02 || strikes) { ctx.fillStyle = 'rgba(255,60,90,' + (alarm * .28 + danger * .06 * (1 + Math.sin(M.t * 8))) + ')'; ctx.fillRect(-20, -20, W + 40, H + 40); }
+    var gl = ctx.createRadialGradient(cx, cy, R * .4, cx, cy, R * 2.2); gl.addColorStop(0, 'rgba(255,201,60,.16)'); gl.addColorStop(1, 'rgba(255,201,60,0)'); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H);
+    // steel door
+    var DR = R * 1.34; ctx.beginPath(); ctx.arc(cx, cy, DR, 0, TAU); var dg = ctx.createLinearGradient(cx - DR, cy - DR, cx + DR, cy + DR); dg.addColorStop(0, '#8d86b8'); dg.addColorStop(.5, '#5d5688'); dg.addColorStop(1, '#3c3566'); M.ink(ctx, dg, 4);
+    for (var i = 0; i < 12; i++) { var ba = i / 12 * TAU + doorSpin * 2; ctx.beginPath(); ctx.arc(cx + Math.cos(ba) * DR * .92, cy + Math.sin(ba) * DR * .92, 5 * u, 0, TAU); M.ink(ctx, '#c9c3ea', 2); }
+    // dial face
+    ctx.beginPath(); ctx.arc(cx, cy, R * 1.12, 0, TAU); M.ink(ctx, '#17122e', 4);
+    // gold zone
+    ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(cx, cy, R, tgt - hw, tgt + hw); ctx.lineWidth = 24 * u; ctx.strokeStyle = M.INK; ctx.stroke();
+    ctx.save(); ctx.shadowColor = '#ffc93c'; ctx.shadowBlur = 18 * u; ctx.beginPath(); ctx.arc(cx, cy, R, tgt - hw, tgt + hw); ctx.lineWidth = 17 * u; ctx.strokeStyle = '#ffc93c'; ctx.stroke(); ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, cy, R, tgt - hw * .32, tgt + hw * .32); ctx.lineWidth = 17 * u; ctx.strokeStyle = '#fff3c4'; ctx.stroke(); ctx.lineCap = 'butt';
+    // ticks and numbers
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '700 ' + (13 * u) + 'px Fredoka, sans-serif';
+    for (i = 0; i < 48; i++) { var ta = i / 48 * TAU, big = i % 4 === 0, r1 = R * (big ? .74 : .8), r2 = R * .86; ctx.beginPath(); ctx.moveTo(cx + Math.cos(ta) * r1, cy + Math.sin(ta) * r1); ctx.lineTo(cx + Math.cos(ta) * r2, cy + Math.sin(ta) * r2); ctx.lineWidth = (big ? 2.5 : 1.2) * u; ctx.strokeStyle = big ? '#c9bfff' : '#5d5688'; ctx.stroke(); if (big) { ctx.fillStyle = '#8b83b8'; ctx.fillText(String(i / 4 * 10 % 100), cx + Math.cos(ta) * R * .63, cy + Math.sin(ta) * R * .63); } }
+    // hub with five pins
+    var hubR = R * (.42 + pulse * .05); ctx.beginPath(); ctx.arc(cx, cy, hubR, 0, TAU); var hg = ctx.createLinearGradient(cx - hubR, cy - hubR, cx + hubR, cy + hubR); hg.addColorStop(0, '#b3acd9'); hg.addColorStop(1, '#5a528a'); M.ink(ctx, hg, 4);
+    for (i = 0; i < 5; i++) { var pa = -Math.PI / 2 + (i - 2) * .5, px = cx + Math.cos(pa) * hubR * .62, py = cy + Math.sin(pa) * hubR * .62 + hubR * .28; ctx.beginPath(); ctx.arc(px, py, 6.5 * u, 0, TAU); if (i < pins) { ctx.save(); ctx.shadowColor = '#3ddc6a'; ctx.shadowBlur = 12 * u; M.ink(ctx, '#3ddc6a', 2.5); ctx.restore(); } else M.ink(ctx, '#2b2350', 2.5); }
+    ctx.fillStyle = '#17122e'; ctx.font = '700 ' + (15 * u) + 'px Fredoka, sans-serif'; ctx.fillText('ROBIN', cx, cy + hubR * .5);
+    // needle
+    var nx = cx + Math.cos(a) * R * 1.06, ny = cy + Math.sin(a) * R * 1.06, bx = cx + Math.cos(a) * hubR, by = cy + Math.sin(a) * hubR; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(nx, ny); ctx.lineWidth = 10 * u; ctx.strokeStyle = M.INK; ctx.stroke(); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(nx, ny); ctx.lineWidth = 5 * u; ctx.strokeStyle = '#ff3d8a'; ctx.stroke(); ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.arc(nx, ny, 8 * u, 0, TAU); M.ink(ctx, '#ff3d8a', 3);
+    // alarm bulbs
+    for (i = 0; i < 3; i++) { var lx = cx + (i - 1) * 34 * u, ly = cy - DR - 26 * u, on = i < strikes; ctx.beginPath(); ctx.arc(lx, ly, 9 * u, 0, TAU); if (on) { ctx.save(); ctx.shadowColor = '#ff3d5a'; ctx.shadowBlur = 16 * u; M.ink(ctx, '#ff3d5a', 3); ctx.restore(); } else M.ink(ctx, '#2b2350', 3); }
+    // the hero listens at the door
+    var hs = 92 * u; M.drawHero(ctx, M.hero, hs * .55, H - hs * .5 - heroB * 14 * u + Math.sin(M.t * 2.4) * 2 * u, hs, strikes ? Math.sin(M.t * 30) * alarm * .08 : 0, false, 1 + heroB * .06, 1 - heroB * .06);
+    if (M.state === 'play' && M.scoreV === 0 && strikes === 0) { ctx.globalAlpha = .6 + Math.sin(M.t * 5) * .3; ctx.fillStyle = '#fff'; ctx.font = '700 ' + (17 * u) + 'px Fredoka, sans-serif'; ctx.fillText('TAP WHEN THE NEEDLE IS ON GOLD', cx, Math.min(H - 26 * u, cy + DR + 34 * u)); ctx.globalAlpha = 1; } }
+  M.init({ id: 'safecracker', title: 'Safe Cracker', accent: '#ffc93c', music: 'vault', pickHero: true,
+    help: 'The needle spins around the dial. Tap when it is on the gold zone. Five clicks open a lock, three misses set off the alarm.',
+    start: reset, down: tap, key: function (k) { if (k === ' ' || k === 'Enter') tap(); },
+    update: step, draw: draw });
+  reset();
+  window.__g = function () { return { a: a, tgt: tgt, hw: hw, dist: dist(a, tgt) }; };
+})();
+</script>
+</body>
+</html>
