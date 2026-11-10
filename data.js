@@ -220,6 +220,25 @@ window.GAMES.push({
     best: function () { return +localStorage.getItem('mini-wanted-best') || 0; }
 });
 
+window.GAMES.push({
+    id: 'lootmatch',
+    accent: '#b37bff',
+    badge: 'NEW',
+    title: 'Loot Match',
+    file: 'games/lootmatch.html',
+    orient: 'portrait',
+    blurb: 'Line up the recovered loot, three in a row. 60 seconds, big combos, one hero power.',
+    about: 'The loot is back, and it is a mess. Swap two pieces to line up three or more: coins, gems and stars. You have 60 seconds, and every chain reaction multiplies your points. Matches charge your hero: when the ring is full, tap it to clear rows, columns or whole blocks, depending on who you picked.',
+    shot: 'assets/shots/lootmatch.jpg',
+    clip: 'assets/clips/lootmatch.mp4',
+    pos: 'center',
+    controls: [
+      ['Swap', 'Drag a piece, or click two', 'swipe a piece, or tap two'],
+      ['Hero power', 'Space, or click the hero', 'tap the hero when the ring is full']
+    ],
+    best: function () { return +localStorage.getItem('mini-lootmatch-best') || 0; }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },
