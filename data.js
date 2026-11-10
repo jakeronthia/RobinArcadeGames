@@ -148,6 +148,24 @@ window.GAMES.push({
     best: function () { try { return +JSON.parse(localStorage.getItem('dtv-best') || '0') || 0; } catch (e) { return 0; } }
 });
 
+window.GAMES.push({
+    id: 'skyhoot',
+    accent: '#7fe3ff',
+    badge: 'NEW',
+    title: 'Sky Hoot',
+    file: 'games/skyhoot.html',
+    orient: 'portrait',
+    blurb: 'Flap through the rain between rooftops and neon signs. One tap, one more try.',
+    about: 'Hoot is flying home across Ravenport in the rain. Tap to flap and squeeze through the gaps between the rooftops and the hanging neon signs. Every gap is a point, every coin is one more, and the city gets faster the further you go.',
+    shot: 'assets/shots/skyhoot.jpg',
+    clip: 'assets/clips/skyhoot.mp4',
+    pos: 'center',
+    controls: [
+      ['Flap', 'Space, \u2191 or click', 'tap anywhere']
+    ],
+    best: function () { return +localStorage.getItem('mini-skyhoot-best') || 0; }
+});
+
 window.HEROES = [
   { name: 'Leonidas', power: 'Charge', desc: 'Bursts forward and smashes through everything.', img: 'assets/heroes/leonidas.png', col: '#3a2f5c' },
   { name: 'Atreus', power: 'Nunchaku', desc: 'Clears every obstacle in his lane.', img: 'assets/heroes/atreus.png', col: '#1f4a35' },

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sky Hoot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<script src="../assets/fx/music.js"></script>
+<script src="../assets/fx/snd.js"></script>
+<script src="../assets/fx/mini.js"></script>
+<script>
+/* Sky Hoot: tap to flap, fly the owl through the gaps between rooftops and hanging neon signs. */
+(function () {
+  var M = Mini, sky = M.sky({ seed: 11 });
+  var owl, gates, scroll, speed, dead, spawnX, coins, nextBolt = 6;
+  var SIGNS = [['#ff3d8a', 'HOTEL'], ['#7fe3ff', 'NEAR'], ['#ffc93c', '$ROBIN'], ['#3ddc6a', 'OPEN'], ['#b37bff', 'ARCADE'], ['#ff8a3d', 'NOODLES'], ['#7fe3ff', '24H']];
+  function reset() { owl = { x: M.W * .3, y: M.H * .42, vy: 0, rot: 0, wing: 0, flapT: 1 }; gates = []; scroll = 0; speed = 170; dead = false; spawnX = M.W + 80 * M.u; coins = 0; }
+  function addGate() { var u = M.u, s = M.scoreV, gap = Math.max(138, 196 - s * 1.6) * u, margin = 70 * u, gy = margin + gap / 2 + Math.random() * (M.H - margin * 2 - gap - 40 * u);
+    var sg = SIGNS[Math.random() * SIGNS.length | 0]; gates.push({ x: spawnX, w: 72 * u, gy: gy, gap: gap, passed: false, col: sg[0], word: sg[1], coin: Math.random() < .55, seed: Math.random() * 1000 | 0 });
+    spawnX += Math.max(205, 255 - s * 1.2) * u; }
+  function flap() { if (dead) return; owl.vy = -455 * M.u; owl.flapT = 0; M.snd('flap'); M.burst(owl.x - 14 * M.u, owl.y + 10 * M.u, 'rgba(210,220,255,.5)', 3, 60, { g: 100, r: 3, life: .35 }); }
+  function die() { if (dead) return; dead = true; M.shake(1); M.flash(.45); M.snd('hit'); M.burst(owl.x, owl.y, ['#8a5a2b', '#c98f4e', '#f3e3c2'], 22, 260, { sq: true, r: 5, g: 420, life: 1.1 }); owl.vy = -260 * M.u;
+    M.over(coins ? coins + ' coin' + (coins > 1 ? 's' : '') + ' grabbed on the way.' : null); }
+  function step(dt, playing) { var u = M.u;
+    if (playing && !dead) { speed = 170 + Math.min(M.scoreV, 45) * 2.6; scroll += speed * dt; var dx = speed * u * dt; spawnX -= dx;
+      for (var i = gates.length - 1; i >= 0; i--) { var g = gates[i]; g.x -= dx; if (g.x + g.w < -40 * u) { gates.splice(i, 1); continue; }
+        if (!g.passed && g.x + g.w < owl.x) { g.passed = true; M.add(1); M.snd('point', 1 + Math.min(M.scoreV, 24) * .02); M.pop(owl.x, owl.y - 44 * u, '+1', '#fff', 20); }
+        if (g.coin && Math.abs(g.x + g.w / 2 - owl.x) < 26 * u && Math.abs(g.gy - owl.y) < 30 * u) { g.coin = false; coins++; M.add(1); M.snd('coin'); M.burst(g.x + g.w / 2, g.gy, ['#ffc93c', '#ffe08a'], 10, 170, { r: 3.5, life: .5 }); M.pop(g.x + g.w / 2, g.gy - 26 * u, '+1', '#ffc93c', 20); M.extra('COINS', coins); }
+        var r = 19 * u; if (owl.x + r > g.x && owl.x - r < g.x + g.w && (owl.y - r < g.gy - g.gap / 2 || owl.y + r > g.gy + g.gap / 2)) die(); }
+      while (spawnX < M.W + 90 * u) addGate();
+      nextBolt -= dt; if (nextBolt < 0) { nextBolt = 9 + Math.random() * 12; M.flash(.22); } }
+    else if (!playing && !dead) scroll += 40 * dt;
+    if (playing || dead) { owl.vy += 1450 * u * dt; owl.y += owl.vy * dt; if (owl.y < 22 * u) { owl.y = 22 * u; owl.vy = Math.max(0, owl.vy); } if (owl.y > M.H + 60 * u) { if (!dead) die(); owl.y = M.H + 60 * u; } }
+    else owl.y = M.H * .42 + Math.sin(M.t * 2.2) * 12 * u;
+    owl.flapT += dt; var target = dead ? owl.rot + dt * 9 : Math.max(-.5, Math.min(1.1, owl.vy / (620 * u))); owl.rot = dead ? target : owl.rot + (target - owl.rot) * Math.min(1, dt * 10); }
+  function bricks(ctx, x, y, w, h, seed) { var u = M.u, r = M.rng(seed); ctx.fillStyle = '#7a3d4a'; ctx.fillRect(x, y, w, h); ctx.fillStyle = 'rgba(0,0,0,.18)'; var bh = 11 * u, row = 0; for (var yy = y + 14 * u; yy < y + h; yy += bh, row++) { ctx.fillRect(x, yy, w, 1.5 * u); for (var xx = x + (row % 2 ? 8 : 20) * u; xx < x + w - 2; xx += 24 * u) ctx.fillRect(xx, yy, 1.5 * u, bh); }
+    var cols = 2, ww = 15 * u, wh = 20 * u; for (var j = 0; j < 12; j++) { var wy = y + (34 + j * 44) * u; if (wy + wh > M.H + 50) break; for (var i = 0; i < cols; i++) { var lit = r() < .55; ctx.fillStyle = lit ? '#ffd27a' : '#2b1f45'; var wx = x + (12 + i * 33) * u; ctx.fillRect(wx, wy, ww, wh); ctx.lineWidth = 2 * u; ctx.strokeStyle = M.INK; ctx.strokeRect(wx, wy, ww, wh); } } }
+  function drawGate(ctx, g) { var u = M.u, top = g.gy - g.gap / 2, bot = g.gy + g.gap / 2;
+    // rooftop tower from below
+    bricks(ctx, g.x, bot + 12 * u, g.w, M.H - bot + 60, g.seed); ctx.lineWidth = 3 * u; ctx.strokeStyle = M.INK; ctx.strokeRect(g.x, bot + 12 * u, g.w, M.H);
+    M.rr(ctx, g.x - 7 * u, bot, g.w + 14 * u, 16 * u, 4 * u); M.ink(ctx, '#b9a6d8');
+    ctx.fillStyle = '#5a2e38'; ctx.fillRect(g.x + g.w * .62, bot - 16 * u, 13 * u, 16 * u); ctx.strokeRect(g.x + g.w * .62, bot - 16 * u, 13 * u, 16 * u);
+    // neon sign hanging from above
+    ctx.strokeStyle = '#3b3460'; ctx.lineWidth = 3 * u; ctx.beginPath(); ctx.moveTo(g.x + g.w * .25, -10); ctx.lineTo(g.x + g.w * .25, top - 10); ctx.moveTo(g.x + g.w * .75, -10); ctx.lineTo(g.x + g.w * .75, top - 10); ctx.stroke();
+    var sh = Math.min(top + 10, 200 * u), sy = top - sh; M.rr(ctx, g.x, sy, g.w, sh, 8 * u); M.ink(ctx, '#17122e');
+    var fl = Math.sin(M.t * 9 + g.seed) > -.92 ? 1 : .35; ctx.save(); ctx.globalAlpha = fl; ctx.shadowColor = g.col; ctx.shadowBlur = 16 * u; ctx.strokeStyle = g.col; ctx.lineWidth = 2.5 * u; M.rr(ctx, g.x + 6 * u, sy + 6 * u, g.w - 12 * u, sh - 12 * u, 5 * u); ctx.stroke();
+    ctx.fillStyle = g.col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; var fs = 22 * u, n = g.word.length, lh = Math.min(fs * 1.12, (sh - 26 * u) / n); ctx.font = '700 ' + Math.min(fs, lh * .95) + 'px Fredoka, sans-serif';
+    for (var i = 0; i < n; i++) { var cy = top - 16 * u - (n - 1 - i) * lh - lh * .3; if (cy > sy + 10 * u) ctx.fillText(g.word[i], g.x + g.w / 2, cy); } ctx.restore();
+    if (g.coin) M.coin(ctx, g.x + g.w / 2, g.gy + Math.sin(M.t * 4 + g.seed) * 4 * u, 11 * u, M.t * 3 + g.seed); }
+  function drawOwl(ctx) { var u = M.u, s = 66 * u, k = Math.min(1, owl.flapT / .22), wing = dead ? 1.2 : -1.0 + k * 1.5 + Math.sin(M.t * 14) * .08; ctx.save(); ctx.translate(owl.x, owl.y); ctx.rotate(owl.rot * .6);
+    var sq = 1 + (1 - k) * .1; M.drawHero(ctx, 'hoot', 0, 0, s, 0, false, 1 / sq, sq);
+    ctx.save(); ctx.translate(-9 * u, -3 * u); ctx.rotate(wing); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-30 * u, -12 * u, -34 * u, 12 * u); ctx.quadraticCurveTo(-18 * u, 16 * u, 0, 9 * u); ctx.closePath(); M.ink(ctx, '#8a5a2b', 2.5); ctx.restore();
+    ctx.restore(); }
+  M.init({ id: 'skyhoot', title: 'Sky Hoot', accent: '#7fe3ff', music: 'rush', hero: 'hoot',
+    help: 'Tap, click or press Space to flap. Fly Hoot between the rooftops and the neon signs, and grab the coins.',
+    start: reset, resize: function () { if (owl) owl.x = M.W * .3; },
+    down: flap, key: function (k) { if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') flap(); },
+    update: function (dt) { step(dt, true); }, idle: function (dt) { step(dt, false); },
+    draw: function (ctx, W, H) { M.drawSky(ctx, sky, scroll, { wind: 1 }); for (var i = 0; i < gates.length; i++) drawGate(ctx, gates[i]);
+      var fg = ctx.createLinearGradient(0, H - 60 * M.u, 0, H); fg.addColorStop(0, 'rgba(58,36,102,0)'); fg.addColorStop(1, 'rgba(90,60,150,.5)'); ctx.fillStyle = fg; ctx.fillRect(0, H - 60 * M.u, W, 60 * M.u); drawOwl(ctx); } });
+  reset();
+  window.__g = function () { return { owl: owl, gates: gates }; };
+})();
+</script>
+</body>
+</html>
