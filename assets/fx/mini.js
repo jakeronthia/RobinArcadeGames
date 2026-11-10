@@ -92,7 +92,7 @@ body:not(.playing) #mHud .pill{opacity:0}\
     add: function (n) { M.score(M.scoreV + n); },
     extra: function (label, v) { var p = M.$('mExtraP'); if (label == null) { p.hidden = true; return; } p.hidden = false; M.$('mExtraL').textContent = label; M.$('mExtra').textContent = v; },
     // end of a game: score is what counts for the record
-    over: function (line, tag) { if (M.state !== 'play') return; M.state = 'over'; M.lock = true; var s = M.scoreV, nb = s > M.best; if (nb) { M.best = s; try { localStorage.setItem('mini-' + M.o.id + '-best', s); } catch (e) {} }
+    over: function (line, tag) { if (M.state !== 'play') return; M.state = 'over'; M.lock = true; var s = M.scoreV, nb = s > M.best; try { if (parent !== window) parent.postMessage({ rvScore: { id: M.o.id, score: s, best: nb && s > 0 } }, location.origin); } catch (e) {} if (nb) { M.best = s; try { localStorage.setItem('mini-' + M.o.id + '-best', s); } catch (e) {} }
       setTimeout(function () { M.lock = false; document.body.classList.remove('playing'); M.$('mFinal').textContent = s.toLocaleString('en'); M.$('mNew').hidden = !nb; M.$('mBest1').textContent = M.best.toLocaleString('en'); M.$('mBest0').textContent = M.best.toLocaleString('en'); M.$('mOverTag').textContent = tag || 'GAME OVER'; var l = M.$('mLine'); l.hidden = !line; l.textContent = line || ''; M.overEl.hidden = false; snd(nb && s > 0 ? 'win' : 'lose'); M.$('mAgain').focus({ preventScroll: true }); }, M.o.overDelay || 900); },
     // ---- juice ----
     parts: [], pops: [], sh: 0, fl: 0,

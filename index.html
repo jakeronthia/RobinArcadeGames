@@ -250,6 +250,39 @@ body:not(.title) #roomHint{opacity:0}
 .plrow .btn[disabled]{opacity:.6;cursor:wait}
 .plnote{margin:14px 0 0!important;font-size:12.5px!important;color:#8b83b8!important}
 .plnote:empty{display:none}
+/* the arcade pass: level, missions of the day, coins, trails */
+#pExt{display:none}
+#toast{z-index:10}
+#coins{pointer-events:auto;cursor:pointer}
+#coins:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+#menu .mpass{justify-content:space-between;background:rgba(255,201,60,.1);border:1px solid rgba(255,201,60,.35);margin-bottom:4px}
+#menu .mpass small{color:var(--y);font:800 12px Nunito,sans-serif}
+#passView{position:absolute;inset:0;overflow:auto;padding:18px 18px 28px;color:#fff;font:700 15px/1.4 Nunito,sans-serif}
+#passView h3{margin:22px 0 10px;font:700 13px Nunito,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8b83b8}
+.pv-top{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(180deg,#221a45,#150f2c);border:2px solid #2e2650}
+.pv-lv{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:#120d28;border:3px solid var(--y);text-align:center;line-height:1}
+.pv-lv small{display:block;font:900 9px Nunito,sans-serif;letter-spacing:.14em;color:#8b83b8}
+.pv-lv b{font:700 30px Fredoka,sans-serif;color:#fff}
+.pv-bar{height:10px;border-radius:99px;background:#120d28;overflow:hidden;margin:8px 0 6px}
+.pv-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--y),#ff8a3d)}
+.pv-top small{color:#8b83b8;font-size:12.5px}
+.pv-coins{display:flex;align-items:center;gap:8px;font:700 22px Fredoka,sans-serif}
+.pv-coins i{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe08a,#ffc93c 60%,#b07a12);flex:0 0 auto}
+.pv-m{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:14px 16px;border-radius:16px;background:#17112f;border:1.5px solid #2e2650;margin-bottom:10px}
+.pv-m b{font-size:15.5px}.pv-m small{display:block;color:var(--y);font-size:12.5px}
+.pv-m .pv-bar{grid-column:1/-1;margin:2px 0 0;height:8px}
+.pv-m .pv-n{font:700 15px Fredoka,sans-serif;color:#c9bfff;font-variant-numeric:tabular-nums}
+.pv-m.done{border-color:#3ddc6a;background:#12251f}.pv-m.done .pv-n{color:#3ddc6a}.pv-m.done .pv-bar i{background:#3ddc6a}
+.pv-m button,.pv-t{font:800 13.5px Nunito,sans-serif;color:#fff;cursor:pointer}
+.pv-m button{grid-column:1/-1;justify-self:start;min-height:40px;padding:0 18px;border-radius:999px;border:0;background:var(--y);color:#2a1a00}
+.pv-tr{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.pv-t{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border-radius:16px;background:#17112f;border:1.5px solid #2e2650;text-align:left;min-height:44px}
+.pv-t i{display:block;width:100%;height:12px;border-radius:99px}
+.pv-t small{color:#8b83b8;font-size:12px}
+.pv-t.on{border-color:var(--y);box-shadow:0 0 18px rgba(255,201,60,.3)}.pv-t.on small{color:var(--y)}
+.pv-t.no{opacity:.55}
+.pv-m button:focus-visible,.pv-t:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.pv-note{margin-top:18px;color:#8b83b8;font-size:12.5px}
 </style>
 </head>
 <body class="title">
@@ -272,7 +305,7 @@ body:not(.title) #roomHint{opacity:0}
 </section>
 <aside id="panel" aria-hidden="true" aria-labelledby="pTitle">
   <div class="phead"><button class="pback" id="pBack" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Back</button><h2 id="pTitle"></h2><a id="pExt" href="#" target="_blank" rel="noopener" aria-label="Open as a full page"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></div>
-  <div class="pbody loading" id="pBody"><div class="pload">LOADING&hellip;</div></div>
+  <div class="pbody loading" id="pBody"><div class="pload">LOADING&hellip;</div><div id="passView" hidden></div></div>
 </aside>
 
 <div id="cabUi">
@@ -294,6 +327,7 @@ body:not(.title) #roomHint{opacity:0}
   <button class="menuBtn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu">Menu<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
 </header>
 <nav id="menu" aria-label="Main" hidden>
+  <a href="#pass" data-panel="pass" class="mpass"><span>Missions</span><small id="mPassS"></small></a>
   <a id="allG2" href="arcade.html#games" data-panel="games">All games</a>
   <a href="treasury.html" data-panel="prize"><span class="dot"></span>Prize Pool</a>
   <a href="arcade.html#hall" data-panel="hall">Leaderboard</a>
@@ -316,7 +350,7 @@ body:not(.title) #roomHint{opacity:0}
 </aside>
 <nav id="rail" aria-label="Districts"><div class="fill" id="railFill"></div></nav>
 <button class="btn" id="replay" type="button" aria-label="Back to the arcade">&#8634; <span class="lbl">Back to the arcade</span></button>
-<div id="coins" class="hud" aria-live="polite"><i class="coin"></i><b id="coinN">0</b><span>/ 40</span></div>
+<div id="coins" class="hud" aria-live="polite" role="button" tabindex="0" aria-label="Coins and missions"><i class="coin"></i><b id="coinN">0</b><span>/ 40</span></div>
 <div id="toast" role="status"></div>
 <div id="push" aria-hidden="true"><span>Scroll for the next game</span></div>
 <button class="ico navb" id="navPrev" type="button" aria-label="Previous game"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
@@ -339,6 +373,7 @@ function toonify(root) { root.traverse(o => { if (!o.material || o.isSprite || o
 <script src="assets/fx/post.js"></script>
 <script src="assets/fx/robinvault.js"></script>
 <script src="assets/fx/snd.js"></script>
+<script src="assets/fx/pass.js"></script>
 <script>
 requestAnimationFrame(() => setTimeout(async function () {
 'use strict';
@@ -1564,7 +1599,7 @@ const GOT = new Set(); let coinBest = 0; try { coinBest = parseInt(localStorage.
 function coinToast(txt) { const t = document.getElementById('toast'); t.textContent = txt; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on'); }
 function collect(i) {
   if (GOT.has(i)) return; GOT.add(i); const n = GOT.size; const el = document.getElementById('coinN'); el.textContent = n; const hud = document.getElementById('coins'); hud.classList.remove('pop'); void hud.offsetWidth; hud.classList.add('pop');
-  SND.coin(true);
+  SND.coin(true); passToast(PASS.event('coin'));
   if (n === 20) coinToast('Halfway there! 20 coins');
   if (n === COINS.length) { coinToast('Lucky Flight! You caught every coin'); try { localStorage.setItem('rv-lucky', '1'); } catch (e) {} document.getElementById('coins').classList.add('gold'); }
   if (n > coinBest) { coinBest = n; try { localStorage.setItem('rv-coins-best', String(n)); } catch (e) {} }
@@ -1770,7 +1805,7 @@ const FLOCKS = [.1, .24, .4, .55, .7, .86].map((u, k) => { const p = road.getPoi
 let honked = false;
 function flightLife(dt, time) {
   const moving = !!FL.tw;
-  trailAcc += dt; if (moving && trailAcc > .04) { trailAcc = 0; const sp = TRAIL[trailI++ % TRAIL.length]; sp.position.copy(flyer.position).add(new T.Vector3(0, -.3, 0)); sp.userData.life = 1; }
+  trailAcc += dt; if (moving && trailAcc > .04) { trailAcc = 0; const sp = TRAIL[trailI++ % TRAIL.length]; sp.position.copy(flyer.position).add(new T.Vector3(0, -.3, 0)); sp.userData.life = 1; if (TRC.rgb) sp.material.color.setRGB(TRC.rgb[0], TRC.rgb[1], TRC.rgb[2]); else sp.material.color.setHSL((performance.now() / 900) % 1, 1, .6).multiplyScalar(1.8); }
   TRAIL.forEach(sp => { const l = sp.userData.life || 0; sp.userData.life = Math.max(0, l - dt * 1.6); sp.material.opacity = sp.userData.life * .55; sp.scale.setScalar(.4 + sp.userData.life * 1.1); });
   FLOCKS.forEach(f => { if (f.t < 0 && moving && flyer.position.distanceTo(f.home) < 16) f.t = 0;
     f.birds.forEach((b, j) => { if (f.t < 0) { b.position.copy(f.home).add(b.userData.off); b.scale.y = 1.3; b.rotation.set(0, j, 0); return; }
@@ -1885,7 +1920,7 @@ const RMETA = {
   'HEROES': { key: 'heroes', title: 'Heroes & meme kit', src: 'kit.html?embed', h: 1.78, d: 3.0 }
 };
 ROOM.forEach(o => Object.assign(o, RMETA[o.label]));
-const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o }); PANELS.profile = { title: 'Your profile', src: 'profile.html?embed' };
+const PANELS = { games: { title: 'All games', src: 'arcade.html?embed&only=games' } }; ROOM.forEach(o => PANELS[o.key] = { title: o.title, src: o.src, obj: o }); PANELS.profile = { title: 'Your profile', src: 'profile.html?embed' }; PANELS.pass = { title: 'Missions', native: true };
 const byKey = k => ROOM.find(o => o.key === k);
 const STN = ['heroes', 'hall', 'cab', 'prize', 'faq', 'token'];
 const sndF = new T.Vector3(); let FT = null, stI = 2, panelKey = null, swipedAt = 0;
@@ -1908,8 +1943,9 @@ function stUi() { const k = STN[stI], cabSt = k === 'cab'; document.body.classLi
 function stGo(dlt) { if (stage !== 'title' || panelKey) return; stI = (stI + dlt + STN.length) % STN.length; const k = STN[stI]; FT = k === 'cab' ? 'cab' : byKey(k); stUi(); SND.start(); SND.play('ratchet'); }
 function frameFor(key) { let f = $('pBody').querySelector('iframe[data-k="' + key + '"]'); if (!f) { f = document.createElement('iframe'); f.dataset.k = key; f.title = PANELS[key].title; f.addEventListener('load', () => { f.classList.add('on'); $('pBody').classList.remove('loading'); }); f.src = PANELS[key].src; $('pBody').appendChild(f); $('pBody').classList.add('loading'); } return f; }
 function openPanel(key) { const P2 = PANELS[key]; if (!P2) return; SND.start(); SND.object(key); SND.duck(true);
-  panelKey = key; $('pTitle').textContent = P2.title; $('pExt').href = P2.src.replace(/[?&]embed(&only=(\w+))?/, (m, a, o) => '') + (P2.src.includes('only=') ? '#' + P2.src.split('only=')[1] : '');
-  $('pBody').querySelectorAll('iframe').forEach(f => f.hidden = f.dataset.k !== key); const f = frameFor(key); f.hidden = false; if (f.classList.contains('on')) $('pBody').classList.remove('loading');
+  panelKey = key; $('pTitle').textContent = P2.title; 
+  $('pBody').querySelectorAll('iframe').forEach(f => f.hidden = f.dataset.k !== key); $('passView').hidden = !P2.native;
+  if (P2.native) { $('pBody').classList.remove('loading'); passRender(); } else { const f = frameFor(key); f.hidden = false; $('pBody').classList.toggle('loading', !f.classList.contains('on')); }
   if (stage === 'title') { FT = P2.obj || 'cab'; const si = STN.indexOf(P2.obj ? key : 'cab'); if (si >= 0) { stI = si; stUi(); } }
   document.body.classList.add('panel'); $('panel').setAttribute('aria-hidden', 'false'); $('roomTip').classList.remove('on');
   try { history.replaceState(null, '', '#' + key); } catch (e) {} setTimeout(() => $('pBack').focus({ preventScroll: true }), 50); }
@@ -2034,6 +2070,20 @@ function tickFlight(dt) {
 
 const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
 let last = performance.now(), lastScr = 0;
+// ---------- the arcade pass: one progression over every game ----------
+const passQ = []; let passBusy = false;
+function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'level' ? 'Level ' + o.level + '!  +' + o.coins + ' coins' : 'Mission done: ' + o.text + '  +' + o.coins + ' coins')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
+function passUi() { const g = PASS.get(); $('mPassS').textContent = 'Lv ' + g.level + ' · ' + g.coins + ' coins'; if (panelKey === 'pass') passRender(); TRC = PASS.trail(); }
+function passRender() { const g = PASS.get(), v = $('passView'), esc = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  v.innerHTML = '<div class="pv-top"><div class="pv-lv"><div><small>LEVEL</small><b>' + g.level + '</b></div></div><div><div class="pv-coins"><i></i>' + g.coins.toLocaleString('en') + ' <small>arcade coins</small></div><div class="pv-bar"><i style="width:' + Math.round(g.into / g.need * 100) + '%"></i></div><small>' + g.into + ' / ' + g.need + ' XP to level ' + (g.level + 1) + '</small></div></div>'
+    + '<h3>Missions of the day</h3>' + g.missions.map(m => '<div class="pv-m' + (m.done ? ' done' : '') + '"><div><b>' + esc(m.text) + '</b><small>+' + m.coins + ' coins · +' + m.xp + ' XP</small></div><span class="pv-n">' + (m.done ? 'Done' : m.p.toLocaleString('en') + ' / ' + m.n.toLocaleString('en')) + '</span><div class="pv-bar"><i style="width:' + Math.round(m.p / m.n * 100) + '%"></i></div>' + (!m.done && m.game ? '<button type="button" data-g="' + m.game + '">Play ' + esc(PASS.titles[m.game]) + '</button>' : '') + '</div>').join('')
+    + '<h3>Flight trails</h3><div class="pv-tr">' + PASS.trails.map(t => { const own = g.owned.indexOf(t.id) >= 0, on = g.trail === t.id; return '<button type="button" class="pv-t' + (on ? ' on' : '') + (!own && g.coins < t.cost ? ' no' : '') + '" data-t="' + t.id + '"><i style="background:' + t.css + '"></i>' + t.name + '<small>' + (on ? 'In use' : own ? 'Owned · tap to use' : t.cost + ' coins') + '</small></button>'; }).join('') + '</div>'
+    + '<p class="pv-note">You earn XP by playing any game. Arcade coins come from flying through the city, from missions and from new levels. They only buy trails here: they are not $ROBIN.</p>';
+  v.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.g; closePanel(); openPlay(id, 'choose'); }));
+  v.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { if (PASS.buy(b.dataset.t)) SND.play('coin'); else SND.play('wrong'); })); }
+let TRC = PASS.trail(); PASS.onChange(passUi); passUi();
+$('coins').addEventListener('click', () => openPanel('pass')); $('coins').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('pass'); } });
+
 // ---------- play a game inside the arcade: free, or for the pot with a wallet ----------
 const RVT = window.RobinVault || null, PLAY = { id: null, title: '', cfg: null, me: null, potOn: false, open: false, game: false, poll: 0 };
 const rvFmt = x => RVT ? RVT.fmt(x) : x, rvSym = () => RVT ? RVT.sym() : 'ROBIN';
@@ -2042,7 +2092,7 @@ function plShow(o) { const c = $('plCard'); c.className = 'plcard' + (o.win ? ' 
 function plAcct() { $('plMe').innerHTML = ''; if (PLAY.me) { $('plMe').append('Playing as '); const b = document.createElement('b'); b.textContent = PLAY.me; $('plMe').appendChild(b); } }
 async function plLoadPot() { if (!RVT) { PLAY.potOn = false; return; } try { await RVT.ready(); PLAY.cfg = await RVT.vaultView('config'); PLAY.potOn = true; } catch (e) { PLAY.potOn = false; } PLAY.me = RVT.guestId() || null; if (!PLAY.me) { try { PLAY.me = await RVT.account(); } catch (e) {} } plAcct(); }
 function plWon(out, me) { let won = '0'; try { (out.receipts_outcome || []).forEach(o => (o.outcome.logs || []).forEach(l => { const m = l.match(/^JACKPOT (\S+) won (\d+)/); if (m && m[1] === me) won = m[2]; })); } catch (e) {} return won; }
-function plLaunch(paid) { clearInterval(PLAY.poll); const f = document.createElement('iframe'); f.title = PLAY.title; f.allow = 'autoplay; fullscreen; gamepad'; f.src = 'games/' + PLAY.id + '.html' + (paid ? '?pot=1' : ''); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); $('plBody').appendChild(f); $('plBody').classList.add('game'); PLAY.game = true; f.addEventListener('load', () => { try { f.focus(); f.contentWindow.focus(); } catch (e) {} }); }
+function plLaunch(paid) { clearInterval(PLAY.poll); const f = document.createElement('iframe'); f.title = PLAY.title; f.allow = 'autoplay; fullscreen; gamepad'; f.src = 'games/' + PLAY.id + '.html' + (paid ? '?pot=1' : ''); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); $('plBody').appendChild(f); $('plBody').classList.add('game'); PLAY.game = true; clearTimeout(PLAY.xpT); { const gid = PLAY.id; PLAY.xpT = setTimeout(() => { if (PLAY.game && PLAY.id === gid) passToast(PASS.event('play', { game: gid })); }, 20000); } f.addEventListener('load', () => { try { f.focus(); f.contentWindow.focus(); } catch (e) {} }); }
 function plResult(won, paid, extra) { const w = BigInt(won || 0) > 0n; if (w) SND.play('win'); plShow({ win: w, tag: w ? 'JACKPOT!' : paid ? 'YOU ARE IN' : 'FREE ROLL', head: w ? 'You won ' + rvFmt(won) + ' ' + rvSym() : paid ? 'No jackpot this time' : 'Good luck!', text: w ? 'It is already in your account.' : (extra || ''), btns: [{ label: 'Start the game', go: () => plLaunch(paid) }] }); }
 function plChoose() { const c = PLAY.cfg; plShow({ tag: PLAY.potOn ? 'JACKPOT ' + rvFmt(c.jackpot) + ' ' + rvSym() : 'ROBIN ARCADE', head: 'How do you want to play?', text: PLAY.potOn ? 'For the pot costs ' + rvFmt(c.price) + ' ' + rvSym() + ': 1 in ' + Number(c.odds_paid).toLocaleString('en') + ' to win the jackpot right now, and the play counts for the weekly prize pool.' : 'The prize pool is offline right now, but every game is free to play.',
   btns: (PLAY.potOn ? [{ label: 'Play for the pot', go: plPot }] : []).concat([{ label: 'Play free', cls: PLAY.potOn ? 'c' : 'y', go: plFree }]), note: 'Every play for the pot is on-chain. No one can change the rules, the draws or the payouts.' }); }
@@ -2071,11 +2121,11 @@ async function openPlay(id, mode) { const d = DI(id); if (!d) return; SND.start(
   await plLoadPot(); if (!PLAY.open || PLAY.id !== id) return;
   if (mode === 'paid') { try { const p = await RVT.vaultView('get_player', { account_id: PLAY.me }); plResult(p.last && p.last.paid ? p.last.won : '0', true, 'Your play counts for this week\u2019s prize pool.'); } catch (e) { plResult('0', true, ''); } return; }
   if (mode === 'pot') plPot(); else if (mode === 'free') plFree(); else plChoose(); }
-function closePlay() { if (!PLAY.open) return; clearInterval(PLAY.poll); PLAY.open = false; PLAY.game = false; $('play').hidden = true; document.body.classList.remove('inplay'); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); SND.hush(false); SND.play('close'); last = performance.now(); }
+function closePlay() { if (!PLAY.open) return; clearInterval(PLAY.poll); clearTimeout(PLAY.xpT); PLAY.open = false; PLAY.game = false; $('play').hidden = true; document.body.classList.remove('inplay'); $('plBody').querySelectorAll('iframe').forEach(x => x.remove()); SND.hush(false); SND.play('close'); last = performance.now(); }
 $('plBack').addEventListener('click', closePlay);
 $('cFree').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'free'); });
 $('cPot').addEventListener('click', e => { e.preventDefault(); openPlay(e.currentTarget.dataset.g, 'pot'); });
-addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; if (e.data.rvPlay) openPlay(e.data.rvPlay, e.data.pot ? 'pot' : 'choose'); else if (e.data.rvPanel) { if (PANELS[e.data.rvPanel]) openPanel(e.data.rvPanel); else closePanel(); } });
+addEventListener('message', e => { if (e.origin !== location.origin || !e.data) return; if (e.data.rvScore && PASS.titles[e.data.rvScore.id]) passToast(PASS.event('score', { game: e.data.rvScore.id, score: +e.data.rvScore.score || 0, best: !!e.data.rvScore.best })); else if (e.data.rvPlay) openPlay(e.data.rvPlay, e.data.pot ? 'pot' : 'choose'); else if (e.data.rvPanel) { if (PANELS[e.data.rvPanel]) openPanel(e.data.rvPanel); else closePanel(); } });
 function plResume() { try { const q = new URLSearchParams(location.search), paid = JSON.parse(sessionStorage.getItem('rv-play-paid') || 'null'), res = JSON.parse(sessionStorage.getItem('rv-play-resume') || 'null'), fresh = x => x && Date.now() - x.t < 15 * 60000;
     sessionStorage.removeItem('rv-play-paid'); sessionStorage.removeItem('rv-play-resume');
     if (q.get('transactionHashes') && fresh(paid)) { history.replaceState(null, '', location.pathname); openPlay(paid.id, 'paid'); } else if (fresh(res)) { history.replaceState(null, '', location.pathname); openPlay(res.id, 'pot'); } } catch (e) {} }
