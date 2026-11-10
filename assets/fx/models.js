@@ -31,6 +31,7 @@ function makeCorgi(){const g=new T.Group(),body=new T.Group();g.add(body);
   body.add(part(SPH,Wh,0.06,0.42,0,0.48,0.2,0.3,false));                     // belly
   for(const[x,y,z,r] of[[0.4,0.66,0,.26],[0.46,0.52,0.1,.17],[0.46,0.52,-0.1,.17],[0.52,0.78,0,.18],[0.36,0.46,0,.18]])body.add(part(SPH,Wh,x,y,z,r,r,r*.9,false)); // fluffy chest
   for(const s of[-1,1])body.add(part(SPH,Wh,-0.58,0.58,s*0.16,0.17,0.2,0.14,false)); // white "corgi butt" patches
+  furOn(body,Od,0.12,0.62,0,0.5,0.38,0.4,26,0.075,3,1.1);furOn(body,Od,-0.38,0.64,0,0.4,0.36,0.38,22,0.075,7,1.2);furOn(body,Wh,0.4,0.66,0,0.27,0.27,0.25,10,0.06,11,1.5);
   // tail: fluffy stub with a white tip
   const tail=new T.Group();tail.position.set(-0.74,0.78,0);body.add(tail);
   tail.add(part(SPH,O,-0.06,0.03,0,0.14,0.12,0.12));tail.add(part(SPH,Wh,-0.16,0.06,0,0.08,0.07,0.07,false));
@@ -83,6 +84,10 @@ function heroEye(parent,x,y,z,ry,sz,irisCol){const e=new T.Group();e.position.se
   e.add(part(SPH,HL_M,0.062*sz,0.022*sz,0,0.013*sz,0.013*sz,0.008*sz,false));
   e.add(part(SPH,HL_M,0.06*sz,-0.016*sz,0,0.007*sz,0.007*sz,0.005*sz,false));return e}
 function heroPaw(L,mat,toe,x,y,sx){L.add(part(SPH,mat,x,y,0,0.13*sx,0.08,0.13*sx));for(const tz of[-0.06,0,0.06])L.add(part(SPH,toe||mat,x+0.11*sx,y-0.01,tz*sx,0.035,0.035,0.035,false))}
+// small tufts laid over a rounded body part, leaning back like a coat combed by the wind
+function furOn(grp,mat,cx,cy,cz,rx,ry,rz,n,size,seed,maxPhi){let a=seed*9301+49297;const rnd=()=>{a=(a*9301+49297)%233280;return a/233280};const up=new T.Vector3(0,1,0),d=new T.Vector3(),q=new T.Quaternion();
+  for(let i=0;i<n;i++){const phi=(.12+rnd()*.88)*(maxPhi||1.25),th=rnd()*6.283;d.set(Math.sin(phi)*Math.cos(th),Math.cos(phi),Math.sin(phi)*Math.sin(th));
+    const sz=size*(.7+rnd()*.6),m=part(CONE,mat,cx+d.x*rx*1.0,cy+d.y*ry*1.0,cz+d.z*rz*1.0,sz*.42,sz,sz*.42,false);d.x-=.9;d.normalize();q.setFromUnitVectors(up,d);m.quaternion.copy(q);grp.add(m)}}
 function heroClasp(body,x,y,z){const c=new T.Mesh(new T.CylinderGeometry(0.085,0.085,0.035,20),toon(0xffc93c));c.rotation.z=Math.PI/2;c.position.set(x,y,z);body.add(c);
   body.add(part(SPH,new T.MeshBasicMaterial({color:0xfff1a8}),x+0.025,y,z,0.035,0.035,0.035,false))}
 
@@ -93,6 +98,7 @@ function makeBeagle(){const g=new T.Group(),body=new T.Group();g.add(body);
   body.add(part(SPH,Bl,-0.12,1.07,0,0.48,0.26,0.385,false));
   body.add(part(SPH,Wh,0.2,0.82,0,0.42,0.24,0.31,false));
   for(const[x,y,z,r] of[[0.48,1.0,0,.2],[0.52,0.86,0.1,.15],[0.52,0.86,-0.1,.15]])body.add(part(SPH,Wh,x,y,z,r,r,r*.9,false));
+  furOn(body,Bl,-0.12,1.07,0,0.48,0.26,0.385,26,0.06,5,1.0);furOn(body,Tn,0.06,0.95,0,0.6,0.37,0.37,16,0.06,9,1.35);furOn(body,Wh,0.48,1.0,0,0.21,0.21,0.19,8,0.05,13,1.5);
   // longer legs with white socks and toes
   const legs=[];for(const[lx,lz] of[[0.36,0.2],[0.36,-0.2],[-0.36,0.2],[-0.36,-0.2]]){const L=new T.Group();L.position.set(lx,0.68,lz);
     L.add(part(SPH,Tn,0,-0.02,0,0.13,0.15,0.12));L.add(part(CYL,Tn,0,-0.22,0,0.09,0.32,0.09));L.add(part(CYL,Wh,0,-0.46,0,0.095,0.2,0.095));
@@ -331,6 +337,14 @@ function makeGoon(kind){const g=new T.Group(),body=new T.Group();g.add(body);con
   for(const s of[-1,1]){body.add(part(SPH,Wt,0.37,1.13,s*0.11,0.025,0.04,0.045,false));body.add(part(SPH,Bk,0.395,1.13,s*0.11,0.012,0.02,0.02,false));
     body.add(part(SPH,Sk,0.22,0.62,s*0.45,0.1,0.1,0.1,false))}
   body.add(part(SPH,Sk,0.4,1.05,0,0.06,0.05,0.06,false));
+  // arms down to the hands, a belt, angry brows, a turned-up collar and, for the ones who carry it, the loot on the back
+  for(const s2 of[-1,1]){const arm=part(CYL,Sh,0.11,0.74,s2*0.43,0.075,0.3,0.075,false);arm.rotation.z=0.75;arm.rotation.x=s2*-0.12;body.add(arm);
+    body.add(part(SPH,Sh,0.0,0.86,s2*0.4,0.11,0.11,0.1,false));
+    const br=part(BOX,Bk,0.385,1.21,s2*0.11,0.03,0.025,0.11,false);br.rotation.x=s2*0.45;body.add(br);
+    const leg=part(CYL,Pn,0.03,0.18,s2*0.17,0.12,0.22,0.12,false);body.add(leg)}
+  const belt=part(TOR,Bk,0,0.42,0,0.33,0.33,0.2,false);belt.rotation.x=Math.PI/2;body.add(belt);body.add(part(BOX,toon(0xffc93c),0.33,0.42,0,0.04,0.09,0.11,false));
+  const col=part(TOR,Bn,0.02,0.96,0,0.25,0.25,0.35,false);col.rotation.x=Math.PI/2;body.add(col);
+  if(kind!=='gun'&&kind!=='sniper'&&kind!=='shield'){const sack=part(SPH,toon(0xb08a55),-0.44,0.78,0,0.27,0.32,0.27);body.add(sack);body.add(part(SPH,toon(0x8a6a3a),-0.44,1.1,0,0.09,0.07,0.09,false));const tie=part(TOR,toon(0x5a3a1c),-0.44,1.05,0,0.09,0.09,0.1,false);tie.rotation.x=Math.PI/2;body.add(tie)}
   const feet=[];for(const s of[-1,1]){const f=part(SPH,Bk,0.08,0.08,s*0.2,0.2,0.09,0.14);body.add(f);feet.push(f)}
   let barrel=null;
   if(kind==='sniper')body.add(part(SPH,new T.MeshBasicMaterial({color:0xff3355}),0.41,1.14,0.11,0.045,0.045,0.045,false));
