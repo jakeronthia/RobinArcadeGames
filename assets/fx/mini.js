@@ -61,7 +61,7 @@ body:not(.playing) #mHud .pill{opacity:0}\
       function lvHtml() { var lv = M.heroLv(), perk = o.perks ? o.perks[lv - 1] : ''; return '<b>' + HNAME[M.xpHero()] + '</b> · level ' + lv + ' <span class="st">' + '\u2605'.repeat(lv) + '<i>' + '\u2605'.repeat(3 - lv) + '</i></span>' + (perk ? '<br>' + perk : ''); }
       // today's mission for this game, from the arcade pass
       function mission() { try { var d = new Date(), day = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(), P = JSON.parse(localStorage.getItem('rv-pass') || 'null'); if (!P || P.day !== day) return null; return (P.missions || []).filter(function (m) { return m.type === 'score' && m.game === o.id; })[0] || null; } catch (e) { return null; } }
-      function misHtml(score) { var m = mission(); if (!m) return ''; var ok = m.done || (score != null && score >= m.n); return '<div class="mis' + (ok ? ' ok' : '') + '">' + (ok ? 'MISSION DONE · ' : "TODAY'S MISSION · ") + m.text + (ok ? '' : ' · <b>+' + m.coins + ' coins</b>') + '</div>'; }
+      function misHtml(score) { var m = mission(); if (!m) return ''; var ok = m.done || (score != null && score >= m.n); return '<div class="mis' + (ok ? ' ok' : '') + '">' + (ok ? 'MISSION DONE · ' : "TODAY'S MISSION · ") + m.text + (ok ? '' : ' · <b>+' + m.xp + ' XP</b>') + '</div>'; }
       M.misHtml = misHtml;
       var pot = /[?&]pot=1/.test(location.search);
       // HUD

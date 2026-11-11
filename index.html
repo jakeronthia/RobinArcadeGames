@@ -144,7 +144,7 @@ body.city #replay{opacity:1;pointer-events:auto}
   #replay .lbl{display:none}
   #end{bottom:150px}
 }
-/* hero picker, coins, weather */
+/* hero picker, level pill, weather */
 #cabUi .pick{position:absolute;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:auto;transition:opacity .4s,transform .4s}
 body:not(.picking) #cabUi .pick{opacity:0;transform:translateY(20px);pointer-events:none}
 body:not(.title) #pressStart{opacity:0;pointer-events:none;animation:none}
@@ -166,12 +166,9 @@ body:not(.title) #pressStart{opacity:0;pointer-events:none;animation:none}
 #heroChips button img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
 #heroChips button[aria-pressed="true"]{border-color:var(--y);color:#fff;background:rgba(255,201,60,.14);box-shadow:0 0 18px rgba(255,201,60,.3)}
 #heroChips button:focus-visible{outline:3px solid var(--c);outline-offset:2px}
-.hud{position:fixed;z-index:4;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px 0 12px;border-radius:999px;background:rgba(20,16,44,.55);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px);font:800 15px Nunito,sans-serif;color:#fff;opacity:0;pointer-events:none;transition:opacity .5s;font-variant-numeric:tabular-nums}
+.hud{position:fixed;z-index:4;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;background:rgba(20,16,44,.55);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(10px);font:800 15px Nunito,sans-serif;color:#fff;opacity:0;pointer-events:none;transition:opacity .5s;font-variant-numeric:tabular-nums}
 body.city .hud{opacity:1}
-.hud .coin{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff1b0,#ffc93c 45%,#b8860b);box-shadow:0 0 12px rgba(255,201,60,.6)}
-.hud span{color:rgba(255,255,255,.5);font-weight:700}
 .hud.pop{animation:pop .35s ease}
-.hud.gold{border-color:var(--y);box-shadow:0 0 24px rgba(255,201,60,.4)}
 @keyframes pop{40%{transform:translateX(-50%) scale(1.15)}}
 #push{position:fixed;z-index:4;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,8px);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;font:800 12px Nunito,sans-serif;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.8);text-shadow:0 2px 8px #000}
 #push.on{opacity:1;transform:translate(-50%,0)}
@@ -250,7 +247,7 @@ body:not(.title) #roomHint{opacity:0}
 .plrow .btn[disabled]{opacity:.6;cursor:wait}
 .plnote{margin:14px 0 0!important;font-size:12.5px!important;color:#8b83b8!important}
 .plnote:empty{display:none}
-/* the arcade pass: level, missions of the day, coins, trails */
+/* the arcade pass: level, missions of the day, trails */
 .pstars{color:var(--y);font-size:.6em;letter-spacing:2px;vertical-align:middle}.pstars i{font-style:normal;color:rgba(255,255,255,.22)}
 #pName small{display:block;font:800 12px Nunito,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:2px}
 .pv-h{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -274,8 +271,6 @@ body:not(.title) #roomHint{opacity:0}
 .pv-bar{height:10px;border-radius:99px;background:#120d28;overflow:hidden;margin:8px 0 6px}
 .pv-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--y),#ff8a3d)}
 .pv-top small{color:#8b83b8;font-size:12.5px}
-.pv-coins{display:flex;align-items:center;gap:8px;font:700 22px Fredoka,sans-serif}
-.pv-coins i{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe08a,#ffc93c 60%,#b07a12);flex:0 0 auto}
 .pv-m{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;padding:14px 16px;border-radius:16px;background:#17112f;border:1.5px solid #2e2650;margin-bottom:10px}
 .pv-m b{font-size:15.5px}.pv-m small{display:block;color:var(--y);font-size:12.5px}
 .pv-m .pv-bar{grid-column:1/-1;margin:2px 0 0;height:8px}
@@ -358,7 +353,7 @@ body:not(.title) #roomHint{opacity:0}
 </aside>
 <nav id="rail" aria-label="Districts"><div class="fill" id="railFill"></div></nav>
 <button class="btn" id="replay" type="button" aria-label="Back to the arcade">&#8634; <span class="lbl">Back to the arcade</span></button>
-<div id="coins" class="hud" aria-live="polite" role="button" tabindex="0" aria-label="Coins and missions"><i class="coin"></i><b id="coinN">0</b><span>/ 40</span></div>
+<div id="coins" class="hud" role="button" tabindex="0" aria-label="Level and missions"><b id="coinN">Level 1</b></div>
 <div id="toast" role="status"></div>
 <div id="push" aria-hidden="true"><span>Scroll for the next game</span></div>
 <button class="ico navb" id="navPrev" type="button" aria-label="Previous game"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
@@ -1461,8 +1456,6 @@ function neonSign(i, text, x, y, z, w, o) {
 // runner hero on the avenue
 let runner = null, owlP = null; const flyer = new T.Group(); B.add(flyer);
 const blob = new T.Mesh(new T.PlaneGeometry(4, 4).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ map: radT.t, color: 0x000000, transparent: true, opacity: .5, depthWrite: false })); blob.renderOrder = 2; B.add(blob);
-// a few glowing coins to fly through
-const COINS = []; for (let i = 0; i < 40; i++) { const c = new T.Mesh(new T.CylinderGeometry(.55, .55, .12, 20).rotateX(Math.PI / 2), new T.MeshStandardMaterial({ color: 0xffc93c, emissive: 0xffa51f, emissiveIntensity: 1.6, metalness: .8, roughness: .25 })); const u = .03 + i / 40 * .94; c.userData.u = u; const p = road.getPointAt(u); c.position.set(p.x, 3.1, p.z); B.add(c); COINS.push(c); }
 // harbor at the end
 const water = new T.Mesh(new T.PlaneGeometry(320, 80), toon(0x0f2340)); water.rotation.x = -Math.PI / 2; water.position.set(0, .05, -330); B.add(water);
 
@@ -1636,16 +1629,7 @@ function tickWorld(dt) {
   STREAK.uniforms.k.value = (.25 + .75 * c.rain) * Math.max(.15, c.lamp); RAIN.uniforms.k.value = c.rain; SPLASH.uniforms.k.value = c.rain;
   WORLD.lamp = c.lamp; WORLD.base = { hi: c.hi, si: c.si };
 }
-// ---------- coins: fly through them, collect them all ----------
-const GOT = new Set(); let coinBest = 0; try { coinBest = parseInt(localStorage.getItem('rv-coins-best'), 10) || 0; } catch (e) {}
 function coinToast(txt) { const t = document.getElementById('toast'); t.textContent = txt; t.classList.remove('on'); void t.offsetWidth; t.classList.add('on'); }
-function collect(i) {
-  if (GOT.has(i)) return; GOT.add(i); const n = GOT.size; const el = document.getElementById('coinN'); el.textContent = n; const hud = document.getElementById('coins'); hud.classList.remove('pop'); void hud.offsetWidth; hud.classList.add('pop');
-  SND.coin(true); passToast(PASS.event('coin', { hero: HERO_LIST[heroIdx][2] }));
-  if (n === 20) coinToast('Halfway there! 20 coins');
-  if (n === COINS.length) { coinToast('Lucky Flight! You caught every coin'); try { localStorage.setItem('rv-lucky', '1'); } catch (e) {} document.getElementById('coins').classList.add('gold'); }
-  if (n > coinBest) { coinBest = n; try { localStorage.setItem('rv-coins-best', String(n)); } catch (e) {} }
-}
 // ---------- phone tilt and mouse give a little depth ----------
 const TILT = { x: 0, y: 0, tx: 0, ty: 0 };
 addEventListener('deviceorientation', e => { if (e.gamma == null) return; TILT.dev = true; TILT.tx = Math.max(-1, Math.min(1, e.gamma / 30)); TILT.ty = Math.max(-1, Math.min(1, ((e.beta || 0) - 45) / 30)); });
@@ -2108,7 +2092,7 @@ function tickFlight(dt) {
   if (!FL.tw) return;
   const w = FL.tw; w.t = Math.min(1, w.t + dt / w.dur); const e = .5 - .5 * Math.cos(Math.PI * w.t);
   FL.pos = w.from + (w.to - w.from) * e;
-  if (w.t >= 1) { FL.pos = w.to; FL.dock = w.j; FL.tw = null; FL.acc = 0; FL.cool = performance.now() + 900; FL.arrived = performance.now(); if (w.j > 0 && w.j <= DS.length) { DS[w.j - 1].signT = 0; SND.buzz(); } }
+  if (w.t >= 1) { FL.pos = w.to; FL.dock = w.j; FL.tw = null; FL.acc = 0; FL.cool = performance.now() + 900; FL.arrived = performance.now(); if (w.j > 0 && w.j <= DS.length) { DS[w.j - 1].signT = 0; SND.buzz(); passToast(PASS.event('visit', { district: DS[w.j - 1].id, hero: HERO_LIST[heroIdx][2] })); } }
 }
 
 const cp = new T.Vector3(), cl = new T.Vector3(), tmp = new T.Vector3();
@@ -2133,17 +2117,17 @@ fetch('assets/models/heroes.json', { cache: 'no-store' }).then(r => r.ok ? r.jso
 
 // ---------- the arcade pass: one progression over every game ----------
 const passQ = []; let passBusy = false;
-function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'hero' ? o.hero + ' reached level ' + o.level + '!  +' + o.coins + ' coins' : o.kind === 'level' ? 'Level ' + o.level + '!  +' + o.coins + ' coins' : 'Mission done: ' + o.text + '  +' + o.coins + ' coins')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
-function passUi() { const g = PASS.get(); $('mPassS').textContent = 'Lv ' + g.level + ' · ' + g.coins + ' coins'; if (panelKey === 'pass') passRender(); TRC = PASS.trail(); HLV = PASS.heroLevel(HERO_LIST[heroIdx][2]); if (typeof carSel === 'number' && stage === 'pick') pNameSet(); }
+function passToast(out) { (out || []).forEach(o => passQ.push(o.kind === 'hero' ? o.hero + ' reached level ' + o.level + '!' : o.kind === 'level' ? 'Level ' + o.level + '!' + (o.trail ? '  New trail: ' + o.trail : '') : 'Mission done: ' + o.text + '  +' + o.xp + ' XP')); if (passBusy) return; (function next() { const t = passQ.shift(); if (!t) { passBusy = false; return; } passBusy = true; coinToast(t); SND.play('perfect'); setTimeout(next, 2600); })(); }
+function passUi() { const g = PASS.get(); $('mPassS').textContent = 'Level ' + g.level; $('coinN').textContent = 'Level ' + g.level; if (panelKey === 'pass') passRender(); TRC = PASS.trail(); HLV = PASS.heroLevel(HERO_LIST[heroIdx][2]); if (typeof carSel === 'number' && stage === 'pick') pNameSet(); }
 function passRender() { const g = PASS.get(), v = $('passView'), esc = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  v.innerHTML = '<div class="pv-top"><div class="pv-lv"><div><small>LEVEL</small><b>' + g.level + '</b></div></div><div><div class="pv-coins"><i></i>' + g.coins.toLocaleString('en') + ' <small>arcade coins</small></div><div class="pv-bar"><i style="width:' + Math.round(g.into / g.need * 100) + '%"></i></div><small>' + g.into + ' / ' + g.need + ' XP to level ' + (g.level + 1) + '</small></div></div>'
-    + '<h3>Missions of the day</h3>' + g.missions.map(m => '<div class="pv-m' + (m.done ? ' done' : '') + '"><div><b>' + esc(m.text) + '</b><small>+' + m.coins + ' coins · +' + m.xp + ' XP</small></div><span class="pv-n">' + (m.done ? 'Done' : m.p.toLocaleString('en') + ' / ' + m.n.toLocaleString('en')) + '</span><div class="pv-bar"><i style="width:' + Math.round(m.p / m.n * 100) + '%"></i></div>' + (!m.done && m.game ? '<button type="button" data-g="' + m.game + '">Play ' + esc(PASS.titles[m.game]) + '</button>' : '') + '</div>').join('')
+  v.innerHTML = '<div class="pv-top"><div class="pv-lv"><div><small>LEVEL</small><b>' + g.level + '</b></div></div><div><div class="pv-bar"><i style="width:' + Math.round(g.into / g.need * 100) + '%"></i></div><small>' + g.into + ' / ' + g.need + ' XP to level ' + (g.level + 1) + '</small></div></div>'
+    + '<h3>Missions of the day</h3>' + g.missions.map(m => '<div class="pv-m' + (m.done ? ' done' : '') + '"><div><b>' + esc(m.text) + '</b><small>+' + m.xp + ' XP</small></div><span class="pv-n">' + (m.done ? 'Done' : m.p.toLocaleString('en') + ' / ' + m.n.toLocaleString('en')) + '</span><div class="pv-bar"><i style="width:' + Math.round(m.p / m.n * 100) + '%"></i></div>' + (!m.done && m.game ? '<button type="button" data-g="' + m.game + '">Play ' + esc(PASS.titles[m.game]) + '</button>' : '') + '</div>').join('')
     + '<h3>Your heroes</h3><div class="pv-h">' + PASS.heroes().map(h => '<div class="pv-hc l' + h.level + '"><img alt="" src="assets/heroes/' + h.id + '.png"><b>' + esc(h.name) + '</b><span class="pstars">' + '\u2605'.repeat(h.level) + '<i>' + '\u2605'.repeat(3 - h.level) + '</i></span><div class="pv-bar"><i style="width:' + (h.next ? Math.round((h.xp - h.from) / (h.next - h.from) * 100) : 100) + '%"></i></div><small>' + (h.next ? (h.next - h.xp) + ' XP to level ' + (h.level + 1) : 'Top level') + '</small></div>').join('') + '</div><p class="pv-note" style="margin-top:10px">Each hero has 3 levels of its own. A hero earns XP when you play or fly with it. Level 2 and 3 give it a brighter aura in the city and a small perk in the arcade games.</p>'
-    + '<h3>Flight trails</h3><div class="pv-tr">' + PASS.trails.map(t => { const own = g.owned.indexOf(t.id) >= 0, on = g.trail === t.id; return '<button type="button" class="pv-t' + (on ? ' on' : '') + (!own && g.coins < t.cost ? ' no' : '') + '" data-t="' + t.id + '"><i style="background:' + t.css + '"></i>' + t.name + '<small>' + (on ? 'In use' : own ? 'Owned · tap to use' : t.cost + ' coins') + '</small></button>'; }).join('') + '</div>'
-    + '<p class="pv-note">You earn XP by playing any game. Arcade coins come from flying through the city, from missions and from new levels. They only buy trails here: they are not $ROBIN.</p>';
+    + '<h3>Flight trails</h3><div class="pv-tr">' + PASS.trails.map(t => { const own = g.owned.indexOf(t.id) >= 0 || g.level >= t.lv, on = g.trail === t.id; return '<button type="button" class="pv-t' + (on ? ' on' : '') + (!own ? ' no' : '') + '" data-t="' + t.id + '"><i style="background:' + t.css + '"></i>' + t.name + '<small>' + (on ? 'In use' : own ? 'Tap to use' : 'Unlocks at level ' + t.lv) + '</small></button>'; }).join('') + '</div>'
+    + '<p class="pv-note">You earn XP by playing any game, by finishing missions and by visiting districts in the city. New flight trails unlock as your level goes up.</p>';
   
   v.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => { const id = b.dataset.g; closePanel(); openPlay(id, 'choose'); }));
-  v.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { if (PASS.buy(b.dataset.t)) SND.play('coin'); else SND.play('wrong'); })); }
+  v.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { if (PASS.buy(b.dataset.t)) SND.play('click'); else SND.play('wrong'); })); }
 const aura = new T.Sprite(new T.SpriteMaterial({ map: radT.t, color: new T.Color(1.9, 1.5, .6), transparent: true, opacity: .3, depthWrite: false, blending: T.AdditiveBlending })); aura.visible = false; aura.userData.noInk = true; B.add(aura);
 let HLV = 1; let TRC = PASS.trail(); PASS.onChange(passUi); passUi();
 $('coins').addEventListener('click', () => openPanel('pass')); $('coins').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPanel('pass'); } });
@@ -2245,7 +2229,6 @@ function frame(now) {
     flyer.position.set(fP.x, fy, fP.z); flyer.lookAt(fP.x + fT.x, fy - frame.v * .3, fP.z + fT.z); flyer.rotateZ(turn);
     animFlyer(time, frame.v); { if (frame.hi !== heroIdx) { frame.hi = heroIdx; HLV = PASS.heroLevel(HERO_LIST[heroIdx][2]); } const lv = HLV; aura.visible = lv > 1 && stage === 'city'; if (lv > 1) { aura.position.copy(flyer.position); const sc = (lv === 3 ? 5.2 : 3.6) * (1 + Math.sin(time * 3) * .06); aura.scale.set(sc, sc, 1); aura.material.opacity = lv === 3 ? .5 : .3; } }
     blob.position.set(fP.x, .17, fP.z); blob.material.opacity = .42;
-    COINS.forEach((c, ci) => { if (c.userData.u - fu < .002 && c.userData.u - fu > -.008 && stage === 'city') collect(ci); c.rotation.y = time * 2.4 + c.userData.u * 40; const d = c.userData.u - fu; c.visible = d > -.01; c.scale.setScalar(d < .004 && d > -.01 ? Math.max(.01, 1 - (.004 - d) * 140) : 1); });
     const rAt = fP, look = road.getPointAt(Math.min(.999, fu + .05));
     let k = -1, best = 1, wsum = 0; const foc = new T.Vector3(), side = new T.Vector3();
     D.forEach((d, j) => { const dd = Math.abs(u + .045 - d.u); if (dd < best) { best = dd; k = j; } const w = Math.max(0, 1 - dd / .065); d.w = w; });
