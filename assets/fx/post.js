@@ -40,7 +40,7 @@ function makePost(renderer, opts) {
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       void main(){
         vec2 q=v-.5; float r2=dot(q*vec2(asp,1.),q*vec2(asp,1.));
-        vec2 off=q*r2*.006*ca;
+        vec2 off=q*r2*.0012*ca;
         // depth of field: when the camera stops on a district, what is far from the focus plane goes soft
         float coc=0.; if(dof>0.&&ol>.5){float dz=lin(v);coc=clamp((abs(dz-fz)-fz*.3)/(fz*1.3),0.,1.)*dof;}
         vec3 c;
@@ -53,23 +53,23 @@ function makePost(renderer, opts) {
         if(ol>.5){float dc=lin(v);
           // contact shadows: nearby geometry in front of this pixel darkens it
           if(aoK>0.){float occ=0.;float rad=clamp(14./max(dc*.05,.5),2.5,26.);
-            for(int i=0;i<10;i++){float a=float(i)*2.39996+fract(sin(dot(v,vec2(12.9898,78.233)))*43758.5)*6.28;float rr=rad*(.35+.65*fract(float(i)*.618));
+            for(int i=0;i<10;i++){float a=float(i)*2.39996;float rr=rad*(.35+.65*fract(float(i)*.618));
               float ds=lin(v+vec2(cos(a),sin(a))*rr*px);float dd=dc-ds;occ+=smoothstep(.06,.5,dd)*(1.-smoothstep(2.5,6.,dd));}
             c*=1.-clamp(occ/10.,0.,1.)*aoK*(1.-smoothstep(120.,320.,dc));}
           // outer silhouettes are drawn thick, inner creases thin
           vec2 o1=vec2(px.x,0.),o2=vec2(0.,px.y),w1=o1*1.8,w2=o2*1.8;
           float de=abs(lin(v+w1)+lin(v-w1)+lin(v+w2)+lin(v-w2)-4.*dc)/dc;
           vec3 n0=nr(v);float ne=max(max(1.-dot(n0,nr(v+o1)),1.-dot(n0,nr(v-o1))),max(1.-dot(n0,nr(v+o2)),1.-dot(n0,nr(v-o2))));
-          float fade=1.-smoothstep(90.,300.,dc);
+          float fade=1.-smoothstep(45.,150.,dc);float fin=1.-smoothstep(14.,48.,dc);
           c=mix(c,vec3(.07,.05,.13),smoothstep(.05,.14,de)*fade*.92*(1.-coc*.85));
-          c=mix(c,vec3(.10,.07,.18),smoothstep(.2,.5,ne)*fade*.6);}
+          c=mix(c,vec3(.10,.07,.18),smoothstep(.55,.95,ne)*fin*.4);}
         float l=dot(c,vec3(.299,.587,.114));
-        c=mix(c,c*vec3(.82,.9,1.18),(1.-smoothstep(0.,.5,l))*.7);
-        c=mix(c,c*vec3(1.1,1.,.86),smoothstep(.5,1.,l)*.6);
+        c=mix(c,c*vec3(.82,.9,1.18),(1.-smoothstep(0.,.5,l))*.35);
+        c=mix(c,c*vec3(1.1,1.,.86),smoothstep(.5,1.,l)*.3);
         c=mix(vec3(l),c,1.12);
         c+=vec3(.012,.008,.03);
-        c*=mix(1.-vig,1.,1.-smoothstep(.2,1.1,sqrt(r2)));
-        c+=(h(v*vec2(1913.,1577.)+fract(tm))-.5)*.035;
+        c*=mix(1.-vig*.55,1.,1.-smoothstep(.2,1.1,sqrt(r2)));
+        c+=(h(v*vec2(1913.,1577.))-.5)*.006;
         gl_FragColor=vec4(pow(max(c,0.),vec3(.97)),1.);}` });
   let w = 2, h = 2;
   function pass(mat, target, clear) { quad.material = mat; renderer.setRenderTarget(target); if (clear !== false) renderer.clear(); renderer.render(qs, qc); }
@@ -86,7 +86,7 @@ function makePost(renderer, opts) {
         for (let i = 0; i < N; i++) { down.uniforms.t.value = src; down.uniforms.px.value.set(1 / sw, 1 / sh); down.uniforms.first.value = i === 0 ? 1 : 0; down.uniforms.th.value = o.threshold != null ? o.threshold : (opts.threshold || 1); pass(down, mips[i]); src = mips[i].texture; sw = mips[i].width; sh = mips[i].height; }
         for (let i = N - 1; i > 0; i--) { up.uniforms.t.value = mips[i].texture; up.uniforms.px.value.set(1 / mips[i].width, 1 / mips[i].height); up.uniforms.r.value = 1; pass(up, mips[i - 1], false); }
       }
-      const doOl = this.outline && !o.noInk; comp.uniforms.ol.value = doOl ? 1 : 0; comp.uniforms.aoK.value = doOl && this.ao ? .55 : 0;
+      const doOl = this.outline && !o.noInk; comp.uniforms.ol.value = doOl ? 1 : 0; comp.uniforms.aoK.value = doOl && this.ao ? .26 : 0;
       if (doOl) { if (++hideAge > 90) collectHidden(scene); const hl = hideList.concat(dynList.filter(x => x.userData.noInk)); const was = hl.map(x => x.visible); hl.forEach(x => x.visible = false);
         const ov = scene.overrideMaterial, bg = scene.background, fg = scene.fog; scene.overrideMaterial = nrmMat; scene.background = null; scene.fog = null;
         renderer.setRenderTarget(nrmRT); renderer.setClearColor(0x8080ff, 1); renderer.clear(); renderer.render(scene, camera);

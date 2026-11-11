@@ -407,8 +407,8 @@ const R = new T.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high
 const LOW = matchMedia('(pointer: coarse)').matches || (navigator.hardwareConcurrency || 8) <= 4;
 R.setPixelRatio(Math.min(devicePixelRatio || 1, LOW ? 1.5 : 2));
 R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap;
-const glowA = makePost(R, { threshold: 1, strength: .6, exposure: 1.05, vignette: .66, outline: true, ca: .3, ao: !LOW });
-const glow = makePost(R, { threshold: 1.45, strength: .32, exposure: .82, vignette: .5, outline: true, ca: .4, ao: !LOW });
+const glowA = makePost(R, { threshold: 1.25, strength: .38, exposure: 1.05, vignette: .66, outline: true, ca: .3, ao: !LOW });
+const glow = makePost(R, { threshold: 1.45, strength: .26, exposure: .82, vignette: .5, outline: true, ca: .4, ao: !LOW });
 const aq = makeAutoQuality(R, glow, (lv) => { glowA.on = glow.on; if (lv >= 1) { glow.ao = false; glowA.ao = false; } if (lv >= 1 && typeof moon !== 'undefined') { moon.castShadow = false; spot.castShadow = false; } if (lv >= 2) { glow.outline = false; glowA.outline = false; } fit(); });
 const cam = new T.PerspectiveCamera(48, 1, .05, 900);
 let W = 1, H = 1;
@@ -617,9 +617,9 @@ B.environment = ENV.night;
 function noiseCanvas(sz, fn) { return tex(sz, sz, (x, w, h) => { const id = x.createImageData(w, h); const r = mulberry(5); const N = (px, py, s) => { /* value noise */ const gx = px / s, gy = py / s, ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy; const hh = (a, b) => { const v = Math.sin(((a % 64 + 64) % 64) * 127.1 + ((b % 64 + 64) % 64) * 311.7) * 43758.5453; return v - Math.floor(v); }; const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy); return (hh(ix, iy) * (1 - sx) + hh(ix + 1, iy) * sx) * (1 - sy) + (hh(ix, iy + 1) * (1 - sx) + hh(ix + 1, iy + 1) * sx) * sy; };
   for (let py = 0; py < h; py++) for (let px = 0; px < w; px++) { const v = fn(N, px, py, r); const k = (py * w + px) * 4; id.data[k] = v[0]; id.data[k + 1] = v[1]; id.data[k + 2] = v[2]; id.data[k + 3] = 255; } x.putImageData(id, 0, 0); }); }
 // roughness: puddles are glossy (dark), dry asphalt is rough (light)
-const puddleT = noiseCanvas(256, (N, x, y, r) => { const n = N(x, y, 64) * .6 + N(x, y, 22) * .3 + N(x, y, 6) * .1; const p = n < .42 ? 18 : n < .5 ? 18 + (n - .42) / .08 * 150 : 168 + (N(x, y, 3) * 60 | 0); return [p, p, p]; });
-const asphaltT = noiseCanvas(256, (N, x, y, r) => { const n = N(x, y, 2) * .5 + N(x, y, 9) * .3 + N(x, y, 40) * .2; const v = 34 + n * 26 | 0; return [v, v - 2, v + 8]; });
-const paveT = tex(256, 256, (x) => { x.fillStyle = '#5c566c'; x.fillRect(0, 0, 256, 256); const r = mulberry(9); for (let k = 0; k < 16; k++) for (let j = 0; j < 16; j++) { const v = 78 + r() * 22 | 0; x.fillStyle = `rgb(${v},${v - 6},${v + 12})`; x.fillRect(k * 16 + 1, j * 16 + 1, 14, 14); } });
+const puddleT = noiseCanvas(256, (N, x, y, r) => { const n = N(x, y, 64) * .65 + N(x, y, 22) * .35; const p = n < .42 ? 18 : n < .5 ? 18 + (n - .42) / .08 * 150 : 180; return [p, p, p]; });
+const asphaltT = noiseCanvas(256, (N, x, y, r) => { const n = N(x, y, 14) * .5 + N(x, y, 40) * .5; const v = 42 + n * 10 | 0; return [v, v - 2, v + 8]; });
+const paveT = tex(256, 256, (x) => { x.fillStyle = '#5c566c'; x.fillRect(0, 0, 256, 256); const r = mulberry(9); for (let k = 0; k < 16; k++) for (let j = 0; j < 16; j++) { const v = 84 + r() * 8 | 0; x.fillStyle = `rgb(${v},${v - 6},${v + 12})`; x.fillRect(k * 16 + 1, j * 16 + 1, 14, 14); } });
 [puddleT, asphaltT, paveT].forEach(t => { t.t.wrapS = t.t.wrapT = T.RepeatWrapping; });
 const groundMat = new T.MeshStandardMaterial({ color: 0x8a84a0, map: asphaltT.t, roughness: 1, roughnessMap: puddleT.t, metalness: .15, envMapIntensity: .5 });
 groundMat.map.repeat.set(60, 70); groundMat.roughnessMap.repeat.set(30, 35);
@@ -633,9 +633,13 @@ function ribbon(width, y, mat, vScale) {
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); const m = new T.Mesh(g, mat); m.receiveShadow = true; B.add(m); return m;
 }
 const sideMat = new T.MeshStandardMaterial({ map: paveT.t, color: 0x6e6884, roughness: 1, roughnessMap: puddleT.t, metalness: .05, envMapIntensity: .35 });
+// the ribbons get their own copies: the ground tiles these textures 60 times, which turned the wet road into a moire of dots
+const ownT = (t, rx, ry) => { const c = t.clone(); c.wrapS = c.wrapT = T.RepeatWrapping; c.repeat.set(rx, ry); c.needsUpdate = true; return c; };
+sideMat.roughnessMap = sideMat.userData.wetMap = ownT(puddleT.t, .3, .3);
 ribbon(14, .06, sideMat, 3);
 ribbon(8.8, .1, new T.MeshStandardMaterial({ color: 0x5a5470, roughness: .6, envMapIntensity: .5 }));
 const roadMat = new T.MeshStandardMaterial({ map: asphaltT.t, color: 0x6c6882, roughness: 1, roughnessMap: puddleT.t, metalness: .2, envMapIntensity: .8 });
+roadMat.map = ownT(asphaltT.t, 1, 1); roadMat.roughnessMap = roadMat.userData.wetMap = ownT(puddleT.t, .35, .35);
 ribbon(8, .12, roadMat, 6);
 // ---------- small street furniture along the sidewalks ----------
 { const SF = { hyd: [], cap: [], seat: [], back: [], mail: [], bin: [], news: [] }, fq = new T.Quaternion(), fs = new T.Vector3(1, 1, 1);
@@ -1610,7 +1614,7 @@ function moodVec(name, rain) {
 [groundMat, roadMat, sideMat].forEach(m => m.userData.noToon = true);
 sky.userData.noInk = true;
 const WET = [groundMat, roadMat, sideMat, MAT.roof];
-function setWet(wet) { WET.forEach(m => { const want = wet ? puddleT.t : null; if (m.roughnessMap !== want) { m.roughnessMap = want; m.roughness = wet ? 1 : .82; m.needsUpdate = true; } }); }
+function setWet(wet) { WET.forEach(m => { const want = wet ? (m.userData.wetMap || puddleT.t) : null; if (m.roughnessMap !== want) { m.roughnessMap = want; m.roughness = wet ? 1 : .82; m.needsUpdate = true; } }); }
 function applyWorld(instant) {
   WORLD.time = WORLD.mode === 'auto' ? clockMood() : WORLD.mode;
   const tgt = moodVec(WORLD.time, WORLD.rain); WORLD.tgt = tgt; if (instant || !WORLD.cur) WORLD.cur = moodVec(WORLD.time, WORLD.rain);
