@@ -32,8 +32,8 @@ function makePost(renderer, opts) {
         c+=(texture2D(t,v+vec2(d.x,0)).rgb+texture2D(t,v-vec2(d.x,0)).rgb+texture2D(t,v+vec2(0,d.y)).rgb+texture2D(t,v-vec2(0,d.y)).rgb)*2.;
         c+=texture2D(t,v+d).rgb+texture2D(t,v-d).rgb+texture2D(t,v+vec2(d.x,-d.y)).rgb+texture2D(t,v+vec2(-d.x,d.y)).rgb;
         gl_FragColor=vec4(c/16.,1.);}` });
-  const comp = new T.ShaderMaterial({ uniforms: { tn: { value: null }, td: { value: null }, ol: { value: 0 }, aoK: { value: 0 }, cn: { value: .5 }, cf: { value: 900 }, px: { value: new T.Vector2() }, t: { value: null }, b: { value: null }, k: { value: opts.strength || .6 }, ex: { value: opts.exposure || 1.2 }, tm: { value: 0 }, asp: { value: 1 }, fl: { value: 0 }, ca: { value: opts.ca == null ? 1 : opts.ca }, vig: { value: opts.vignette || .55 }, wet: { value: 0 } }, vertexShader: V, depthTest: false, depthWrite: false,
-    fragmentShader: `uniform sampler2D t;uniform sampler2D b;uniform sampler2D tn;uniform sampler2D td;uniform float k,ex,tm,asp,fl,ca,vig,wet,ol,cn,cf,aoK;uniform vec2 px;varying vec2 v;
+  const comp = new T.ShaderMaterial({ uniforms: { tn: { value: null }, td: { value: null }, ol: { value: 0 }, aoK: { value: 0 }, cn: { value: .5 }, cf: { value: 900 }, px: { value: new T.Vector2() }, t: { value: null }, b: { value: null }, k: { value: opts.strength || .6 }, ex: { value: opts.exposure || 1.2 }, tm: { value: 0 }, asp: { value: 1 }, fl: { value: 0 }, ca: { value: opts.ca == null ? 1 : opts.ca }, vig: { value: opts.vignette || .55 }, wet: { value: 0 }, dof: { value: 0 }, fz: { value: 20 } }, vertexShader: V, depthTest: false, depthWrite: false,
+    fragmentShader: `uniform sampler2D t;uniform sampler2D b;uniform sampler2D tn;uniform sampler2D td;uniform float k,ex,tm,asp,fl,ca,vig,wet,ol,cn,cf,aoK,dof,fz;uniform vec2 px;varying vec2 v;
       float lin(vec2 p){float d=texture2D(td,p).x;return (2.*cn*cf)/(cf+cn-(2.*d-1.)*(cf-cn));}
       vec3 nr(vec2 p){return texture2D(tn,p).xyz*2.-1.;}
       vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
@@ -41,7 +41,11 @@ function makePost(renderer, opts) {
       void main(){
         vec2 q=v-.5; float r2=dot(q*vec2(asp,1.),q*vec2(asp,1.));
         vec2 off=q*r2*.006*ca;
-        vec3 c=vec3(texture2D(t,v+off).r,texture2D(t,v).g,texture2D(t,v-off).b);
+        // depth of field: when the camera stops on a district, what is far from the focus plane goes soft
+        float coc=0.; if(dof>0.&&ol>.5){float dz=lin(v);coc=clamp((abs(dz-fz)-fz*.3)/(fz*1.3),0.,1.)*dof;}
+        vec3 c;
+        if(coc>.03){vec3 acc=vec3(0.);for(int i=0;i<12;i++){float a=float(i)*2.39996;float rr=sqrt((float(i)+.5)/12.)*coc*6.5;acc+=texture2D(t,v+vec2(cos(a),sin(a))*rr*px).rgb;}c=acc/12.;}
+        else c=vec3(texture2D(t,v+off).r,texture2D(t,v).g,texture2D(t,v-off).b);
         vec3 bl=texture2D(b,v).rgb;
         c+=bl*k;
         c*=ex*(1.+fl*1.6); c+=vec3(.55,.6,.9)*fl*.12;
@@ -57,7 +61,7 @@ function makePost(renderer, opts) {
           float de=abs(lin(v+w1)+lin(v-w1)+lin(v+w2)+lin(v-w2)-4.*dc)/dc;
           vec3 n0=nr(v);float ne=max(max(1.-dot(n0,nr(v+o1)),1.-dot(n0,nr(v-o1))),max(1.-dot(n0,nr(v+o2)),1.-dot(n0,nr(v-o2))));
           float fade=1.-smoothstep(90.,300.,dc);
-          c=mix(c,vec3(.07,.05,.13),smoothstep(.05,.14,de)*fade*.92);
+          c=mix(c,vec3(.07,.05,.13),smoothstep(.05,.14,de)*fade*.92*(1.-coc*.85));
           c=mix(c,vec3(.10,.07,.18),smoothstep(.2,.5,ne)*fade*.6);}
         float l=dot(c,vec3(.299,.587,.114));
         c=mix(c,c*vec3(.82,.9,1.18),(1.-smoothstep(0.,.5,l))*.7);
@@ -89,7 +93,7 @@ function makePost(renderer, opts) {
         scene.overrideMaterial = ov; scene.background = bg; scene.fog = fg; hl.forEach((x, i) => x.visible = was[i]);
         comp.uniforms.tn.value = nrmRT.texture; comp.uniforms.td.value = nrmRT.depthTexture; comp.uniforms.cn.value = camera.near; comp.uniforms.cf.value = camera.far; }
       comp.uniforms.t.value = base.texture; comp.uniforms.b.value = mips[0].texture; comp.uniforms.k.value = this.on ? (o.strength != null ? o.strength : (opts.strength || .6)) : 0;
-      comp.uniforms.tm.value = performance.now() / 1000 % 100; comp.uniforms.asp.value = w / h; comp.uniforms.fl.value = o.flash || 0;
+      comp.uniforms.tm.value = performance.now() / 1000 % 100; comp.uniforms.asp.value = w / h; comp.uniforms.fl.value = o.flash || 0; comp.uniforms.dof.value = o.dof || 0; comp.uniforms.fz.value = o.focus || 20;
       if (o.exposure != null) comp.uniforms.ex.value = o.exposure;
       pass(comp, null);
       renderer.autoClear = ac;

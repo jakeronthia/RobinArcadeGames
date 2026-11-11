@@ -672,6 +672,12 @@ for (let i = 4; i < RS && nl < 118; i += 9) { const p = rp[i], t = rt[i]; for (c
   mtx.compose(v3.set(x - nx * 1.45, 4.82, z - nz * 1.45), q, one); headI.setMatrixAt(nl, mtx);
   LAMPS.push(new T.Vector3(x - nx * 1.45, 4.7, z - nz * 1.45)); nl++; } }
 dash.count = nd; poleI.count = nl; armI.count = nl; headI.count = nl; poleI.castShadow = true; dash.receiveShadow = true; B.add(dash, poleI, armI, headI);
+// a soft cone of light in the damp air under every street lamp
+const CONEM = new T.ShaderMaterial({ uniforms: { op: { value: 0 }, col: { value: new T.Color(1.6, 1.25, .8) } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide,
+  vertexShader: 'varying float vy; varying vec3 vn; varying vec3 vv; void main(){ vec4 wp = modelMatrix * instanceMatrix * vec4(position, 1.); vy = uv.y; vn = normalize(mat3(modelMatrix * instanceMatrix) * normal); vv = normalize(cameraPosition - wp.xyz); gl_Position = projectionMatrix * viewMatrix * wp; }',
+  // bright under the lamp, gone before the ground, and soft at the sides so it reads as lit air and not as a solid cone
+  fragmentShader: 'uniform float op; uniform vec3 col; varying float vy; varying vec3 vn; varying vec3 vv; void main(){ float f = pow(abs(dot(normalize(vn), normalize(vv))), 1.8); float a = (vy * vy * .85 + vy * .1) * f * op; gl_FragColor = vec4(col * a, a); }' });
+{ const cg = new T.ConeGeometry(2.7, 4.5, 20, 1, true); cg.translate(0, -2.25, 0); const coneI = new T.InstancedMesh(cg, CONEM, LAMPS.length); LAMPS.forEach((p, i) => { mtx.compose(v3.set(p.x, p.y + .05, p.z), q.identity(), one); coneI.setMatrixAt(i, mtx); }); coneI.frustumCulled = false; coneI.renderOrder = 4; coneI.userData.noInk = true; B.add(coneI); }
 { const hoodI = new T.InstancedMesh(mergeGeos([roundedBox(.64, .1, 1.1, .05, 3), (() => { const g = roundedBox(.3, .12, .5, .05, 2); g.translate(0, .1, 0); return g; })()]), new T.MeshStandardMaterial({ color: 0x2c2838, roughness: .4, metalness: .7 }), nl); const m4 = new T.Matrix4(), lift = new T.Matrix4().makeTranslation(0, .135, 0); for (let i = 0; i < nl; i++) { headI.getMatrixAt(i, m4); m4.premultiply(lift); hoodI.setMatrixAt(i, m4); } B.add(hoodI); }
 // light pools on the ground and cones in the rain (cheap, additive)
 const radT = tex(128, 128, (x) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); });
@@ -2191,6 +2197,7 @@ function plResume() { try { const q = new URLSearchParams(location.search), paid
 function frame(now) {
   if (PLAY.game) { requestAnimationFrame(frame); last = now; return; } // the city rests while you play
   const rawDt = (now - last) / 1000, dt = Math.min(.1, rawDt); last = now; const time = Math.max(0, (now - t0) / 1000);
+  { const tg = WORLD.time === 'night' ? .2 : WORLD.time === 'dusk' ? .13 : 0; CONEM.uniforms.op.value += ((WORLD.rain ? tg * 1.35 : tg) * 2.2 - CONEM.uniforms.op.value) * Math.min(1, dt * 2); }
   autoQuality(rawDt, !document.hidden && (stage === 'title' || stage === 'pick' || stage === 'city'));
   if (stage === 'land' || stage === 'city') SND.update({ room: false });
   if (stage === 'title' || stage === 'pick' || stage === 'zoom' || stage === 'cab' || stage === 'dive') {
@@ -2258,9 +2265,9 @@ function frame(now) {
     if (!TILT.dev) { TILT.tx = mx * .8; TILT.ty = my * .5; } TILT.x += (TILT.tx - TILT.x) * Math.min(1, dt * 3); TILT.y += (TILT.ty - TILT.y) * Math.min(1, dt * 3);
     chase.x += -fT.z * TILT.x * 2.4; chase.z += fT.x * TILT.x * 2.4; chase.y += -TILT.y * 1.4;
     cp.copy(high).lerp(chase, el);
-    cl.set(look.x, 3.8, look.z); if (VD) cl.lerp(vlook, we);
+    cl.set(look.x, 3.8, look.z); if (VD) cl.lerp(vlook, we); frame.dofK = stage === 'city' ? we : 0;
     if (landT < 1) cl.lerp(new T.Vector3(base.x, 0, base.z - 30), 1 - el);
-    cam.position.lerp(cp, landT < 1 ? 1 : Math.min(1, dt * 4)); cam.lookAt(cl);
+    cam.position.lerp(cp, landT < 1 ? 1 : Math.min(1, dt * 4)); cam.lookAt(cl); frame.fz = cam.position.distanceTo(cl);
     const fov = (W < H ? 72 : 60) + frame.v * 9; if (Math.abs(cam.fov - fov) > .05) { cam.fov = fov; cam.updateProjectionMatrix(); }
     if (landT >= 1 && stage === 'land') stage = 'city';
     $('welcome').classList.toggle('on', prog < .015);
@@ -2282,7 +2289,7 @@ function frame(now) {
     STEAM.forEach(o => { const f = (time * .18 + o.ph) % 1; o.s.position.set(o.base.x + Math.sin(time * .5 + o.ph * 9) * .6 * f, .3 + f * 7, o.base.z + f * 1.5); const sc = 1.2 + f * 5; o.s.scale.set(sc, sc, 1); o.s.material.opacity = Math.sin(f * Math.PI) * .22; });
     $('railFill').style.height = (sprog * (dotEls.length * 46 - 44)) + 'px';
     const vd5 = D[5]; if (vd5.hinge) { vd5.open = (vd5.open || 0) + ((vd5.w > .35 ? 1 : 0) - (vd5.open || 0)) * Math.min(1, dt * 2.5); vd5.hinge.rotation.y = -vd5.open * 1.7; }
-    glow.render(B, cam, { flash: fl * .12 });
+    glow.render(B, cam, { flash: fl * .12, dof: LOW ? 0 : (frame.dofK || 0) * .9, focus: frame.fz || 20 });
   }
   aq.tick(dt, true);
   requestAnimationFrame(frame);
